@@ -1,12 +1,12 @@
+from src.utils.common.common_helper import read_config, unique_id_generator, Hashing, encrypt
 from flask import Flask, redirect, url_for, render_template, request, session
-import re
+from src.utils.databases.mongo_helper import MongoHelper
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
-import os
-import time
-from src.utils.common.common_helper import read_config, unique_id_generator,Hashing,encrypt
-from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
+import time
+import re
+import os
 
 # Yaml Config File
 config_args = read_config("./config.yaml")
@@ -18,6 +18,7 @@ common_path = config_args['logs']['logger']
 admin_log_file_path = config_args["logs"]['adminlogs_dir']
 admin_file_name = config_args["logs"]['adminlogs_file']
 admin_path = os.path.join(common_path, admin_log_file_path, admin_file_name)
+
 # user Path Setting
 user_log_file_path = config_args["logs"]['adminlogs_dir']
 user_file_name = config_args["logs"]['adminlogs_file']
@@ -30,8 +31,6 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
-print(host)
-print(port)
 mysql = MySqlHelper(host, port, user, password, database)
 mongodb = MongoHelper()
 

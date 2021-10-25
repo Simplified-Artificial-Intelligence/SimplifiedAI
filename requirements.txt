@@ -28,3 +28,10 @@ typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1631814937681/w
 Werkzeug @ file:///tmp/build/80754af9/werkzeug_1631818832573/work
 wincertstore==0.2
 zipp @ file:///tmp/build/80754af9/zipp_1633618647012/work
+
+pandas~=1.1.5
+numpy~=1.21.2
+yaml~=0.2.5
+cryptography~=3.4.8
+flask~=2.0.1
+werkzeug~=2.0.1
