@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form action="/project" method="post" class="project-form" enctype = "multipart/form-data">
+  <div class="container col-lg-6 col-sm-6">
+    {% if msg %}
+     <div class="col-lg-12 col-sm-12 col-md-12">
+      <div class="alert alert-danger">
+        <strong>Alert!  </strong>{{msg}}.
+      </div>
+    </div>
+    {% endif %}
+    <h3 class="header">Add New project</h3>
+    <label for="name"><b>Name:</b></label>
+    <input type="text" placeholder="Add your project name" name="name" required>
+
+    <label for="description"><b>Description</b></label>
+    <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="description" required >
+    </textarea>
+       <label for="file" class="label1"><b>Upload Your File:</b></label>
+      <input type="file" id="file" name="file">
+      <p>allowed file *.csv, .tsv, .xml, .json</p>
+    <button class="btn btn-success" type="submit">Add Project</button>
+      <a href="/">
+        <button type="button" class="btn btn-danger back">Back</button>
+      </a>
+  </div>
+  </div>
+
+</form>
+{% endblock %}
