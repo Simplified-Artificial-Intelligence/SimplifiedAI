@@ -13,11 +13,13 @@ Projectathon
 |--> Scheduler
       |--> schedular.py
 |--> Src
-  |--> Data
-  |--> Eda
-  |--> FE
-  |--> Preprocessing
-  |--> Utils
+      |--> Data
+      |--> Eda
+      |--> FE
+      |--> Preprocessing
+      |--> Utils
 |--> Static
+      |--> css
 |--> Templates
+      |--> Html
 ```
