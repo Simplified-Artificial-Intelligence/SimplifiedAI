@@ -1,0 +1,22 @@
+dir_structure:
+  template_dir: src/templates
+  static_dir: src/static
+  upload_folder: src/store
+
+logs:
+  logger: src/customlogger
+  adminlogs_dir: admin
+  adminlogs_file: admin_logs.log
+  generallogs_dir: general
+  generallogs_file: logs.log
+
+secrets:
+  key: DB128%^#*(%$ZXC345
+  MAX_CONTENT_PATH: 209715200
+  host: 38.17.53.115
+  port: 17652
+  user: admin
+  password: AsiK9wJ4
+  database: auto_neuron
+  mongo: mongodb+srv://vishal:123@auto-neuron.euorq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
+

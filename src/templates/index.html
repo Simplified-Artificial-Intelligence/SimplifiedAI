@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="home">
+  <div class="jumbotron">
+    <h1>Welcome To Dashboard</h1>
+    <p>Here you can find all your projects, with there current status and option to show report, logs, export data and
+      delete project</p>
+  </div>
+
+  <a href="/project"><button type="button" class="btn btn-success add-button">Add New Project</button></a>
+  <div class="row">
+
+    {% for item in projects %}
+
+    <div class="col-lg-4 col-sm-6 col-md-4">
+      <div class="card text-white bg-info mb-3" style="max-width: 25rem; min-height:18rem">
+        <div class="card-header">{{item[1]}}</div>
+        <div class="card-body">
+          {% if item[5]=='I' %}
+            <h5 class="badge badge-warning">{{item[4]}}</h5>
+          {% endif %}
+          {% if item[5]=='E' %}
+            <h5 class="badge badge-primary">{{item[4]}}</h5>
+          {% endif %}
+          {% if item[5]=='D' %}
+            <h5 class="badge badge-danger">{{item[4]}}</h5>
+          {% endif %}
+          {% if item[5]=='F' %}
+            <h5 class="badge badge-secondary">{{item[4]}}</h5>
+          {% endif %}
+          <p class="card-text project-desc" title="{{item[2]}}">{{item[2]}}</p>
+         <a href="/stream/{{item[7]}}"><button type="button" class="btn btn-warning">Continue</button></a>
+          <div class="float-right">
+            <a href="/deletePage/{{item[0]}}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill right-icon-pos pull-right" viewBox="0 0 16 16" style="color: #fff;">
+              <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/>
+            </svg></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% endfor %}
+
+  </div>
+</div>
+{% endblock %}
