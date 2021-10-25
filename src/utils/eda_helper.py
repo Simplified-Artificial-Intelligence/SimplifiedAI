@@ -9,8 +9,8 @@ class EDA():
 
     # , "pandas.core.frame.DataFrame", "pandas.core.series.Series"]
 
-    def get_data(self, data):
-        data = 'creditcard.csv'
+    def get_data(self, filepath):
+        data = filepath
         df = pd.read_csv(data)
         return df
 
