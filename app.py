@@ -6,7 +6,6 @@ import os
 import time
 from src.utils.common.common_helper import read_config, unique_id_generator,Hashing,encrypt
 from src.utils.databases.mongo_helper import MongoHelper
-import argparse
 import pandas as pd
 
 # Yaml Config File
