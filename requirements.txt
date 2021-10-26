@@ -1,32 +1,37 @@
-asgiref==3.4.1
-certifi==2021.5.30
-cffi==1.15.0
-click==8.0.3
-colorama==0.4.4
-cryptography==35.0.0
-dataclasses==0.8
-dnspython==2.1.0
-Flask==2.0.1
-Flask-Cors==3.0.10
-h11==0.12.0
-importlib-metadata==4.8.1
-itsdangerous==2.0.1
-Jinja2==3.0.2
-MarkupSafe==2.0.1
+certifi==2021.10.8
+cffi @ file:///C:/ci/cffi_1625831749120/work
+click @ file:///tmp/build/80754af9/click_1621604852318/work
+cryptography @ file:///C:/ci/cryptography_1633520552480/work
+Flask @ file:///tmp/build/80754af9/flask_1632776664051/work
+Flask-Cors @ file:///tmp/build/80754af9/flask-cors_1609957731919/work
+h11 @ file:///tmp/build/80754af9/h11_1620423447028/work
+importlib-metadata @ file:///C:/ci/importlib-metadata_1631916848487/work
+itsdangerous @ file:///tmp/build/80754af9/itsdangerous_1621432558163/work
+Jinja2 @ file:///tmp/build/80754af9/jinja2_1624781299557/work
+MarkupSafe @ file:///C:/ci/markupsafe_1621528314575/work
+mkl-fft==1.3.1
+mkl-random @ file:///C:/ci/mkl_random_1626186184278/work
+mkl-service==2.4.0
 mysql==0.0.3
 mysql-connector-python==8.0.27
 mysqlclient==2.0.3
-numpy==1.19.5
-pandas==1.1.5
+numpy @ file:///C:/ci/numpy_and_numpy_base_1634106873763/work
+pandas @ file:///C:/ci/pandas_1608068219821/work
 protobuf==3.19.0
-pycparser==2.20
+pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
 pymongo==3.12.1
-python-dateutil==2.8.2
+python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
 pytz==2021.3
-PyYAML==6.0
-six==1.16.0
-typing-extensions==3.10.0.2
-uvicorn==0.15.0
-Werkzeug==2.0.2
+PyYAML==5.4.1
+six @ file:///tmp/build/80754af9/six_1623709665295/work
+typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1631814937681/work
+Werkzeug @ file:///tmp/build/80754af9/werkzeug_1631818832573/work
 wincertstore==0.2
-zipp==3.6.0
+zipp @ file:///tmp/build/80754af9/zipp_1633618647012/work
+
+pandas~=1.1.5
+numpy~=1.21.2
+yaml~=0.2.5
+cryptography~=3.4.8
+flask~=2.0.1
+werkzeug~=2.0.1

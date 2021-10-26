@@ -7,6 +7,8 @@ import mysql.connector.pooling
     Returns:
         [type]: [None]
 """
+
+
 class MySqlHelper:
     def __init__(self, host, port, user, password, database):
         """
@@ -34,12 +36,11 @@ class MySqlHelper:
         }
         self.pool = self.create_pool(dbconfig,"auto_neuron_pool", 3)
         # self.connect_todb()
-        
+
     def connect_todb(self):
             self.connection = connector.connect(host=self.host, port=self.port, user=self.user,
                                     password=self.password, database=self.database, use_pure=True)
             self.isconnected=True
-
 
     def create_pool(self,dbconfig, pool_name="mypool", pool_size=3):
         """[summary]
