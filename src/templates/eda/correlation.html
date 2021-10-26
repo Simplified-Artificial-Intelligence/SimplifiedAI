@@ -3,17 +3,18 @@
 
 <div class="table2">
     <div class="jumbotron text-center">
-        <h1>5 Point Summary</h1>
+        <h1>Correlation</h1>
         <p>A summary consists of five values: the most extreme values
             in the data set (the maximum and minimum values), the lower and upper quartiles, and the median.
             These values are presented together and ordered from lowest to highest: minimum value,
             lower quartile (Q1), median value (Q2), upper quartile (Q3), maximum value.</p> 
       </div>
-    {{data | safe}}
+      <div id='myDiv'><!-- Plotly chart will be drawn inside this DIV --></div>
+      {{data}}
 </div>
-<script>
-    $(document).ready(function() {
-    $('.dataframe').DataTable();
-} );
+<script type='text/javascript'>
+ var graphs = {{data | safe}};
+Plotly.newPlot('myDiv',  graphs);
+
 </script>
 {% endblock %}

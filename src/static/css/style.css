@@ -167,3 +167,6 @@ width:60px
   div[data-testid="stToolbar"] {
    display: none;
   }
+  .table2{
+    margin-top: 4rem;
+  }
