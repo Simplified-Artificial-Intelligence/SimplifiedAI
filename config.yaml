@@ -4,7 +4,7 @@ dir_structure:
   upload_folder: src/store
 
 logs:
-  logger: src/customlogger
+  logger: src/logger
   adminlogs_dir: admin
   adminlogs_file: admin_logs.log
   generallogs_dir: general
