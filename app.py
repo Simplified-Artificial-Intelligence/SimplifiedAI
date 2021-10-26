@@ -1,12 +1,13 @@
-from src.utils.common.common_helper import read_config, unique_id_generator, Hashing, encrypt
 from flask import Flask, redirect, url_for, render_template, request, session
-from src.utils.databases.mongo_helper import MongoHelper
+import re
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
-import pandas as pd
-import time
-import re
 import os
+import time
+from src.utils.common.common_helper import decrypt, read_config, unique_id_generator,Hashing,encrypt
+from src.utils.databases.mongo_helper import MongoHelper
+import argparse
+import pandas as pd
 
 # Yaml Config File
 config_args = read_config("./config.yaml")
@@ -18,7 +19,6 @@ common_path = config_args['logs']['logger']
 admin_log_file_path = config_args["logs"]['adminlogs_dir']
 admin_file_name = config_args["logs"]['adminlogs_file']
 admin_path = os.path.join(common_path, admin_log_file_path, admin_file_name)
-
 # user Path Setting
 user_log_file_path = config_args["logs"]['adminlogs_dir']
 user_file_name = config_args["logs"]['adminlogs_file']
@@ -223,12 +223,50 @@ def logout():
     session.pop('loggedin', None)
     session.pop('id', None)
     session.pop('username', None)
+    session.pop('pid', None)
+    session.pop('project_name', None)
     return redirect(url_for('login'))
 
 
 @app.route('/stream/<pid>')
 def stream(pid):
-    return render_template('stream.html', project=pid)
+    try:
+        data=decrypt(pid)
+        if data:
+            values=data.split("&")
+            session['pid'] = values[1]
+            session['project_name']=values[0]
+            mongodb.get_collection_data(values[0])
+            return redirect(url_for('module'))
+        else:
+             return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
+            
+@app.route('/module')
+def module():
+    try:
+        if 'pid' in session:
+            return render_template('help.html')
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
+            
+@app.route('/eda/<action>')
+def eda(action):
+    try:
+        if 'pid' in session:
+            if action=="5point":
+                return render_template('eda/5point.html')
+            elif action=="show":
+                return render_template('eda/showdataset.html')
+            else:
+                return render_template('eda/help.html')
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
 
 
 if __name__ == '__main__':

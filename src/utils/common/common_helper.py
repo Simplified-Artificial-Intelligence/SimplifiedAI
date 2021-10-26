@@ -38,4 +38,4 @@ def decrypt(message ):
     key =b'r7T4WUAHgeAFSwwWVauOdCDsvWugU4xWxlLR1OKayI4='
     fernet = Fernet(key)
     encMessage = fernet.decrypt(message.encode())
-    return encMessage
+    return encMessage.decode("utf-8")
