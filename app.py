@@ -8,6 +8,9 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from logger.logger import Logger
+from src.utils.common.data_helper import load_data
+from src.utils.modules.eda_helper import EDA
+import numpy  as np
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -274,14 +277,37 @@ def module():
 def eda(action):
     try:
         if 'pid' in session:
-            if action=="5point":
-                log.info(log_type='ACTION', log_message='Redirect To Eda 5 Point!')
-                return render_template('eda/5point.html')
-            elif action=="show":
-                log.info(log_type='ACTION', log_message='Redirect To Eda Show Dataset!')
-                return render_template('eda/showdataset.html')
+            df=None
+            df=load_data()
+            if df is not None:
+                if action=="5point":
+                    log.info(log_type='ACTION', log_message='Redirect To Eda 5 Point!')
+                    summary=EDA.five_point_summary(df)
+                    data=summary.to_html()
+                    return render_template('eda/5point.html',data=data)
+                elif action=="show":
+                    log.info(log_type='ACTION', log_message='Redirect To Eda Show Dataset!')
+                    return render_template('eda/showdataset.html')
+                elif action=="correlation":
+                    pearson_corr=EDA.correlation_report(df,'pearson')
+                    persion_data=list(np.around(np.array(pearson_corr.values),2)).replace("[array(","")
+                    persion_data=persion_data.replace("\n","")
+                    persion_data=persion_data("])",")")
+                    data = [
+                            {
+                                "z": pearson_corr,
+                                "x": list(pearson_corr.columns),
+                                "y": list(pearson_corr.columns),
+                                "type": 'heatmap',
+                            }
+                            ]
+                    return render_template('eda/correlation.html',data=data)
+                else:
+                    return render_template('eda/help.html')
             else:
-                return render_template('eda/help.html')
+                """Manage This"""
+                pass
+            
         else:
             return redirect(url_for('/'))
     except Exception  as e:
