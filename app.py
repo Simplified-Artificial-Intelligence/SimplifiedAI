@@ -6,8 +6,11 @@ import os
 import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator,Hashing,encrypt
 from src.utils.databases.mongo_helper import MongoHelper
-import argparse
 import pandas as pd
+from logger.logger import Logger
+
+log = Logger()
+log.info(log_type='INFO', log_message='Check Configuration Files')
 
 # Yaml Config File
 config_args = read_config("./config.yaml")
@@ -39,7 +42,7 @@ static_dir = config_args['dir_structure']['static_dir']
 
 
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
-
+log.info(log_type='INFO', log_message='App Started')
 
 app.secret_key = config_args['secrets']['key']
 app.config["UPLOAD_FOLDER"] = config_args['dir_structure']['upload_folder']
@@ -129,7 +132,6 @@ def project():
                         return redirect(url_for('index'))
                     else:
                         msg = "Error while creating new Project"
-
                 return render_template('new_project.html', msg=msg)
         else:
             return redirect(url_for('login'))
@@ -142,9 +144,11 @@ def project():
 def login():
     global msg
     if 'loggedin' in session:
+        log.info(log_type='ACTION', log_message='Redirect To Main Page')
         return redirect('/')
     else:
         if request.method == "GET":
+            log.info(log_type='ACTION', log_message='Login Template Rendering')
             return render_template('login.html')
         else:
             if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
@@ -155,9 +159,11 @@ def login():
                     session['loggedin'] = True
                     session['id'] = account[0]
                     session['username'] = account[1]
+                    log.info(log_type='INFO', log_message='Login Successful')
                     return redirect('/')
                 else:
                     msg = 'Incorrect username / password !'
+                    log.info(log_type='ERROR', log_message=msg)
             return render_template('login.html', msg=msg)
 
 
@@ -167,40 +173,49 @@ def signup():
         return redirect(url_for('index'))
     else:
         if request.method == "GET":
+            log.info(log_type='ACTION', log_message='Signup Template Rendering')
             return render_template('signup.html')
         else:
-            msg = ''
-
+            msg = None
             if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form:
                 username = request.form['username']
                 password = request.form['password']
                 confirm_password = request.form['confirm-password']
                 email = request.form['email']
                 account = mysql.fetch_one(f'SELECT * FROM tblUsers WHERE Email = "{email}"')
+                log.info(log_type='ACTION', log_message='Checking Database')
                 if account:
                     msg = 'EmailId already exists !'
+                    log.info(log_type='ERROR', log_message=msg)
                 elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
                     msg = 'Invalid email address !'
+                    log.info(log_type='ERROR', log_message=msg)
                 elif not re.match(r'[A-Za-z0-9]+', username):
                     msg = 'Username must contain only characters and numbers !'
+                    log.info(log_type='ERROR', log_message=msg)
                 elif not username or not password or not email:
                     msg = 'Please fill out the form !'
+                    log.info(log_type='ERROR', log_message=msg)
                 elif confirm_password != password:
                     msg = 'Password and Confirm password are not same!'
+                    log.info(log_type='ERROR', log_message=msg)
                 else:
                     hashed_password = Hashing.hash_value(password)
                     # PANKAJ AUTH TOKEN PENDING
                     rowcount = mysql.insert_record(f'INSERT INTO tblUsers (Name, Email, Password, AuthToken) VALUES ("{username}", "{email}", "{hashed_password}", "pankajtest")')
+                    log.info(log_type='INFO', log_message='Data added successful')
                     if rowcount > 0:
                         return redirect(url_for('login'))
             elif request.method == 'POST':
                 msg = 'Please fill out the form !'
+                log.info(log_type='ERROR', log_message=msg)
             return render_template('signup.html', msg=msg)
 
 
 @app.route('/deletePage/<id>', methods=['GET'])
 def renderDeleteProject(id):
     if 'loggedin' in session:
+        log.info(log_type='ACTION', log_message='Redirect To Delete Project Page')
         return render_template('deleteProject.html', data={"id": id})
     else:
         return redirect(url_for('login'))
@@ -211,6 +226,7 @@ def deleteProject(id):
     if 'loggedin' in session:
         if id:
             mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Id={id}')
+            log.info(log_type='INFO', log_message='Data Successfully Deleted From Database')
             return redirect(url_for('index'))
         else:
             return redirect(url_for('index'))
@@ -225,15 +241,16 @@ def logout():
     session.pop('username', None)
     session.pop('pid', None)
     session.pop('project_name', None)
+    log.info(log_type='INFO', log_message='Thanks For Using System!')
     return redirect(url_for('login'))
 
 
 @app.route('/stream/<pid>')
 def stream(pid):
     try:
-        data=decrypt(pid)
+        data = decrypt(pid)
         if data:
-            values=data.split("&")
+            values = data.split("&")
             session['pid'] = values[1]
             session['project_name']=values[0]
             mongodb.get_collection_data(values[0])
@@ -258,8 +275,10 @@ def eda(action):
     try:
         if 'pid' in session:
             if action=="5point":
+                log.info(log_type='ACTION', log_message='Redirect To Eda 5 Point!')
                 return render_template('eda/5point.html')
             elif action=="show":
+                log.info(log_type='ACTION', log_message='Redirect To Eda Show Dataset!')
                 return render_template('eda/showdataset.html')
             else:
                 return render_template('eda/help.html')
