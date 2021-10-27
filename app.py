@@ -8,7 +8,7 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from logger.logger import Logger
-
+import numpy as np
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
 
@@ -286,6 +286,12 @@ def eda(action):
             return redirect(url_for('/'))
     except Exception  as e:
             print(e)
+
+
+@app.route('/analysis/<filename>')
+def analysis(filename):
+    x = pd.DataFrame(np.random.randn(20, 5))
+    return render_template("preprocessing/test.html", data=x.to_html())
 
 
 if __name__ == '__main__':
