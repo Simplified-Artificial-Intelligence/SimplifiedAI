@@ -4,17 +4,47 @@
 <div class="table2">
     <div class="jumbotron text-center">
         <h1>Correlation</h1>
-        <p>A summary consists of five values: the most extreme values
-            in the data set (the maximum and minimum values), the lower and upper quartiles, and the median.
-            These values are presented together and ordered from lowest to highest: minimum value,
-            lower quartile (Q1), median value (Q2), upper quartile (Q3), maximum value.</p> 
+        <p>In statistics, correlation or dependence is any statistical relationship, whether causal or not,
+            between two random variables or bivariate data. In the broadest sense correlation is any
+            statistical association, though it commonly refers to the degree to which a pair of variables
+            are linearly related.</p> 
       </div>
+      <form class="correlation-form">
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Select Correaltion Method</label>
+                    <select class="form-control" id="exampleFormControlSelect1">
+                      <option value="Pearson">Pearson</option>
+                      <option value="Spearman">Spearman</option>
+                      <option value="Kendell">Kendell</option>
+                    </select>
+                  </div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Select Columns</label>
+                    <select class="js-example-basic-multiple form-control" name="states[]" multiple="multiple">
+                        {% for col in columns %}
+                        <option value="{{col}}">{{col}}</option>
+                      {% endfor %}
+                      </select>
+                  </div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <button type="submit" class="btn btn-success margin-top-10">Show Result</button>
+            </div>
+        </div>
+      </form>
       <div id='myDiv'><!-- Plotly chart will be drawn inside this DIV --></div>
-      {{data}}
 </div>
 <script type='text/javascript'>
  var graphs = {{data | safe}};
 Plotly.newPlot('myDiv',  graphs);
-
+</script>
+<script>
+   $(document).ready(function() {
+    $('.js-example-basic-multiple').select2();
+});
 </script>
 {% endblock %}
