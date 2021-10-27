@@ -43,3 +43,13 @@ class EDA:
             return dataframe.corr(method=method)
         except Exception as e:
                 print(e)
+    
+    @staticmethod
+    def get_no_records(dataframe,count=100,order='top'):
+        try:
+            if order=='top':
+                return dataframe.head(count)
+            else:
+                return dataframe.tail(count)
+        except Exception as e:
+                print(e)
