@@ -1,4 +1,4 @@
-argon2-cffi==21.1.0
+fargon2-cffi==21.1.0
 asgiref==3.4.1
 async-generator==1.10
 attrs==21.2.0

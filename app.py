@@ -1,5 +1,6 @@
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
+from src.constants.constants import TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -16,6 +17,8 @@ import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
 from pandas_profiling import ProfileReport
+from src.utils.common.plotly_helper import PlotlyHelper
+
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -303,14 +306,39 @@ def eda(action):
                     bottomSelected=False
                     selectedCount=100
                     return render_template('eda/showdataset.html',data=data,length=len(df),
-                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount)
+                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
+                elif action=="missing":
+                    log.info(log_type='Missing Value Report', log_message='Redirect To Eda Show Dataset!')
+                    df=EDA.missing_cells_table(df)
+                    
+                    graphJSON =  PlotlyHelper.barplot(df, x='Column',y='Missing values')
+                    pie_graphJSON = PlotlyHelper.pieplot(df, names='Column',values='Missing values',title='Missing Values')
+                    
+                    data=df.drop('Column', axis=1, inplace=True)
+                    data=df.to_html()
+                    return render_template('eda/missing_values.html',action=action,data=data,barplot=graphJSON,pieplot=pie_graphJSON)
+                
+                elif action=="outlier":
+                    log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    df=EDA.z_score_outlier_detection(df)
+                    graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
+                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:10,:], names='Features',values='Total outliers',title='Top 10 Outliers')
+
+                    data=df.to_html()
+                    return render_template('eda/outliers.html',data=data,method='zscore',action=action,barplot=graphJSON,pieplot=pie_graphJSON)
+                
+                
                 elif action=="correlation":
                     pearson_corr=EDA.correlation_report(df,'pearson')
                     persion_data=list(np.around(np.array(pearson_corr.values),2))
                     fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
                                                       y=list(pearson_corr.columns), colorscale='Viridis')
                     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                    return render_template('eda/correlation.html',data=graphJSON,columns=list(pearson_corr.columns))
+                    return render_template('eda/correlation.html',data=graphJSON,columns=list(pearson_corr.columns),action=action,method='pearson')
+                
+                elif action=="plots":
+                    return render_template('eda/plots.html',columns=list(df.columns),
+                                           graphs_2d=TWO_D_GRAPH_TYPES,action=action,x_column="",y_column="")
                 else:
                     return render_template('eda/help.html')
             else:
@@ -334,21 +362,70 @@ def eda_post(action):
                 if action=="show":
                     range = request.form['range']
                     optradio = request.form['optradio']
+                    columns_for_list=df.columns
+                    columns = request.form.getlist('columns')
                     log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
+                    
+                    if len(columns)>0:
+                        df=df.loc[:,columns]
+                        
                     data=EDA.get_no_records(df,int(range),optradio)
                     data=data.to_html()
                     topselected=True if optradio=='top' else False
                     bottomSelected=True if optradio=='bottom' else False
                     return render_template('eda/showdataset.html',data=data,length=len(df),
-                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=range)
+                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=range,columns=columns_for_list)
                 elif action=="correlation":
-                    pearson_corr=EDA.correlation_report(df,'pearson')
-                    persion_data=list(np.around(np.array(pearson_corr.values),2))
-                    fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
-                                                      y=list(pearson_corr.columns), colorscale='Viridis',action=action)
-                    # fig = ff.create_annotated_heatmap(persion_data, colorscale='Viridis')
-                    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                    return render_template('eda/correlation.html',data=graphJSON)
+                    method = request.form['method']
+                    columns = request.form.getlist('columns')
+                    
+                    if method is not None:                            
+                        # df=df.loc[:,columns]
+                        _corr=EDA.correlation_report(df,method)
+                        if len(columns) ==0:
+                            columns=_corr.columns
+                        
+                        _corr=_corr.loc[:,columns]
+                        _data=list(np.around(np.array(_corr.values),2))
+                        fig = ff.create_annotated_heatmap(_data, x=list(_corr.columns),
+                                                        y=list(_corr.index), colorscale='Viridis')
+                        # fig = ff.create_annotated_heatmap(_data, colorscale='Viridis')
+                        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+                        return render_template('eda/correlation.html',data=graphJSON,
+                                               columns=list(df.columns),action=action,method=method)
+                    else:
+                        return render_template('eda/help.html')
+                    
+                elif action=="outlier":
+                    method = request.form['method']
+                    lower=25
+                    upper=75
+                    if method=="iqr":
+                        lower = request.form['lower']
+                        upper = request.form['upper']
+                        df=EDA.outlier_detection_iqr(df,int(lower),int(upper))
+                    else:
+                        df=EDA.z_score_outlier_detection(df)
+                    
+                    graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
+                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:10,:], names='Features',values='Total outliers',title='Top 10 Outliers')    
+                    
+                    log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    data=df.to_html()
+                    return render_template('eda/outliers.html',data=data,method=method,action=action,lower=lower,upper=upper,barplot=graphJSON,pieplot=pie_graphJSON)
+                
+                elif action=="plots":
+                    """All Polots for all kind of features????"""
+                    selected_graph_type = request.form['graph']
+                    x_column = request.form['xcolumn']
+                    y_column = request.form['ycolumn']
+                    if selected_graph_type=="Scatter Plot":
+                        graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    return render_template('eda/plots.html',selected_graph_type=selected_graph_type,
+                                           columns=list(df.columns),graphs_2d=TWO_D_GRAPH_TYPES,
+                                           action=action,graphJSON=graphJSON,x_column=x_column,y_column=y_column)
+                
                 else:
                     return render_template('eda/help.html')
             else:
@@ -361,3 +438,4 @@ def eda_post(action):
             print(e)
 if __name__ == '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)
+
