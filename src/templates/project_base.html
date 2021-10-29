@@ -11,6 +11,9 @@
   <script src="https://cdn.plot.ly/plotly-2.4.2.min.js"></script>
   <link rel="stylesheet" href="{{url_for('static', filename='/css/style.css')}}">
   <link rel="stylesheet" href="{{url_for('static', filename='/css/style2.css')}}">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+  <link href="https://cdn.rawgit.com/harvesthq/chosen/gh-pages/chosen.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
 <nav class="navbar navbar-expand-sm bg-info navbar-dark nav-bar-custom">
@@ -29,7 +32,6 @@
 
   </div>
 </nav>
-<!-- {% block content %}{% endblock %} -->
 <div class="wrapper">
   <!-- Sidebar  -->
   <nav id="sidebar">
@@ -43,6 +45,7 @@
               <a href="#edaSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">EDA</a>
               <ul class="collapse list-unstyled" id="edaSubmenu">
                   <li><a href="/eda/help">Help</a></li>
+                  <li><a href="/eda/profiler">Profiler Report</a></li>
                   <li><a href="/eda/5point">5 Point Summary</a></li>
                   <li><a href="/eda/show">Show Dataset</a></li>
                   <li><a href="/eda/plots">Plots</a></li>
@@ -113,7 +116,7 @@
             </button>
         </div>
     </nav> -->
-    
+    {% block content %}{% endblock %}
 
 </div>
 
@@ -125,7 +128,8 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
 <!-- jQuery Custom Scroller CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.concat.min.js"></script>
-
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script type="text/javascript">
   $(document).ready(function () {
       $("#sidebar").mCustomScrollbar({

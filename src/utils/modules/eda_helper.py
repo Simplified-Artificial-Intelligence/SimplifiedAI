@@ -36,3 +36,20 @@ class EDA:
                 print(e)
 
         return pd.DataFrame(my_dict).sort_values(by=['Features'], ascending=True)
+    
+    @staticmethod
+    def correlation_report(dataframe,method='pearson'):
+        try:
+            return dataframe.corr(method=method)
+        except Exception as e:
+                print(e)
+    
+    @staticmethod
+    def get_no_records(dataframe,count=100,order='top'):
+        try:
+            if order=='top':
+                return dataframe.head(count)
+            else:
+                return dataframe.tail(count)
+        except Exception as e:
+                print(e)

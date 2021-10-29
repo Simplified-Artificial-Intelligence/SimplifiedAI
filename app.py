@@ -8,7 +8,15 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from logger.logger import Logger
-import numpy as np
+from src.utils.common.data_helper import load_data
+from src.utils.modules.eda_helper import EDA
+import numpy  as np
+import json
+import plotly
+import plotly.express as px
+import plotly.figure_factory as ff
+from pandas_profiling import ProfileReport
+
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
 
@@ -274,25 +282,82 @@ def module():
 def eda(action):
     try:
         if 'pid' in session:
-            if action=="5point":
-                log.info(log_type='ACTION', log_message='Redirect To Eda 5 Point!')
-                return render_template('eda/5point.html')
-            elif action=="show":
-                log.info(log_type='ACTION', log_message='Redirect To Eda Show Dataset!')
-                return render_template('eda/showdataset.html')
+            df=None
+            df=load_data()
+            if df is not None:
+                if action=="5point":
+                    log.info(log_type='% Point Summary', log_message='Redirect To Eda 5 Point!')
+                    summary=EDA.five_point_summary(df)
+                    data=summary.to_html()
+                    return render_template('eda/5point.html',data=data)
+                elif action=="profiler":
+                    log.info(log_type='Show Profiler Report', log_message='Redirect To Eda Show Dataset!')
+                    pr = ProfileReport(df, explorative=True, minimal=True,correlations={"cramers": {"calculate": False}})
+                    pr.to_widgets()
+                    pr.to_file("your_report.html")
+                elif action=="show":
+                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
+                    data=EDA.get_no_records(df,100)
+                    data=data.to_html()
+                    topselected=True
+                    bottomSelected=False
+                    selectedCount=100
+                    return render_template('eda/showdataset.html',data=data,length=len(df),
+                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount)
+                elif action=="correlation":
+                    pearson_corr=EDA.correlation_report(df,'pearson')
+                    persion_data=list(np.around(np.array(pearson_corr.values),2))
+                    fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
+                                                      y=list(pearson_corr.columns), colorscale='Viridis')
+                    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+                    return render_template('eda/correlation.html',data=graphJSON,columns=list(pearson_corr.columns))
+                else:
+                    return render_template('eda/help.html')
             else:
-                return render_template('eda/help.html')
+                """Manage This"""
+                pass
+            
         else:
             return redirect(url_for('/'))
     except Exception  as e:
             print(e)
 
 
-@app.route('/analysis/<filename>')
-def analysis(filename):
-    x = pd.DataFrame(np.random.randn(20, 5))
-    return render_template("preprocessing/test.html", data=x.to_html())
 
-
+@app.route('/eda/<action>',methods=['POST'])
+def eda_post(action):
+    try:
+        if 'pid' in session:
+            df=None
+            df=load_data()
+            if df is not None:
+                if action=="show":
+                    range = request.form['range']
+                    optradio = request.form['optradio']
+                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
+                    data=EDA.get_no_records(df,int(range),optradio)
+                    data=data.to_html()
+                    topselected=True if optradio=='top' else False
+                    bottomSelected=True if optradio=='bottom' else False
+                    return render_template('eda/showdataset.html',data=data,length=len(df),
+                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=range)
+                elif action=="correlation":
+                    pearson_corr=EDA.correlation_report(df,'pearson')
+                    persion_data=list(np.around(np.array(pearson_corr.values),2))
+                    fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
+                                                      y=list(pearson_corr.columns), colorscale='Viridis',action=action)
+                    # fig = ff.create_annotated_heatmap(persion_data, colorscale='Viridis')
+                    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+                    return render_template('eda/correlation.html',data=graphJSON)
+                else:
+                    return render_template('eda/help.html')
+            else:
+                """Manage This"""
+                pass
+            
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
 if __name__ == '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)
