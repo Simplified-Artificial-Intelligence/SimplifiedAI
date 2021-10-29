@@ -3,6 +3,7 @@ import yaml
 import hashlib
 from cryptography.fernet import Fernet
 
+
 def read_config(config):
     with open(config) as config:
         content = yaml.safe_load(config)
@@ -15,6 +16,7 @@ def unique_id_generator():
     unique_id = "PID" + str(random)
     
     return unique_id
+
 
 class Hashing():     
     @staticmethod   
@@ -31,8 +33,9 @@ def encrypt(message ):
     encMessage = fernet.encrypt(message.encode())
     return encMessage
 
+
 def decrypt(message ):
     key =b'r7T4WUAHgeAFSwwWVauOdCDsvWugU4xWxlLR1OKayI4='
     fernet = Fernet(key)
     encMessage = fernet.decrypt(message.encode())
-    return encMessage
+    return encMessage.decode("utf-8")

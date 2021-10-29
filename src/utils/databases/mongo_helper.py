@@ -3,6 +3,7 @@ import pandas as pd
 import time
 import argparse
 from src.utils.common.common_helper import read_config
+import os
 
 config_args = read_config("./config.yaml")
 
@@ -65,45 +66,22 @@ class MongoHelper():
             [type]: [description]
         """
         try:
-            begin = time.time()
-            collection=self.db[project_name]
-            df = pd.DataFrame(list(collection.find()))
-            end = time.time()  
-            print(f"All records deleted. Total time taken: {end - begin} seconds.")
-            return df
+            
+            path=os.path.join(os.path.join('src','data'),f"{project_name}.csv")
+            backup_path=os.path.join(os.path.join('src','data'),f"{project_name}_backup.csv")
+            # path=f"C:\\Users\\pankaj\\Desktop\\ml\\internship\\auto-neuron\\src\\notebooks\\Ames_Housing_Data.csv"
+            if os.path.exists(path):
+                df=pd.read_csv(path)
+                return df
+            else:
+                begin = time.time()
+                collection=self.db[project_name]
+                df = pd.DataFrame(list(collection.find()))
+                end = time.time()  
+                df.to_csv(path)
+                df.to_csv(backup_path)
+                return df
         except Exception as e:
-            print(e)
+                print(e)
         
         
-def outlier_detection(data,kind:str):
-    try:
-        if kind == 'Box':
-            pass
-        elif kind == 'Standard devation':
-            outliers=[]
-            threshold=3
-            mean=np.mean(data)
-            std=np.std(data)
-
-            for i in data:
-                z_score=(i-mean)/std
-                if np.abs(z_score)>threshold:
-                    outliers.append(i)
-            return outliers      
-
-        elif kind == 'IQR':
-            outliers=[]
-            q1,q3=np.percentile(data,[25,75])
-            iqr=q3-q1
-            
-            lower_bound_value=q1-1.5*iqr
-            upper_bound_value=q3+1.5*iqr
-            
-
-            for i in data:
-                if i<lower_bound_value or i>upper_bound_value:
-                    outliers.append(i)
-            return outliers
-        
-    except Exception as e:
-        return e
