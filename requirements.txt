@@ -1,4 +1,5 @@
 asgiref==3.4.1
+category-encoders==2.3.0
 certifi==2021.5.30
 cffi==1.15.0
 click==8.0.3
@@ -24,6 +25,7 @@ pymongo==3.12.1
 python-dateutil==2.8.2
 pytz==2021.3
 PyYAML==6.0
+seaborn==0.11.2
 six==1.16.0
 typing-extensions==3.10.0.2
 uvicorn==0.15.0
