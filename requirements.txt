@@ -1,37 +1,102 @@
-certifi==2021.10.8
-cffi @ file:///C:/ci/cffi_1625831749120/work
-click @ file:///tmp/build/80754af9/click_1621604852318/work
-cryptography @ file:///C:/ci/cryptography_1633520552480/work
-Flask @ file:///tmp/build/80754af9/flask_1632776664051/work
-Flask-Cors @ file:///tmp/build/80754af9/flask-cors_1609957731919/work
-h11 @ file:///tmp/build/80754af9/h11_1620423447028/work
-importlib-metadata @ file:///C:/ci/importlib-metadata_1631916848487/work
-itsdangerous @ file:///tmp/build/80754af9/itsdangerous_1621432558163/work
-Jinja2 @ file:///tmp/build/80754af9/jinja2_1624781299557/work
-MarkupSafe @ file:///C:/ci/markupsafe_1621528314575/work
-mkl-fft==1.3.1
-mkl-random @ file:///C:/ci/mkl_random_1626186184278/work
-mkl-service==2.4.0
+argon2-cffi==21.1.0
+asgiref==3.4.1
+async-generator==1.10
+attrs==21.2.0
+backcall==0.2.0
+bleach==4.1.0
+Bottleneck==1.3.2
+certifi==2021.5.30
+cffi==1.15.0
+charset-normalizer==2.0.7
+click==8.0.3
+colorama==0.4.4
+cryptography==35.0.0
+cycler==0.10.0
+dataclasses==0.8
+decorator==4.4.2
+defusedxml==0.7.1
+dnspython==2.1.0
+entrypoints==0.3
+Flask==2.0.1
+Flask-Cors==3.0.10
+h11==0.12.0
+htmlmin==0.1.12
+idna==3.3
+ImageHash==4.2.1
+importlib-metadata==4.8.1
+ipykernel==5.5.6
+ipython==7.16.1
+ipython-genutils==0.2.0
+ipywidgets==7.6.5
+itsdangerous==2.0.1
+jedi==0.18.0
+Jinja2==3.0.2
+joblib==1.0.1
+jsonschema==3.2.0
+jupyter-client==7.0.6
+jupyter-core==4.9.0
+jupyterlab-pygments==0.1.2
+jupyterlab-widgets==1.0.2
+kiwisolver==1.3.1
+MarkupSafe==2.0.1
+matplotlib==3.3.4
+missingno==0.5.0
+mistune==0.8.4
+multimethod==1.4
 mysql==0.0.3
 mysql-connector-python==8.0.27
 mysqlclient==2.0.3
-numpy @ file:///C:/ci/numpy_and_numpy_base_1634106873763/work
-pandas @ file:///C:/ci/pandas_1608068219821/work
+nbclient==0.5.4
+nbconvert==6.0.7
+nbformat==5.1.3
+nest-asyncio==1.5.1
+networkx==2.5.1
+notebook==6.4.5
+numpy==1.19.5
+packaging==21.0
+pandas==1.1.5
+pandas-profiling==3.0.0
+pandocfilters==1.5.0
+parso==0.8.2
+phik==0.12.0
+pickleshare==0.7.5
+Pillow==8.4.0
+plotly==5.3.1
+prometheus-client==0.11.0
+prompt-toolkit==3.0.21
 protobuf==3.19.0
-pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
+pycparser==2.20
+pydantic==1.8.2
+Pygments==2.10.0
 pymongo==3.12.1
-python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
+pyparsing==3.0.1
+pyrsistent==0.18.0
+python-dateutil==2.8.2
 pytz==2021.3
-PyYAML==5.4.1
-six @ file:///tmp/build/80754af9/six_1623709665295/work
-typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1631814937681/work
-Werkzeug @ file:///tmp/build/80754af9/werkzeug_1631818832573/work
+PyWavelets==1.1.1
+pywin32==302
+pywinpty==1.1.4
+PyYAML==6.0
+pyzmq==22.3.0
+requests==2.26.0
+scipy==1.5.4
+seaborn==0.11.2
+Send2Trash==1.8.0
+six==1.16.0
+tangled-up-in-unicode==0.1.0
+tenacity==8.0.1
+terminado==0.12.1
+testpath==0.5.0
+tornado==6.1
+tqdm==4.62.3
+traitlets==4.3.3
+typing-extensions==3.10.0.2
+urllib3==1.26.7
+uvicorn==0.15.0
+visions==0.7.1
+wcwidth==0.2.5
+webencodings==0.5.1
+Werkzeug==2.0.2
+widgetsnbextension==3.5.1
 wincertstore==0.2
-zipp @ file:///tmp/build/80754af9/zipp_1633618647012/work
-
-pandas~=1.1.5
-numpy~=1.21.2
-yaml~=0.2.5
-cryptography~=3.4.8
-flask~=2.0.1
-werkzeug~=2.0.1
+zipp==3.6.0

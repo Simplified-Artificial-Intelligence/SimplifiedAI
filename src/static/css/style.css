@@ -1,5 +1,5 @@
 body {font-family: Arial, Helvetica, sans-serif;}
-form {margin-top:100px}
+
 .form1 {margin-top:20px}
 input[type=text], input[type=password] {
   width: 100%;
@@ -170,3 +170,58 @@ width:60px
   .table2{
     margin-top: 4rem;
   }
+  .correlation-form{
+    margin-top: 0px !important;
+  }
+  .margin-top-10{
+    margin-top: 30px !important;
+  }
+  .mt-100 {
+    margin-top: 100px
+}
+.jumbtron{
+  padding-top: 20px;
+  padding-bottom: 10px;
+}
+
+.slidecontainer {
+  width: 100%;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 15px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #04AA6D;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #04AA6D;
+  cursor: pointer;
+}
+.result{
+  margin-top: 10px;
+  margin-bottom: 30px;
+}
