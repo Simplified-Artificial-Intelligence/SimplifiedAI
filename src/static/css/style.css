@@ -225,3 +225,11 @@ width:60px
   margin-top: 10px;
   margin-bottom: 30px;
 }
+.myclass 
+{
+    text-transform:capitalize !important;
+}
+
+.dataTables_scrollBody{
+  margin-right: 100% !important;
+}
