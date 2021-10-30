@@ -92,8 +92,9 @@ font-weight: 700;
  }
 
  .home{
- margin-top:20px;
- padding-left:40px !important;
+  margin-top:20px;
+  padding-left:40px !important;
+  padding-right:40px;
  }
 
  .add-button{
