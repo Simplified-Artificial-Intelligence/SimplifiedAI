@@ -1,4 +1,10 @@
-body {font-family: Arial, Helvetica, sans-serif;}
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background-image: url(/static/css/machine-learning-1.png);
+  background-position: center;
+  /* background-repeat: no-repeat; */
+  background-size: cover;
+}
 
 .form1 {margin-top:20px}
 input[type=text], input[type=password] {
@@ -61,13 +67,14 @@ span.psw {
 }
 
 .login-form{
-    border-radius: 10px;
-    background: #17a2b8;
-    width: 38%;
-    padding-top: 22px;
-    margin-left: 31%;
-    margin-top: 4%;
-    color: #fff;
+  background-image: url("/static/css/machine-learning-1.png");
+  border-radius: 10px;
+  background: #17a2b8;
+  width: 38%;
+  padding-top: 22px;
+  margin-left: 31%;
+  margin-top: 4%;
+  color: #fff;
 }
 
 .project-form{
