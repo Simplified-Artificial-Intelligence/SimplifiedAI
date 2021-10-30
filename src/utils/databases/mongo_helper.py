@@ -8,6 +8,7 @@ import os
 config_args = read_config("./config.yaml")
 
 
+
 class MongoHelper():
     def __init__(self):
         try:

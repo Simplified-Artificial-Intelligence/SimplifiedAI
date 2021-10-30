@@ -18,5 +18,5 @@ secrets:
   user: admin
   password: AsiK9wJ4
   database: auto_neuron
-  mongo: mongodb+srv://vishal:123@auto-neuron.euorq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
+  mongo: mongodb://vishal:123@auto-neuron-shard-00-00.euorq.mongodb.net:27017,auto-neuron-shard-00-01.euorq.mongodb.net:27017,auto-neuron-shard-00-02.euorq.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-v4x6uy-shard-0&authSource=admin&retryWrites=true&w=majority
 
