@@ -41,7 +41,7 @@ img.avatar {
 }
 
 .container {
-  padding: 16px;
+  padding: 20px;
 }
 
 span.psw {
@@ -63,10 +63,11 @@ span.psw {
 .login-form{
     border-radius: 10px;
     background: #17a2b8;
-    width: 60%;
+    width: 38%;
     padding-top: 22px;
-    margin-left: 20%;
-    color:#fff
+    margin-left: 31%;
+    margin-top: 4%;
+    color: #fff;
 }
 
 .project-form{
