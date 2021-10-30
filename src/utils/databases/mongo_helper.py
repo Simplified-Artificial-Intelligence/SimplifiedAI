@@ -69,7 +69,6 @@ class MongoHelper():
             
             path=os.path.join(os.path.join('src','data'),f"{project_name}.csv")
             backup_path=os.path.join(os.path.join('src','data'),f"{project_name}_backup.csv")
-            # path=f"C:\\Users\\pankaj\\Desktop\\ml\\internship\\auto-neuron\\src\\notebooks\\Ames_Housing_Data.csv"
             if os.path.exists(path):
                 df=pd.read_csv(path)
                 return df
