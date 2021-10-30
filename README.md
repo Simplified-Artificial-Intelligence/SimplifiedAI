@@ -23,3 +23,4 @@ Projectathon
 |--> Templates
       |--> Html
 ```
+![Blank diagram](https://user-images.githubusercontent.com/40850370/138923608-3b774ea9-b151-45ae-a567-e17bb0de98cc.png)
