@@ -464,7 +464,7 @@ def feature_engineering(action):
                     dt_splitted = False
                     not_dt_splitted = True
                     selectedCount = 100
-                    print('here inside handle ')
+                    # print('here inside handle ')
                     return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
                                            not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
                                            selectedCount=selectedCount, columns=df.columns)
@@ -497,6 +497,7 @@ def feature_engineering_post(action):
                 data = df.head().to_html()
                 if action == 'help':
                     return render_template('feature_engineering/help.html')
+                
                 elif action == 'handleDatetime':
                     dt_splitted = False
                     not_dt_splitted = True
