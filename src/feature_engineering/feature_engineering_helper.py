@@ -1,7 +1,4 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import category_encoders as ce
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler , RobustScaler
@@ -14,10 +11,10 @@ class FreatureEngineering():
     def __init__(self):
         pass
 
-    def train_test_Split(self, test_size):
+    def train_test_Split(self, cleanedData, label, test_size):
 
-        X_train, X_test, y_train, y_test = train_test_split(self.cleanedData,
-                                                            self.label,
+        X_train, X_test, y_train, y_test = train_test_split(cleanedData,
+                                                            label,
                                                             test_size=test_size,
                                                             random_state=42)
         return X_train, X_test, y_train, y_test

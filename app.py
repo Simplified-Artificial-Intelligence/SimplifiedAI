@@ -366,7 +366,6 @@ def eda(action):
 def eda_post(action):
     try:
         if 'pid' in session:
-            df = None
             df = load_data()
             if df is not None:
                 if action == "show":
@@ -453,22 +452,25 @@ def eda_post(action):
 
 
 @app.route('/feature_engineering/<action>', methods=['GET'])
-def feature_engineering_post(action):
+def feature_engineering(action):
     try:
         if 'pid' in session:
             df = load_data()
-            summary = EDA.five_point_summary(df)
-            data = summary.to_html()
-
             if df is not None:
-                if action == 'handleDatetime':
-                    return render_template('feature_engineering/handleDatetime.html')
-                elif action == 'help':
+                data = df.head().to_html()
+                if action == 'help':
                     return render_template('feature_engineering/help.html')
+                elif action == 'handleDatetime':
+                    dt_splitted = False
+                    not_dt_splitted = True
+                    selectedCount = 100
+                    print('here inside handle ')
+                    return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
+                                           not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
+                                           selectedCount=selectedCount, columns=df.columns)
                 elif action == 'encoding':
                     return render_template('feature_engineering/encoding.html', data=data)
                 elif action == 'scaling':
-
                     return render_template('feature_engineering/scaling.html', data=data)
                 elif action == 'feature_selection':
                     return render_template('feature_engineering/feature_selection.html', data=data)
@@ -477,9 +479,48 @@ def feature_engineering_post(action):
                 elif action == 'train_test_split':
                     return render_template('feature_engineering/train_test_split.html', data=data)
                 else:
-                    return 'Hello No action specified'
+                    return 'Non-Implemented Action'
             else:
-                return 'Hello'
+                return 'No Data'
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
+
+
+@app.route('/feature_engineering/<action>', methods=['POST'])
+def feature_engineering_post(action):
+    try:
+        if 'pid' in session:
+            df = load_data()
+            if df is not None:
+                data = df.head().to_html()
+                if action == 'help':
+                    return render_template('feature_engineering/help.html')
+                elif action == 'handleDatetime':
+                    dt_splitted = False
+                    not_dt_splitted = True
+                    selectedCount = 100
+                    columns = request.form.getlist('columns')
+                    print(columns)
+                    data = df[columns].to_html()
+                    return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
+                                           not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
+                                           selectedCount=selectedCount, columns=df.columns)
+                elif action == 'encoding':
+                    return render_template('feature_engineering/encoding.html', data=data)
+                elif action == 'scaling':
+                    return render_template('feature_engineering/scaling.html', data=data)
+                elif action == 'feature_selection':
+                    return render_template('feature_engineering/feature_selection.html', data=data)
+                elif action == 'dimension_reduction':
+                    return render_template('feature_engineering/dimension_reduction.html', data=data)
+                elif action == 'train_test_split':
+                    return render_template('feature_engineering/train_test_split.html', data=data)
+                else:
+                    return 'Non-Implemented Action'
+            else:
+                return 'No Data'
         else:
             return redirect(url_for('/'))
     except Exception as e:
