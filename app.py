@@ -1,3 +1,4 @@
+from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
 from src.constants.constants import TWO_D_GRAPH_TYPES
@@ -18,6 +19,8 @@ import plotly.express as px
 import plotly.figure_factory as ff
 from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
+from src.utils.common.project_report_helper import ProjectReports
+from src.utils.common.common_helper import immutable_multi_dict_to_str
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -44,7 +47,8 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
-mysql = MySqlHelper(host, port, user, password, database)
+# mysql = MySqlHelper(host, port, user, password, database)
+mysql = MySqlHelper.get_connection_obj()
 mongodb = MongoHelper()
 
 template_dir = config_args['dir_structure']['template_dir']
@@ -291,66 +295,67 @@ def eda(action):
         if 'pid' in session:
             df = load_data()
             if df is not None:
-                if action == "5point":
+                if action=="5point":
+                    ProjectReports.insert_record_eda('5 Points Summary')
                     log.info(log_type='% Point Summary', log_message='Redirect To Eda 5 Point!')
-                    summary = EDA.five_point_summary(df)
-                    data = summary.to_html()
-                    return render_template('eda/5point.html', data=data)
-                elif action == "profiler":
+                    summary=EDA.five_point_summary(df)
+                    data=summary.to_html()
+                    return render_template('eda/5point.html',data=data)
+                elif action=="profiler":
+                    ProjectReports.insert_record_eda('Profiler')
                     log.info(log_type='Show Profiler Report', log_message='Redirect To Eda Show Dataset!')
                     pr = ProfileReport(df, explorative=True, minimal=True,
                                        correlations={"cramers": {"calculate": False}})
                     pr.to_widgets()
                     pr.to_file("your_report.html")
-
-                elif action == "show":
+                elif action=="show":
+                    ProjectReports.insert_record_eda('Show Dataset')
                     log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
-                    data = EDA.get_no_records(df, 100)
-                    data = data.to_html()
-                    topselected = True
-                    bottomSelected = False
-                    selectedCount = 100
-                    return render_template('eda/showdataset.html', data=data, length=len(df),
-                                           bottomSelected=bottomSelected, topselected=topselected, action=action,
-                                           selectedCount=selectedCount, columns=df.columns)
-                elif action == "missing":
+                    data=EDA.get_no_records(df,100)
+                    data=data.to_html()
+                    topselected=True
+                    bottomSelected=False
+                    selectedCount=100
+                    return render_template('eda/showdataset.html',data=data,length=len(df),
+                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
+                elif action=="missing":
+                    ProjectReports.insert_record_eda('Missing Value')
                     log.info(log_type='Missing Value Report', log_message='Redirect To Eda Show Dataset!')
-                    df = EDA.missing_cells_table(df)
-
-                    graphJSON = PlotlyHelper.barplot(df, x='Column', y='Missing values')
-                    pie_graphJSON = PlotlyHelper.pieplot(df, names='Column', values='Missing values',
-                                                         title='Missing Values')
-
-                    data = df.drop('Column', axis=1, inplace=True)
-                    data = df.to_html()
-                    return render_template('eda/missing_values.html', action=action, data=data, barplot=graphJSON,
-                                           pieplot=pie_graphJSON)
-
-                elif action == "outlier":
+                    df=EDA.missing_cells_table(df)
+                    
+                    graphJSON =  PlotlyHelper.barplot(df, x='Column',y='Missing values')
+                    pie_graphJSON = PlotlyHelper.pieplot(df, names='Column',values='Missing values',title='Missing Values')
+                    
+                    data=df.drop('Column', axis=1, inplace=True)
+                    data=df.to_html()
+                    return render_template('eda/missing_values.html',action=action,data=data,barplot=graphJSON,pieplot=pie_graphJSON)
+                
+                elif action=="outlier":
+                    ProjectReports.insert_record_eda('Outlier')
                     log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
                     df = EDA.z_score_outlier_detection(df)
                     graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
                     pie_graphJSON = PlotlyHelper.pieplot(
                         df.sort_values(by='Total outliers', ascending=False).loc[:10, :], names='Features',
                         values='Total outliers', title='Top 10 Outliers')
-
-                    data = df.to_html()
-                    return render_template('eda/outliers.html', data=data, method='zscore', action=action,
-                                           barplot=graphJSON, pieplot=pie_graphJSON)
-
-
-                elif action == "correlation":
-                    pearson_corr = EDA.correlation_report(df, 'pearson')
-                    persion_data = list(np.around(np.array(pearson_corr.values), 2))
+                    data=df.to_html()
+                    return render_template('eda/outliers.html',data=data,method='zscore',action=action,barplot=graphJSON,pieplot=pie_graphJSON)
+                
+                
+                elif action=="correlation":
+                    ProjectReports.insert_record_eda('Correlation')
+                    pearson_corr=EDA.correlation_report(df,'pearson')
+                    persion_data=list(np.around(np.array(pearson_corr.values),2))
                     fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
                                                       y=list(pearson_corr.columns), colorscale='Viridis')
                     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                    return render_template('eda/correlation.html', data=graphJSON, columns=list(pearson_corr.columns),
-                                           action=action, method='pearson')
+                    return render_template('eda/correlation.html',data=graphJSON,columns=list(pearson_corr.columns),action=action,method='pearson')
+                
+                elif action=="plots":
+                    ProjectReports.insert_record_eda('Plots')
+                    return render_template('eda/plots.html',columns=list(df.columns),
+                                           graphs_2d=TWO_D_GRAPH_TYPES,action=action,x_column="",y_column="")
 
-                elif action == "plots":
-                    return render_template('eda/plots.html', columns=list(df.columns),
-                                           graphs_2d=TWO_D_GRAPH_TYPES, action=action, x_column="", y_column="")
                 else:
                     return render_template('eda/help.html')
             else:
@@ -359,6 +364,7 @@ def eda(action):
         else:
             return redirect(url_for('/'))
     except Exception as e:
+        ProjectReports.insert_record_eda(e)
         print(e)
 
 
@@ -374,21 +380,25 @@ def eda_post(action):
                     columns_for_list = df.columns
                     columns = request.form.getlist('columns')
                     log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
-
-                    if len(columns) > 0:
-                        df = df.loc[:, columns]
-
-                    data = EDA.get_no_records(df, int(range), optradio)
-                    data = data.to_html()
-                    topselected = True if optradio == 'top' else False
-                    bottomSelected = True if optradio == 'bottom' else False
-                    return render_template('eda/showdataset.html', data=data, length=len(df),
-                                           bottomSelected=bottomSelected, topselected=topselected, action=action,
-                                           selectedCount=range, columns=columns_for_list)
-                elif action == "correlation":
+                    input_str = immutable_multi_dict_to_str(request.form)
+                    ProjectReports.insert_record_eda('Show', input=input_str)
+                    
+                    if len(columns)>0:
+                        df=df.loc[:,columns]
+                        
+                    data=EDA.get_no_records(df,int(range),optradio)
+                    data=data.to_html()
+                    topselected=True if optradio=='top' else False
+                    bottomSelected=True if optradio=='bottom' else False
+                    return render_template('eda/showdataset.html',data=data,length=len(df),
+                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=range,columns=columns_for_list)
+                elif action=="correlation":
                     method = request.form['method']
                     columns = request.form.getlist('columns')
 
+                    input_str = immutable_multi_dict_to_str(request.form)
+                    ProjectReports.insert_record_eda('Correlation', input=input_str)
+                    
                     if method is not None:
                         # df=df.loc[:,columns]
                         _corr = EDA.correlation_report(df, method)
@@ -415,12 +425,13 @@ def eda_post(action):
                         upper = request.form['upper']
                         df = EDA.outlier_detection_iqr(df, int(lower), int(upper))
                     else:
-                        df = EDA.z_score_outlier_detection(df)
+                        df=EDA.z_score_outlier_detection(df)
 
-                    graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
-                    pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[:10, :], names='Features',
-                        values='Total outliers', title='Top 10 Outliers')
+                    input_str = immutable_multi_dict_to_str(request.form)
+                    ProjectReports.insert_record_eda('Outlier', input=input_str)
+                    
+                    graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
+                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:9,:], names='Features',values='Total outliers',title='Top 10 Outliers')    
 
                     log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
                     data = df.to_html()
@@ -432,12 +443,33 @@ def eda_post(action):
                     selected_graph_type = request.form['graph']
                     x_column = request.form['xcolumn']
                     y_column = request.form['ycolumn']
-                    if selected_graph_type == "Scatter Plot":
-                        graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
+                    input_str = immutable_multi_dict_to_str(request.form)
+                    ProjectReports.insert_record_eda('Plot', input=input_str)
+                    
+                    if selected_graph_type=="Scatter Plot":
+                        graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
                         log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                    return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
-                                           columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
-                                           action=action, graphJSON=graphJSON, x_column=x_column, y_column=y_column)
+                    
+                    elif selected_graph_type=="Pie Chart":
+                        graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                    elif selected_graph_type=="Bar Graph":
+                        graphJSON =  PlotlyHelper.barplot(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    
+                    elif selected_graph_type=="Histogram":
+                        graphJSON =  PlotlyHelper.histogram(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                    elif selected_graph_type=="Line Chart":
+                        graphJSON =  PlotlyHelper.line(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                        
+                    return render_template('eda/plots.html',selected_graph_type=selected_graph_type,
+                                           columns=list(df.columns),graphs_2d=TWO_D_GRAPH_TYPES,
+                                           action=action,graphJSON=graphJSON,x_column=x_column,y_column=y_column)
 
                 else:
                     return render_template('eda/help.html')
@@ -524,6 +556,7 @@ def feature_engineering_post(action):
                 return 'No Data'
         else:
             return redirect(url_for('/'))
+
     except Exception as e:
         print(e)
 
@@ -544,5 +577,10 @@ def systemlogs(action):
     except Exception as e:
         print(e)
 
+
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    if mysql is None or mongodb is None:
+        print("OOPS!!!!Somethong went wrong")
+    else:
+        app.run(host="127.0.0.1", port=5000, debug=True)
+

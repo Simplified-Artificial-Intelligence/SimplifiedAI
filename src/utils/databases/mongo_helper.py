@@ -6,6 +6,7 @@ import os
 
 config_args = read_config("./config.yaml")
 
+
 class MongoHelper:
 
     def __init__(self):
@@ -66,10 +67,8 @@ class MongoHelper:
             [type]: [description]
         """
         try:
-            print('hello db', self.db)
-            path=os.path.join(os.path.join('src', 'data'), f"{project_name}.csv")
-            backup_path=os.path.join(os.path.join('src', 'data'), f"{project_name}_backup.csv")
-            # path=f"C:\\Users\\pankaj\\Desktop\\ml\\internship\\auto-neuron\\src\\notebooks\\Ames_Housing_Data.csv"
+            path=os.path.join(os.path.join('src','data'),f"{project_name}.csv")
+            backup_path=os.path.join(os.path.join('src','data'),f"{project_name}_backup.csv")
             if os.path.exists(path):
                 df = pd.read_csv(path)
                 return df
