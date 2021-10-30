@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from math import floor
-
+from sklearn.preprocessing import StandardScaler
 
 class EDA():
     data_types = ['bool', "int_", "int8", "int16", "int32", "int64", "uint8", "uint16",
