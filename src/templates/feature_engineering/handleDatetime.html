@@ -1,0 +1,16 @@
+{% extends 'project_base.html' %}
+{% block content %}
+
+<div class="table2">
+    <div class="jumbotron text-center">
+        <h1>Handle Date Time</h1>
+        <p>This Function helps you to create new feature and handle date time effectively!</p>
+      </div>
+    {{data | safe}}
+</div>
+<script>
+    $(document).ready(function() {
+    $('.dataframe').DataTable();
+} );
+</script>
+{% endblock %}
