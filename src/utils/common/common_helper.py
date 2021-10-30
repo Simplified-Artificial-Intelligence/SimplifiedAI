@@ -2,7 +2,7 @@ import uuid
 import yaml
 import hashlib
 from cryptography.fernet import Fernet
-
+import os
 
 def read_config(config):
     with open(config) as config:

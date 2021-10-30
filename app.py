@@ -1,3 +1,4 @@
+from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
 from src.constants.constants import TWO_D_GRAPH_TYPES
@@ -18,6 +19,7 @@ import plotly.express as px
 import plotly.figure_factory as ff
 from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
+from src.utils.common.project_report_helper import ProjectReports
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -289,6 +291,7 @@ def eda(action):
             if df is not None:
                 if action=="5point":
                     log.info(log_type='% Point Summary', log_message='Redirect To Eda 5 Point!')
+                    ProjectReports.insert_record_eda(mysql,'5 Points Summary')
                     summary=EDA.five_point_summary(df)
                     data=summary.to_html()
                     return render_template('eda/5point.html',data=data)
@@ -298,6 +301,7 @@ def eda(action):
                     pr.to_widgets()
                     pr.to_file("your_report.html")
                 elif action=="show":
+                    ProjectReports.insert_record_eda(mysql,'Show Dataset')
                     log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
                     data=EDA.get_no_records(df,100)
                     data=data.to_html()
@@ -405,7 +409,7 @@ def eda_post(action):
                         df=EDA.z_score_outlier_detection(df)
                     
                     graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
-                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:10,:], names='Features',values='Total outliers',title='Top 10 Outliers')    
+                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:9,:], names='Features',values='Total outliers',title='Top 10 Outliers')    
                     
                     log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
                     data=df.to_html()
@@ -416,9 +420,28 @@ def eda_post(action):
                     selected_graph_type = request.form['graph']
                     x_column = request.form['xcolumn']
                     y_column = request.form['ycolumn']
+                    
                     if selected_graph_type=="Scatter Plot":
                         graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
                         log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    
+                    elif selected_graph_type=="Pie Chart":
+                        graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                    elif selected_graph_type=="Bar Graph":
+                        graphJSON =  PlotlyHelper.barplot(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    
+                    elif selected_graph_type=="Histogram":
+                        graphJSON =  PlotlyHelper.histogram(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                    elif selected_graph_type=="Line Chart":
+                        graphJSON =  PlotlyHelper.line(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                        
                     return render_template('eda/plots.html',selected_graph_type=selected_graph_type,
                                            columns=list(df.columns),graphs_2d=TWO_D_GRAPH_TYPES,
                                            action=action,graphJSON=graphJSON,x_column=x_column,y_column=y_column)
@@ -434,5 +457,8 @@ def eda_post(action):
     except Exception  as e:
             print(e)
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    if mysql is None or mongodb is None:
+        print("OOPS!!!!Somethong went wrong")
+    else:
+        app.run(host="127.0.0.1", port=5000, debug=True)
 

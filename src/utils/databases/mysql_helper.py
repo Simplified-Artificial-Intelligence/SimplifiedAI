@@ -70,7 +70,7 @@ class MySqlHelper:
         :return: 
         """
         cursor.close()
-        conn.close()
+        # conn.close()
         
     def fetch_all(self, query):
         """
@@ -116,6 +116,7 @@ class MySqlHelper:
             print("Error: {}".format(error))
 
         finally:
+            cursor.commit()
             self.close(conn, cursor)
             print("MySQL connection is closed")
 
@@ -158,6 +159,7 @@ class MySqlHelper:
             cursor = conn.cursor()
             cursor.execute(query)
             rowcount = cursor.rowcount
+            cursor.close()
             return rowcount
 
         except connector.Error as error:
@@ -165,5 +167,4 @@ class MySqlHelper:
 
         finally:
             conn.commit()
-            self.close(conn, cursor)
-            print("MySQL connection is closed")
+            # self.close(conn, cursor)
