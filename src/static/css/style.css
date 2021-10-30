@@ -184,6 +184,19 @@ width:60px
   padding-bottom: 10px;
 }
 
+.terminal{
+    background-color: black;
+    margin-top: 51px;
+    height: 500px;
+}
+
+.terminal_table{
+    margin-left: 5rem;
+    margin-right: 5rem;
+    height: 200px;
+
+}
+
 .slidecontainer {
   width: 100%;
 }

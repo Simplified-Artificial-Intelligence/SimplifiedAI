@@ -1,15 +1,13 @@
 import pymongo
 import pandas as pd
 import time
-import argparse
 from src.utils.common.common_helper import read_config
 import os
 
 config_args = read_config("./config.yaml")
 
+class MongoHelper:
 
-
-class MongoHelper():
     def __init__(self):
         try:
             path = config_args['secrets']['mongo']
@@ -17,9 +15,10 @@ class MongoHelper():
             self.db = self.client['Auto-neuron']
             print("Mongodb Connection Established")
         except Exception as e:
+            print('Here')
             print(e)
         
-    def create_new_project(self,collection_name,df):
+    def create_new_project(self, collection_name, df):
         """[summary]
             Create New Project and Upload data
         Args:
@@ -27,7 +26,7 @@ class MongoHelper():
             df ([type]): [description]
         """
         try:
-            collection=self.db[collection_name]
+            collection = self.db[collection_name]
             df.reset_index(inplace=True)
             begin = time.time()
             
@@ -42,7 +41,7 @@ class MongoHelper():
         except Exception as e:
             print(e)
         
-    def delete_collection_data(self,collection_name):
+    def delete_collection_data(self, collection_name):
         """[summary]
         Delete Collection Data
         Args:
@@ -67,22 +66,23 @@ class MongoHelper():
             [type]: [description]
         """
         try:
-            
-            path=os.path.join(os.path.join('src','data'),f"{project_name}.csv")
-            backup_path=os.path.join(os.path.join('src','data'),f"{project_name}_backup.csv")
+            print('hello db', self.db)
+            path=os.path.join(os.path.join('src', 'data'), f"{project_name}.csv")
+            backup_path=os.path.join(os.path.join('src', 'data'), f"{project_name}_backup.csv")
             # path=f"C:\\Users\\pankaj\\Desktop\\ml\\internship\\auto-neuron\\src\\notebooks\\Ames_Housing_Data.csv"
             if os.path.exists(path):
-                df=pd.read_csv(path)
+                df = pd.read_csv(path)
                 return df
             else:
                 begin = time.time()
-                collection=self.db[project_name]
+                collection = self.db[project_name]
                 df = pd.DataFrame(list(collection.find()))
                 end = time.time()  
                 df.to_csv(path)
                 df.to_csv(backup_path)
                 return df
+
         except Exception as e:
-                print(e)
+            print(e)
         
         

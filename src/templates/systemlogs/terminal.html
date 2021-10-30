@@ -1,0 +1,21 @@
+{% extends 'project_base.html' %}
+{% block content %}
+
+<div class="table2 terminal_table">
+    <div class="jumbotron text-center terminal">
+        <div>
+            <p style="color:Green">Terminal</p>
+            {% for log in logs %}
+                <p> > {{log}} </p>
+            {% endfor %}
+            </div>
+
+      </div>
+    {{data | safe}}
+</div>
+<script>
+    $(document).ready(function() {
+    $('.dataframe').DataTable();
+} );
+</script>
+{% endblock %}
