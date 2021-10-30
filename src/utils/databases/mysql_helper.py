@@ -145,7 +145,7 @@ class MySqlHelper:
             print("Error: {}".format(error))
 
         finally:
-            cursor.commit()
+            conn.commit()
             self.close(conn, cursor)
             print("MySQL connection is closed")
 
