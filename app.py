@@ -452,5 +452,55 @@ def eda_post(action):
         print(e)
 
 
+@app.route('/feature_engineering/<action>', methods=['GET'])
+def feature_engineering_post(action):
+    try:
+        if 'pid' in session:
+            df = load_data()
+            summary = EDA.five_point_summary(df)
+            data = summary.to_html()
+
+            if df is not None:
+                if action == 'handleDatetime':
+                    return render_template('feature_engineering/handleDatetime.html')
+                elif action == 'help':
+                    return render_template('feature_engineering/help.html')
+                elif action == 'encoding':
+                    return render_template('feature_engineering/encoding.html', data=data)
+                elif action == 'scaling':
+
+                    return render_template('feature_engineering/scaling.html', data=data)
+                elif action == 'feature_selection':
+                    return render_template('feature_engineering/feature_selection.html', data=data)
+                elif action == 'dimension_reduction':
+                    return render_template('feature_engineering/dimension_reduction.html', data=data)
+                elif action == 'train_test_split':
+                    return render_template('feature_engineering/train_test_split.html', data=data)
+                else:
+                    return 'Hello No action specified'
+            else:
+                return 'Hello'
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
+
+
+@app.route('/systemlogs/<action>', methods=['GET'])
+def systemlogs(action):
+    try:
+        if action == 'terminal':
+            lines = []
+            with open(r"C:\Users\ketan\Desktop\Project\Projectathon\logger\logs\logs.log") as file_in:
+                for line in file_in:
+                    lines.append(line)
+            print(lines)
+            file_in.close()
+            return render_template('systemlogs/terminal.html', logs=lines)
+        else:
+            return 'Not Visible'
+    except Exception as e:
+        print(e)
+
 if __name__ == '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)
