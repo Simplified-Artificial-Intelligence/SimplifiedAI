@@ -55,7 +55,7 @@
           <h5 class="modal-title" id="resourceModalLabel">Resource:</h5>
         </div>
 
-        <form action="/api/{{resource}}" method="post">
+        <form method="POST" enctype="multipart/form-data" id="awsForm">
           <div class="modal-body">
             <div class="form-group row">
               <label for="region_name" class="col-sm-4 col-form-label">Region Name</label>
@@ -90,7 +90,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary" id="submitModal">Submit</button>
           </div>
         </form>
           
@@ -99,21 +99,22 @@
   </div>
 
   <script>
-    $(document).ready(function(){               //Make script DOM ready
+    $(document).ready(function(){   
+      var opval = ""            //Make script DOM ready
       $('#resourceFile').change(function(e) {   //jQuery Change Function
-        var opval = $(this).val();              //Get value from select element
+        opval = $(this).val();              //Get value from select element
         if(opval=="awsS3bucket"){               //Compare it and if true
-          $('#resourceModal').modal("show");     //Open Modal
+          $('#resourceModal').modal("show");    //Open Modal
         } else if(opval=="gcpStorage") {
           $('#resourceModal').modal("show");
         } else if(opval=="mySql") {
           $('#resourceModal').modal("show");
         }
       });
-    });
 
-    $(document).ready(function() {
+      var selectedRadio = ''
       $("input:radio[name=resourceFileRadio]").click(function(e) {
+        selectedRadio = $(this)[0].id
         // console.log($(this))
         if($(this)[0].id === "uploadFileRadio") {
 
@@ -136,7 +137,51 @@
           $('#resourceFile').prop('disabled', false);
         }
       })
-    })
+
+      $("#submitModal").click(function (event) {
+          //stop submit the form, we will post it manually.
+          event.preventDefault();
+    
+          // Get form
+          var form = $('#awsForm')[0];
+    
+          // FormData object 
+          var data = new FormData(form);
+    
+          // If you want to add an extra field for the FormData
+          data.append("selected_radio", selectedRadio);
+          data.append("other_resource", opval);
+    
+          // disabled the submit button
+          // $("#btnSubmit").prop("disabled", true);
+
+          var object = {};
+          data.forEach((value, key) => object[key] = value);
+          console.log(JSON.stringify(object))
+    
+          $.ajax({
+              type: "POST",
+              enctype: 'multipart/form-data',
+              url: "/app/resource",
+              data: data,
+              processData: false,
+              contentType: false,
+              cache: false,
+              timeout: 800000,
+              success: function (data) {
+                  $("#output").text(data);
+                  console.log("SUCCESS : ", data);
+                  $("#btnSubmit").prop("disabled", false);
+              },
+              error: function (e) {
+                  $("#output").text(e.responseText);
+                  console.log("ERROR : ", e);
+                  $("#btnSubmit").prop("disabled", false);
+              }
+          });
+      });
+
+    });
   </script>
 
 {% endblock %}
