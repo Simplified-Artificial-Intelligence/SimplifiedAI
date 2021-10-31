@@ -489,10 +489,21 @@ def data_preprocessing(action):
                 if action=="delete-columns":
                     log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
                     return render_template('dp/delete_columns.html',columns=list(df.columns),action=action)
+                elif action=="duplicate-data":
+                    duplicate_data=df[df.duplicated()].head(500)
+                    data=duplicate_data.to_html()  
+                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
+                    return render_template('dp/duplicate.html',columns=list(df.columns),action=action,data=data,duplicate_count=len(duplicate_data))
+                
                 elif action=="outlier":
                     columns=Preprocessing.col_seperator(df,'Numerical_columns')
                     log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
                     return render_template('dp/outliers.html',columns=columns,action=action)
+                
+                elif  action=="delete-outlier" or action=="remove-duplicate-data":
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return redirect(('/dp/outlier'))
                 else:
                     return render_template('eda/help.html')
             else:
@@ -519,12 +530,40 @@ def data_preprocessing_post(action):
                     log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
                     return render_template('dp/delete_columns.html',columns=list(df.columns),action=action,status='success')
                 
-                elif action=="outlier" or action=="delete-outlier":
+                elif action=="duplicate-data":
+                    columns = request.form.getlist('columns')
+                    if len(columns)>0:
+                        df=df[df.duplicated(columns)]
+                    else:
+                        df=df[df.duplicated()]
+                    data=df.head(500).to_html()  
+                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
+                    return render_template('dp/duplicate.html',columns=list(df.columns),action=action,
+                                           data=data,duplicate_count=len(df),selected_column=','.join(columns))
+                    
+                elif action=="remove-duplicate-data":
+                    columns =request.form['selected_column']
+                    
+                    if len(columns)>0:
+                        data=df.drop_duplicates(subset=list(columns.split(",")), keep='last')  
+                    else:
+                        data=df.drop_duplicates(keep='last') 
+                                        
+                    df=update_data(data)
+                    
+                    duplicate_data=df[df.duplicated()]
+                    data=duplicate_data.head(500).to_html()  
+                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
+                    return render_template('dp/duplicate.html',columns=list(df.columns),action="duplicate-data",data=data,
+                                           duplicate_count=len(duplicate_data),success=True)
+                
+                elif action=="outlier":
                     method = request.form['method']
                     column = request.form['columns']
                     lower=25
                     upper=75
                     graphJSON=""
+                    pie_graphJSON=""
                     columns=Preprocessing.col_seperator(df,'Numerical_columns')
                     outliers_list=[]
                     if method=="iqr":
@@ -547,15 +586,22 @@ def data_preprocessing_post(action):
                         unique_outliers=np.unique(outliers_list)
                     
                     df_outliers=pd.DataFrame(pd.Series(outliers_list).value_counts(),columns=['value']).reset_index(level=0)
-                    pie_graphJSON = PlotlyHelper.pieplot(df_outliers, names='index',values='value',title='Missing Values Count') 
+                    if len(df_outliers)>0:
+                        pie_graphJSON = PlotlyHelper.pieplot(df_outliers, names='index',values='value',title='Missing Values Count') 
+                        
                     log.info(log_type='Outlier Report', log_message='Post: Redirect To Delete Columns!')
                     return render_template('dp/outliers.html',columns=columns,method=method,selected_column=column,
                                            outliers_list=outliers_list,unique_outliers=unique_outliers,pie_graphJSON=pie_graphJSON,
-                                           action=action,data=data,outliercount=result['Total outliers'][0],graphJSON=graphJSON)
+                                           action=action,data=data,
+                                           outliercount=result['Total outliers'][0] if len(result['Total outliers'])>0 else 0,
+                                           graphJSON=graphJSON)
                 elif action=="delete-outlier":
                     values = request.form.getlist('columns')
+                    selected_column=request.form['selected_column']
                     columns=Preprocessing.col_seperator(df,'Numerical_columns')
-                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    df=df[~df[selected_column].isin(list(values))]
+                    df=update_data(df)
+                    log.info(log_type='Delete Outlier', log_message='Redirect To Handler Outlier!')
                     return render_template('dp/outliers.html',columns=columns,action="outlier",status="success")
                 
                 

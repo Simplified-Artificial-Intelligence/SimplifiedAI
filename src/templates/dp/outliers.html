@@ -5,7 +5,7 @@
     {% if status=="success" %}
     <div class="alert alert-success">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <strong>Success!</strong> Data Deleted Successfully.
+        <strong>Success!</strong> Outliers Deleted Successfully.
       </div>
     {% endif %}
         <div class="jumbotron text-center">
@@ -79,14 +79,12 @@
                 <input type="checkbox" class="form-check-input" name="deleteall" id="deleteall">
                 <label class="form-check-label"  for="deleteall">Delete All Values</label>
               </div>
-              <input type="hidden" name="outlier_value" id="outlier_value"/>
+              <input type="hidden" name="selected_column" id="selected_column" value="{{selected_column}}"/>
         </div>
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <button type="button" class="btn btn-default" id="delete-btn" data-toggle="modal" data-target="#exampleModal">Remove Outliers</button>
+        </div>  
         </div>
-        <div class="row">
-            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-                <button type="button" class="btn btn-default" id="delete-btn" data-toggle="modal" data-target="#exampleModal">Remove Outliers</button>
-            </div>
-        </div>     
     </div>
         <!-- Delete Modal-->
           <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
