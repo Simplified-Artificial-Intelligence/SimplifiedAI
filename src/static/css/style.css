@@ -268,3 +268,12 @@ width:60px
     padding-bottom: 25px;
     padding-left: 30px;
 }
+
+.disabled-label {
+  color: darkgrey;
+}
+
+.disabled-input {
+  color: darkgrey;
+  background-color: grey;
+}
