@@ -12,10 +12,21 @@
             <div class="form-group">
                 <label for="exampleFormControlSelect1">Select PCA </label>
                 <select class="js-example-basic-multiple form-control" name="columns" multiple="multiple">
-                    {% for col in columns %}
-                    <option value="{{col}}">{{col}}</option>
+                    {% for dr in dimenstion_reduction_list %}
+                    <option value="{{col}}">{{dr}}</option>
                     {% endfor %}
                 </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <div class="form-group">
+                <form action="/action_page.php">
+                    <label for="Random_State">Write no of components</label>
+                    <input type="int" id="Random_State" name="Random_State"><br><br>
+                </form>
             </div>
         </div>
     </div>

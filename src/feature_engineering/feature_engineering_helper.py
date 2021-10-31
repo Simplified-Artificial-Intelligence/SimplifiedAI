@@ -20,21 +20,21 @@ class FreatureEngineering():
         return X_train, X_test, y_train, y_test
 
     def scaler(self, train, test, typ):
-        if typ == 'MinMaxScaler':
+        if typ == 'MinMax Scaler':
             scaler = MinMaxScaler()
             scaled_train = scaler.fit_transform(train)
             scaled_test = scaler.transform(test)
 
             return scaled_train, scaled_test
 
-        elif typ == 'StanderdScaler':
+        elif typ == 'Standerd Scaler':
             scaler = StandardScaler()
             scaled_train = scaler.fit_transform(train)
             scaled_test = scaler.transform(test)
 
             return scaled_train, scaled_test
 
-        elif typ == 'RobustScaler':
+        elif typ == 'Robust Scaler':
             scaler = RobustScaler()
             scaled_train = scaler.fit_transform(train)
             scaled_test = scaler.transform(test)
@@ -88,7 +88,7 @@ class FreatureEngineering():
 
     def feature_selection(self, features, target, typ, k=None):
         important_features = pd.DataFrame()
-        if typ == 'Select_K_Best':
+        if typ == 'SelectKBest':
             # chi2 + anova test
             best_features = SelectKBest(score_func=chi2, k=k)
             imp = best_features.fit(features, target)
@@ -97,7 +97,7 @@ class FreatureEngineering():
 
             return important_features.sort_values('scores', ascending=False)
 
-        elif typ == 'ExtraTreesClassifier':
+        elif typ == 'Extra Trees Classifier':
 
             best_features = ExtraTreesClassifier()
             best_features.fit(features, target)
@@ -106,7 +106,7 @@ class FreatureEngineering():
 
             return important_features.sort_values('scores', ascending=False)
 
-        elif typ == 'ExtraTreesRegressor':
+        elif typ == 'Extra Trees Regressor':
             best_features = ExtraTreesRegressor()
             best_features.fit(features, target)
             important_features['score'] = best_features.feature_importances_

@@ -355,7 +355,6 @@ def eda(action):
                     ProjectReports.insert_record_eda('Plots')
                     return render_template('eda/plots.html',columns=list(df.columns),
                                            graphs_2d=TWO_D_GRAPH_TYPES,action=action,x_column="",y_column="")
-
                 else:
                     return render_template('eda/help.html')
             else:
@@ -496,12 +495,11 @@ def feature_engineering(action):
                     dt_splitted = False
                     not_dt_splitted = True
                     selectedCount = 100
-                    # print('here inside handle ')
                     return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
                                            not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
                                            selectedCount=selectedCount, columns=df.columns)
                 elif action == 'encoding':
-                    return render_template('feature_engineering/encoding.html', data=data)
+                    return render_template('feature_engineering/encoding.html', data=data, columns=df.columns, action=action)
                 elif action == 'scaling':
                     return render_template('feature_engineering/scaling.html', data=data)
                 elif action == 'feature_selection':
@@ -577,6 +575,65 @@ def systemlogs(action):
     except Exception as e:
         print(e)
 
+@app.route('/model_training/<action>', methods=['GET'])
+def model_training(action):
+    try:
+        if 'pid' in session:
+            df = load_data()
+            if df is not None:
+                if action == 'help':
+                    return render_template('model_training/help.html')
+                elif action == 'auto_training':
+                    ProjectReports.insert_record_eda('Show Dataset')
+                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
+                    data=EDA.get_no_records(df,100)
+                    data=data.to_html()
+                    topselected=True
+                    bottomSelected=False
+                    selectedCount=100
+                    return render_template('model_training/auto_training.html',data=data,length=len(df),
+                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
+                elif action == 'custom_training':
+                    typ = "Classification"
+                    if typ == "Regression":
+                        return render_template('model_training/regression.html')
+                    elif typ == "Classification":
+                        return render_template('model_training/classification.html')
+                    elif typ == "Clustering":
+                        return render_template('model_training/clustering.html')
+                    else:
+                        return 'Non-Implemented Action'
+                    return render_template('model_training/custom_training.html')
+
+                else:
+                    return 'Non-Implemented Action'
+            else:
+                return 'No Data'
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
+
+@app.route('/model_training/<action>', methods=['POST'])
+def model_training_post(action):
+    try:
+        if 'pid' in session:
+            df = load_data()
+            if df is not None:
+                if action == 'help':
+                    return render_template('model_training/help.html')
+                elif action == 'auto_training':
+                    return render_template('model_training/auto_training.html')
+                elif action == 'custom_training':
+                    return render_template('model_training/custom_training.html')
+                else:
+                    return 'Non-Implemented Action'
+            else:
+                return 'No Data'
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
