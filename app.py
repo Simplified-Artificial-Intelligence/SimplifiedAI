@@ -21,6 +21,9 @@ from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
+from lazypredict.Supervised import LazyRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -575,6 +578,7 @@ def systemlogs(action):
     except Exception as e:
         print(e)
 
+
 @app.route('/model_training/<action>', methods=['GET'])
 def model_training(action):
     try:
@@ -602,9 +606,7 @@ def model_training(action):
                     elif typ == "Clustering":
                         return render_template('model_training/clustering.html')
                     else:
-                        return 'Non-Implemented Action'
-                    return render_template('model_training/custom_training.html')
-
+                        return render_template('model_training/custom_training.html')
                 else:
                     return 'Non-Implemented Action'
             else:
@@ -613,6 +615,7 @@ def model_training(action):
             return redirect(url_for('/'))
     except Exception as e:
         print(e)
+
 
 @app.route('/model_training/<action>', methods=['POST'])
 def model_training_post(action):
@@ -623,7 +626,23 @@ def model_training_post(action):
                 if action == 'help':
                     return render_template('model_training/help.html')
                 elif action == 'auto_training':
-                    return render_template('model_training/auto_training.html')
+                    typ = 'Regression'
+                    df = pd.read_csv('AMES_Final_DF.csv')
+                    df = df[0:500]
+                    X = df.drop('SalePrice', axis=1)
+                    y = df['SalePrice']
+                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=123)
+                    scaler = StandardScaler()
+                    X_train = scaler.fit_transform(X_train)
+                    X_test = scaler.transform(X_test)
+                    if typ == 'Regression':
+                        clf = LazyRegressor(verbose=0, ignore_warnings=True, custom_metric=None)
+                        models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+                        return render_template('model_training/regression.html', data=predictions.sort_values('R-Squared',ascending=False)[:5])
+                    elif typ == 'Classification':
+                        pass
+                    else:
+                        return render_template('model_training/auto_training.html')
                 elif action == 'custom_training':
                     return render_template('model_training/custom_training.html')
                 else:
@@ -634,6 +653,7 @@ def model_training_post(action):
             return redirect(url_for('/'))
     except Exception as e:
         print(e)
+
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
