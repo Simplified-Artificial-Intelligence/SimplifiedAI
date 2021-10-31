@@ -1,5 +1,7 @@
+from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
+from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
@@ -9,8 +11,8 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from logger.logger import Logger
-from src.utils.common.data_helper import load_data
-from src.utils.modules.eda_helper import EDA
+from src.utils.common.data_helper import load_data, update_data
+from src.eda.eda_helper import EDA
 import numpy  as np
 import json
 import plotly
@@ -18,6 +20,8 @@ import plotly.express as px
 import plotly.figure_factory as ff
 from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
+from src.utils.common.project_report_helper import ProjectReports
+from src.utils.common.common_helper import immutable_multi_dict_to_str
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -44,7 +48,8 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
-mysql = MySqlHelper(host, port, user, password, database)
+# mysql = MySqlHelper(host, port, user, password, database)
+mysql = MySqlHelper.get_connection_obj()
 mongodb = MongoHelper()
 
 template_dir = config_args['dir_structure']['template_dir']
@@ -288,16 +293,19 @@ def eda(action):
             df=load_data()
             if df is not None:
                 if action=="5point":
+                    ProjectReports.insert_record_eda('5 Points Summary')
                     log.info(log_type='% Point Summary', log_message='Redirect To Eda 5 Point!')
                     summary=EDA.five_point_summary(df)
                     data=summary.to_html()
                     return render_template('eda/5point.html',data=data)
                 elif action=="profiler":
+                    ProjectReports.insert_record_eda('Profiler')
                     log.info(log_type='Show Profiler Report', log_message='Redirect To Eda Show Dataset!')
                     pr = ProfileReport(df, explorative=True, minimal=True,correlations={"cramers": {"calculate": False}})
                     pr.to_widgets()
                     pr.to_file("your_report.html")
                 elif action=="show":
+                    ProjectReports.insert_record_eda('Show Dataset')
                     log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
                     data=EDA.get_no_records(df,100)
                     data=data.to_html()
@@ -307,6 +315,7 @@ def eda(action):
                     return render_template('eda/showdataset.html',data=data,length=len(df),
                                            bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
                 elif action=="missing":
+                    ProjectReports.insert_record_eda('Missing Value')
                     log.info(log_type='Missing Value Report', log_message='Redirect To Eda Show Dataset!')
                     df=EDA.missing_cells_table(df)
                     
@@ -318,6 +327,7 @@ def eda(action):
                     return render_template('eda/missing_values.html',action=action,data=data,barplot=graphJSON,pieplot=pie_graphJSON)
                 
                 elif action=="outlier":
+                    ProjectReports.insert_record_eda('Outlier')
                     log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
                     df=EDA.z_score_outlier_detection(df)
                     graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
@@ -328,6 +338,7 @@ def eda(action):
                 
                 
                 elif action=="correlation":
+                    ProjectReports.insert_record_eda('Correlation')
                     pearson_corr=EDA.correlation_report(df,'pearson')
                     persion_data=list(np.around(np.array(pearson_corr.values),2))
                     fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
@@ -336,6 +347,7 @@ def eda(action):
                     return render_template('eda/correlation.html',data=graphJSON,columns=list(pearson_corr.columns),action=action,method='pearson')
                 
                 elif action=="plots":
+                    ProjectReports.insert_record_eda('Plots')
                     return render_template('eda/plots.html',columns=list(df.columns),
                                            graphs_2d=TWO_D_GRAPH_TYPES,action=action,x_column="",y_column="")
                 else:
@@ -346,8 +358,9 @@ def eda(action):
             
         else:
             return redirect(url_for('/'))
-    except Exception  as e:
-            print(e)
+    except Exception as e:
+        ProjectReports.insert_record_eda(e)
+        print(e)
 
 @app.route('/eda/<action>',methods=['POST'])
 def eda_post(action):
@@ -362,6 +375,9 @@ def eda_post(action):
                     columns_for_list=df.columns
                     columns = request.form.getlist('columns')
                     log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
+
+                    input_str = immutable_multi_dict_to_str(request.form)
+                    ProjectReports.insert_record_eda('Show', input=input_str)
                     
                     if len(columns)>0:
                         df=df.loc[:,columns]
@@ -375,6 +391,9 @@ def eda_post(action):
                 elif action=="correlation":
                     method = request.form['method']
                     columns = request.form.getlist('columns')
+
+                    input_str = immutable_multi_dict_to_str(request.form)
+                    ProjectReports.insert_record_eda('Correlation', input=input_str)
                     
                     if method is not None:                            
                         # df=df.loc[:,columns]
@@ -403,9 +422,12 @@ def eda_post(action):
                         df=EDA.outlier_detection_iqr(df,int(lower),int(upper))
                     else:
                         df=EDA.z_score_outlier_detection(df)
+
+                    input_str = immutable_multi_dict_to_str(request.form)
+                    ProjectReports.insert_record_eda('Outlier', input=input_str)
                     
                     graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
-                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:10,:], names='Features',values='Total outliers',title='Top 10 Outliers')    
+                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:9,:], names='Features',values='Total outliers',title='Top 10 Outliers')    
                     
                     log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
                     data=df.to_html()
@@ -416,9 +438,31 @@ def eda_post(action):
                     selected_graph_type = request.form['graph']
                     x_column = request.form['xcolumn']
                     y_column = request.form['ycolumn']
+
+                    input_str = immutable_multi_dict_to_str(request.form)
+                    ProjectReports.insert_record_eda('Plot', input=input_str)
+                    
                     if selected_graph_type=="Scatter Plot":
                         graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
                         log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    
+                    elif selected_graph_type=="Pie Chart":
+                        graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                    elif selected_graph_type=="Bar Graph":
+                        graphJSON =  PlotlyHelper.barplot(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    
+                    elif selected_graph_type=="Histogram":
+                        graphJSON =  PlotlyHelper.histogram(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                    elif selected_graph_type=="Line Chart":
+                        graphJSON =  PlotlyHelper.line(df, x=x_column,y=y_column)                    
+                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        
+                        
                     return render_template('eda/plots.html',selected_graph_type=selected_graph_type,
                                            columns=list(df.columns),graphs_2d=TWO_D_GRAPH_TYPES,
                                            action=action,graphJSON=graphJSON,x_column=x_column,y_column=y_column)
@@ -432,7 +476,105 @@ def eda_post(action):
         else:
             return redirect(url_for('/'))
     except Exception  as e:
+        ProjectReports.insert_record_eda(e)
+            
+            
+@app.route('/dp/<action>')
+def data_preprocessing(action):
+    try:
+        if 'pid' in session:
+            df=None
+            df=load_data()
+            if df is not None:
+                if action=="delete-columns":
+                    log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
+                    return render_template('dp/delete_columns.html',columns=list(df.columns),action=action)
+                elif action=="outlier":
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return render_template('dp/outliers.html',columns=columns,action=action)
+                else:
+                    return render_template('eda/help.html')
+            else:
+                """Manage This"""
+                pass
+            
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
             print(e)
+            
+            
+@app.route('/dp/<action>',methods=['POST'])
+def data_preprocessing_post(action):
+    try:
+        if 'pid' in session:
+            df=None
+            df=load_data()
+            if df is not None:
+                if action=="delete-columns":
+                    columns = request.form.getlist('columns')
+                    df=Preprocessing.delete_col(df,columns)
+                    df=update_data(df)
+                    log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
+                    return render_template('dp/delete_columns.html',columns=list(df.columns),action=action,status='success')
+                
+                elif action=="outlier" or action=="delete-outlier":
+                    method = request.form['method']
+                    column = request.form['columns']
+                    lower=25
+                    upper=75
+                    graphJSON=""
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    outliers_list=[]
+                    if method=="iqr":
+                        # lower = request.form['lower']
+                        # upper = request.form['upper']
+                        result=EDA.outlier_detection_iqr(df.loc[:,[column]],int(lower),int(upper))
+                        if len(result)>0:
+                            graphJSON =  PlotlyHelper.boxplot(df,column)  
+                        data=result.to_html()
+                        
+                        outliers_list=EDA.outlier_detection(list(df.loc[:,column]),'iqr')
+                        unique_outliers=np.unique(outliers_list)
+                    else:
+                        result=EDA.z_score_outlier_detection(df.loc[:,[column]])
+                        if len(result)>0:
+                            graphJSON =  PlotlyHelper.distplot(list(df.loc[:,column]),column)  
+                        data=result.to_html()   
+                        
+                        outliers_list=EDA.outlier_detection(list(df.loc[:,column]),'z-score')
+                        unique_outliers=np.unique(outliers_list)
+                    
+                    df_outliers=pd.DataFrame(pd.Series(outliers_list).value_counts(),columns=['value']).reset_index(level=0)
+                    pie_graphJSON = PlotlyHelper.pieplot(df_outliers, names='index',values='value',title='Missing Values Count') 
+                    log.info(log_type='Outlier Report', log_message='Post: Redirect To Delete Columns!')
+                    return render_template('dp/outliers.html',columns=columns,method=method,selected_column=column,
+                                           outliers_list=outliers_list,unique_outliers=unique_outliers,pie_graphJSON=pie_graphJSON,
+                                           action=action,data=data,outliercount=result['Total outliers'][0],graphJSON=graphJSON)
+                elif action=="delete-outlier":
+                    values = request.form.getlist('columns')
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return render_template('dp/outliers.html',columns=columns,action="outlier",status="success")
+                
+                
+                else:
+                    return redirect('dp/help.html')
+            else:
+                """Manage This"""
+                pass
+            
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
+            
+
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    if mysql is None or mongodb is None:
+        print("OOPS!!!!Somethong went wrong")
+    else:
+        app.run(host="127.0.0.1", port=5000, debug=True)
+
 

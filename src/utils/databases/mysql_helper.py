@@ -1,5 +1,12 @@
 import mysql.connector as connector
 import mysql.connector.pooling
+from src.utils.common.common_helper import read_config
+import os
+
+dir=os.getcwd()
+path=os.path.join(dir,"config.csv")
+config_args = read_config("./config.yaml")
+
 
 """
     [summary]
@@ -10,6 +17,9 @@ import mysql.connector.pooling
 
 
 class MySqlHelper:
+
+    connection_obj = None
+
     def __init__(self, host, port, user, password, database):
         """
         [summary]: Constructor
@@ -36,6 +46,25 @@ class MySqlHelper:
         }
         self.pool = self.create_pool(dbconfig,"auto_neuron_pool", 3)
         # self.connect_todb()
+
+    @staticmethod
+    def get_connection_obj():
+        try:
+            if MySqlHelper.connection_obj is None:
+                
+                host = config_args['secrets']['host']
+                port = config_args['secrets']['port']
+                user = config_args['secrets']['user']
+                password = config_args['secrets']['password']
+                database = config_args['secrets']['database']
+                
+                obj=MySqlHelper(host, port, user, password, database)
+                MySqlHelper.connection_obj=obj
+                return obj
+            else:
+                return MySqlHelper.connection_obj
+        except Exception as e:
+            print(e)
 
     def connect_todb(self):
             self.connection = connector.connect(host=self.host, port=self.port, user=self.user,
@@ -116,6 +145,7 @@ class MySqlHelper:
             print("Error: {}".format(error))
 
         finally:
+            conn.commit()
             self.close(conn, cursor)
             print("MySQL connection is closed")
 
@@ -158,12 +188,11 @@ class MySqlHelper:
             cursor = conn.cursor()
             cursor.execute(query)
             rowcount = cursor.rowcount
+            conn.commit()
             return rowcount
 
         except connector.Error as error:
             print("Error: {}".format(error))
 
         finally:
-            conn.commit()
             self.close(conn, cursor)
-            print("MySQL connection is closed")

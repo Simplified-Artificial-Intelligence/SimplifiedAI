@@ -1,4 +1,10 @@
-body {font-family: Arial, Helvetica, sans-serif;}
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background-image: url(/static/css/machine-learning-1.png);
+  background-position: center;
+  /* background-repeat: no-repeat; */
+  background-size: cover;
+}
 
 .form1 {margin-top:20px}
 input[type=text], input[type=password] {
@@ -41,7 +47,7 @@ img.avatar {
 }
 
 .container {
-  padding: 16px;
+  padding: 20px;
 }
 
 span.psw {
@@ -61,12 +67,14 @@ span.psw {
 }
 
 .login-form{
-    border-radius: 10px;
-    background: #17a2b8;
-    width: 60%;
-    padding-top: 22px;
-    margin-left: 20%;
-    color:#fff
+  background-image: url("/static/css/machine-learning-1.png");
+  border-radius: 10px;
+  background: #17a2b8;
+  width: 38%;
+  padding-top: 22px;
+  margin-left: 31%;
+  margin-top: 4%;
+  color: #fff;
 }
 
 .project-form{
@@ -84,8 +92,9 @@ font-weight: 700;
  }
 
  .home{
- margin-top:20px;
- padding-left:40px !important;
+  margin-top:20px;
+  padding-left:40px !important;
+  padding-right:40px;
  }
 
  .add-button{
@@ -232,4 +241,30 @@ width:60px
 
 .dataTables_scrollBody{
   margin-right: 100% !important;
+}
+.margin-100{
+  margin-left: 100px;
+    margin-top: 100px;
+}
+.div12{
+  padding-right: 33px;
+    margin-right: 100px;
+    background: #fff;
+    padding-left: 10px;
+    padding-top: 20px;
+}
+
+.max-height{
+  overflow-y: scroll;
+  max-height: 450px;
+}
+.outlier-form{
+  color: #fff;
+    align-items: center;
+    margin-top: 30px;
+    background-color: #212529c7;
+    border-radius: 12px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    padding-left: 30px;
 }

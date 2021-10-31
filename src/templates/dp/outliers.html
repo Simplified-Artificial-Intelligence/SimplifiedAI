@@ -1,0 +1,159 @@
+{% extends 'project_base.html' %}
+{% block content %}
+
+<div class="table2">
+    {% if status=="success" %}
+    <div class="alert alert-success">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Success!</strong> Data Deleted Successfully.
+      </div>
+    {% endif %}
+        <div class="jumbotron text-center">
+            <h1>Outlier Report</h1>
+            <p>In statistics, an outlier is a data point that differs significantly from other observations. 
+                An outlier may be due to variability in the measurement or it may indicate experimental error; the latter are sometimes excluded from the data set. 
+                An outlier can cause serious problems in statistical analyses.</p> 
+        </div>
+      <form action="/dp/{{action}}" method="post">
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Select Columns To Handle</label>
+                    <select class="form-control" name="columns" id="columns">
+                        {% for col in columns %}
+                        <option value="{{col}}">{{col}}</option>
+                      {% endfor %}
+                      </select>
+                  </div>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Select Outlier Detection Method</label>
+                    <select class="form-control" id="exampleFormControlSelect1" name="method">
+                      <option value="zscore" {% if method=="zscore" %} selected="selected"{% endif %}>Z-Score</option>
+                      <option value="iqr" {% if method=="iqr" %} selected="selected"{% endif %}>IQR</option>
+                    </select>
+                  </div>
+            </div>
+            </div>    
+            <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                    <button type="submit" class="btn btn-default" id="delete-btn">Submit</button>
+                </div>
+               </div>
+      </form>
+      {{data | safe}}
+      {% if outliercount and outliercount!=0%}
+    <form action="/dp/delete-outlier" method="post">
+      <div id='myDiv'></div>
+      <div class="row margin-100">
+        <div col-lg-4 col-md-4 col-sm-6 col-sm-12>
+          <div class="form-group div12 max-height">
+                <label for="exampleFormControlSelect1">Unique Outliers</label>
+                <ul>
+                    {% for outlier in unique_outliers %}
+                        <li>{{outlier}}</li>
+                    {% endfor %}
+                </ul>
+            </div>  
+        </div>
+        <div col-lg-4 col-md-4 col-sm-6 col-sm-12></div>
+        <div col-lg-4 col-md-4 col-sm-6 col-sm-12>
+            <div id='pieDiv'></div></div>
+        </div>
+     </div>
+     <div class="outlier-form">
+     <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-12 col-sm-12">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Select Outlier To Remove</label>
+                <select class="js-example-basic-multiple form-control" name="columns" id="columns" multiple="multiple">
+                    {% for outlier in unique_outliers %}
+                    <option value="{{outlier}}">{{outlier}}</option>
+                  {% endfor %}
+                  </select>
+              </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12 col-sm-12">
+            <div class="form-group form-check" style="margin-top: 30px;">
+                <input type="checkbox" class="form-check-input" name="deleteall" id="deleteall">
+                <label class="form-check-label"  for="deleteall">Delete All Values</label>
+              </div>
+              <input type="hidden" name="outlier_value" id="outlier_value"/>
+        </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <button type="button" class="btn btn-default" id="delete-btn" data-toggle="modal" data-target="#exampleModal">Remove Outliers</button>
+            </div>
+        </div>     
+    </div>
+        <!-- Delete Modal-->
+          <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Are you sure to delete??</h5>
+                </div>
+                <div class="modal-body">
+                    <p>If you delete the selected outliers then it will remove the all Records
+                        that contains these values.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-danger">Remove Selected Outliers</button>
+                </div>
+              </div>
+            </div>
+          </div>
+    </form>
+     {% endif %}
+      {% if outliercount==0 %}
+      <div class="alert alert-success">
+          <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+          <strong>Great!</strong> This Column doesn't contain outliers.
+      </div>
+      {% endif %}
+
+
+</div>
+<script type='text/javascript'>
+
+    var graphs = {{graphJSON | safe}};
+   Plotly.newPlot('myDiv',  graphs);
+
+   var pie_graphs = {{pie_graphJSON | safe}};
+   Plotly.newPlot('pieDiv',  pie_graphs);
+
+    $("#exampleFormControlSelect1").on('change',()=>{
+        var val=$("#exampleFormControlSelect1").val()
+
+        if(val=="iqr"){
+            $("#iqr_lower").show()
+            $("#iqr_upper").show()
+        }else{
+            $("#iqr_lower").hide()
+            $("#iqr_upper").hide()
+        }
+    })
+
+if($("#exampleFormControlSelect1").val()=='zscore'){
+    $("#iqr_lower").hide()
+    $("#iqr_upper").hide()
+}
+</script>
+<script>
+   $(document).ready(function() {
+    $('.dataframe').DataTable();
+    $('.js-example-basic-multiple').select2();
+    $("#deleteall").change((e)=>{
+        if($("#deleteall").is(':checked')){
+            $('select.js-example-basic-multiple option').attr('selected', true).parent().trigger('change')
+        }else{
+            $('select.js-example-basic-multiple option').attr('selected', false).parent().trigger('change')
+        }
+    })
+});
+</script>
+{% endblock %}
