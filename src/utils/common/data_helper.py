@@ -31,7 +31,7 @@ def update_data(df):
     try:
         filename=get_filename()
         os.remove(filename)
-        df.to_csv(filename)
+        df.to_csv(filename,index=False)
         return df
         
     except Exception as e:

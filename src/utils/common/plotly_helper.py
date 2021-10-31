@@ -49,3 +49,23 @@ class PlotlyHelper():
              return graphJSON
         except Exception as e:
             pass
+    
+    @staticmethod
+    def boxplot(df,y):
+        try:
+             fig = px.box(df, y=y)
+             graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+             return graphJSON
+        except Exception as e:
+            pass
+        
+    @staticmethod
+    def distplot(x,y):
+        try:
+             hist_data = [x]
+             group_labels = [y] # name of the dataset
+             fig = ff.create_distplot(hist_data, group_labels)
+             graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+             return graphJSON
+        except Exception as e:
+            pass
