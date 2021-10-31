@@ -1,6 +1,7 @@
 from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
+from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
@@ -10,8 +11,8 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from logger.logger import Logger
-from src.utils.common.data_helper import load_data
-from src.utils.modules.eda_helper import EDA
+from src.utils.common.data_helper import load_data, update_data
+from src.eda.eda_helper import EDA
 import numpy  as np
 import json
 import plotly
@@ -476,11 +477,104 @@ def eda_post(action):
             return redirect(url_for('/'))
     except Exception  as e:
         ProjectReports.insert_record_eda(e)
-
+            
+            
+@app.route('/dp/<action>')
+def data_preprocessing(action):
+    try:
+        if 'pid' in session:
+            df=None
+            df=load_data()
+            if df is not None:
+                if action=="delete-columns":
+                    log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
+                    return render_template('dp/delete_columns.html',columns=list(df.columns),action=action)
+                elif action=="outlier":
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return render_template('dp/outliers.html',columns=columns,action=action)
+                else:
+                    return render_template('eda/help.html')
+            else:
+                """Manage This"""
+                pass
+            
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
+            
+            
+@app.route('/dp/<action>',methods=['POST'])
+def data_preprocessing_post(action):
+    try:
+        if 'pid' in session:
+            df=None
+            df=load_data()
+            if df is not None:
+                if action=="delete-columns":
+                    columns = request.form.getlist('columns')
+                    df=Preprocessing.delete_col(df,columns)
+                    df=update_data(df)
+                    log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
+                    return render_template('dp/delete_columns.html',columns=list(df.columns),action=action,status='success')
+                
+                elif action=="outlier" or action=="delete-outlier":
+                    method = request.form['method']
+                    column = request.form['columns']
+                    lower=25
+                    upper=75
+                    graphJSON=""
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    outliers_list=[]
+                    if method=="iqr":
+                        # lower = request.form['lower']
+                        # upper = request.form['upper']
+                        result=EDA.outlier_detection_iqr(df.loc[:,[column]],int(lower),int(upper))
+                        if len(result)>0:
+                            graphJSON =  PlotlyHelper.boxplot(df,column)  
+                        data=result.to_html()
+                        
+                        outliers_list=EDA.outlier_detection(list(df.loc[:,column]),'iqr')
+                        unique_outliers=np.unique(outliers_list)
+                    else:
+                        result=EDA.z_score_outlier_detection(df.loc[:,[column]])
+                        if len(result)>0:
+                            graphJSON =  PlotlyHelper.distplot(list(df.loc[:,column]),column)  
+                        data=result.to_html()   
+                        
+                        outliers_list=EDA.outlier_detection(list(df.loc[:,column]),'z-score')
+                        unique_outliers=np.unique(outliers_list)
+                    
+                    df_outliers=pd.DataFrame(pd.Series(outliers_list).value_counts(),columns=['value']).reset_index(level=0)
+                    pie_graphJSON = PlotlyHelper.pieplot(df_outliers, names='index',values='value',title='Missing Values Count') 
+                    log.info(log_type='Outlier Report', log_message='Post: Redirect To Delete Columns!')
+                    return render_template('dp/outliers.html',columns=columns,method=method,selected_column=column,
+                                           outliers_list=outliers_list,unique_outliers=unique_outliers,pie_graphJSON=pie_graphJSON,
+                                           action=action,data=data,outliercount=result['Total outliers'][0],graphJSON=graphJSON)
+                elif action=="delete-outlier":
+                    values = request.form.getlist('columns')
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return render_template('dp/outliers.html',columns=columns,action="outlier",status="success")
+                
+                
+                else:
+                    return redirect('dp/help.html')
+            else:
+                """Manage This"""
+                pass
+            
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
+            
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("OOPS!!!!Somethong went wrong")
     else:
         app.run(host="127.0.0.1", port=5000, debug=True)
+
 
