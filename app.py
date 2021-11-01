@@ -1,8 +1,5 @@
-from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
-
-from imblearn import under_sampling
 from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
@@ -15,19 +12,14 @@ import pandas as pd
 from logger.logger import Logger
 from src.utils.common.data_helper import load_data, update_data
 from src.eda.eda_helper import EDA
-import numpy  as np
 import numpy as np
 import json
 import plotly
-import plotly.express as px
 import plotly.figure_factory as ff
 from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
-from lazypredict.Supervised import LazyRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -813,18 +805,8 @@ def model_training_post(action):
                     return render_template('model_training/help.html')
                 elif action == 'auto_training':
                     typ = 'Regression'
-                    df = pd.read_csv('AMES_Final_DF.csv')
-                    df = df[0:500]
-                    X = df.drop('SalePrice', axis=1)
-                    y = df['SalePrice']
-                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=123)
-                    scaler = StandardScaler()
-                    X_train = scaler.fit_transform(X_train)
-                    X_test = scaler.transform(X_test)
                     if typ == 'Regression':
-                        clf = LazyRegressor(verbose=0, ignore_warnings=True, custom_metric=None)
-                        models, predictions = clf.fit(X_train, X_test, y_train, y_test)
-                        return render_template('model_training/regression.html', data=predictions.sort_values('R-Squared',ascending=False)[:5])
+                        return render_template('model_training/regression.html')
                     elif typ == 'Classification':
                         pass
                     else:
