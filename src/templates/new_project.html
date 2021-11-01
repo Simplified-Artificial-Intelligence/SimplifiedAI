@@ -22,22 +22,42 @@
       </textarea>
 
       <!-- Upload File -->
-      <input class="" type="radio" name="resourceFileRadio" id="uploadFileRadio">
-      <label for="uploadFileRadio" class="label1"><b>Upload Your File:</b></label>
+      <input class="" type="radio" name="resourceFileRadio" id="uploadFile">
+      <label for="uploadFile" class="label1"><b>Upload Your File:</b></label>
       <input type="file" id="file" name="file">
       <p>allowed file *.csv, .tsv, .xml, .json</p>
       
 
       <!-- Other Resources -->
-      <input class="" type="radio" name="resourceFileRadio" id="resourceRadio">
-      <label for="resourceRadio" class="resource-file-label"><b>Upload From Various Resource:</b></label>
+      <input class="" type="radio" name="resourceFileRadio" id="uploadResource">
+      <label for="uploadResource" class="resource-file-label"><b>Upload From Various Resource:</b></label>
       <select class="form-control" name="resourceFile" id="resourceFile">
         <option value=""> Select any one </option>
         <option value="awsS3bucket"> AWS S3 Bucket </option>
         <option value="gcpStorage"> GCP Blob Storage </option>
         <option value="mySql"> MySql </option>
-      </select>      
+      </select>  
+      
+      <div id="awsS3bucket">
+        <label for="region_name" class="col-form-label"><b> Region Name </b></label>
+        <input type="text" class="form-control" id="region_name" name="region_name" placeholder="" required>
+        
+        <label for="aws_access_key_id" class="col-form-label"><b> AWS Access Key Id </b></label>
+        <input type="text" class="form-control" id="aws_access_key_id" name="aws_access_key_id" placeholder="" required>
+        
+        <label for="aws_secret_access_key" class="col-form-label"><b> AWS Secret Access Key </b></label>
+        <input type="text" class="form-control" id="aws_secret_access_key" name="aws_secret_access_key" placeholder="" required>
+        
+        <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
+        <input type="text" class="form-control" id="bucket_name" name="bucket_name" placeholder="" required>
+        
+        <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
+        <input type="text" class="form-control" id="file_name" name="file_name" placeholder="" required>
 
+        <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
+      </div>
+
+      
       <button class="btn btn-success" type="submit">Add Project</button>
       <a href="/">
         <button type="button" class="btn btn-danger back">Back</button>
@@ -48,7 +68,7 @@
   </form>
 
   <!-- Modal-->
-  <div class="modal fade" id="resourceModal" tabindex="-1" role="dialog" aria-labelledby="resourceModalLabel" aria-hidden="true">
+  <!-- <div class="modal fade" id="resourceModal" tabindex="-1" role="dialog" aria-labelledby="resourceModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document" style="max-width: 600px;">
       <div class="modal-content" style="color: black;">
         <div class="modal-header">
@@ -96,74 +116,80 @@
           
       </div>
     </div>
-  </div>
+  </div> -->
 
   <script>
     $(document).ready(function(){               //Make script DOM ready
-      var opval = ""            
+      var opval = "" 
+
+      $('#awsS3bucket').hide();  
+
       $('#resourceFile').change(function(e) {   //jQuery Change Function
         opval = $(this).val();                  //Get value from select element
-        if(opval=="awsS3bucket"){               //Compare it and if true
-          $('#resourceModal').modal("show");    //Open Modal
-        } else if(opval=="gcpStorage") {
-          $('#resourceModal').modal("show");
-        } else if(opval=="mySql") {
-          $('#resourceModal').modal("show");
-        }
+        $('#awsS3bucket').show();
+        // if(opval=="awsS3bucket"){               //Compare it and if true
+        //   $('#resourceModal').modal("show");    //Open Modal
+        // } else if(opval=="gcpStorage") {
+        //   $('#resourceModal').modal("show");
+        // } else if(opval=="mySql") {
+        //   $('#resourceModal').modal("show");
+        // }
       });
+
+      $('input:radio[id=uploadFile]').prop('checked', true);
+      $("label[for='uploadResource']").addClass('disabled-label');
+      $('#resourceFile').addClass('disabled-input');
+      $('#resourceFile').prop('disabled', true);
 
       var selectedRadio = ''
       $("input:radio[name=resourceFileRadio]").click(function(e) {
         selectedRadio = $(this)[0].id
         // console.log($(this))
-        if($(this)[0].id === "uploadFileRadio") {
+        if($(this)[0].id === "uploadFile") {
 
-          $("label[for='uploadFileRadio']").removeClass('disabled-label');
+          $("label[for='uploadFile']").removeClass('disabled-label');
           $('#file').removeClass('disabled-input');
           $('#file').prop('disabled', false);
 
-          $("label[for='resourceRadio']").addClass('disabled-label');
+          $("label[for='uploadResource']").addClass('disabled-label');
           $('#resourceFile').addClass('disabled-input');
           $('#resourceFile').prop('disabled', true);
           
-        } else if($(this)[0].id === "resourceRadio") {
+        } else if($(this)[0].id === "uploadResource") {
 
-          $("label[for='uploadFileRadio']").addClass('disabled-label');
+          $("label[for='uploadFile']").addClass('disabled-label');
           $('#file').addClass('disabled-input');
           $('#file').prop('disabled', true);
 
-          $("label[for='resourceRadio']").removeClass('disabled-label');
+          $("label[for='uploadResource']").removeClass('disabled-label');
           $('#resourceFile').removeClass('disabled-input');
           $('#resourceFile').prop('disabled', false);
         }
       })
 
-      $("#submitModal").click(function (event) {
+      $("#testConnection").click(function (event) {
           //stop submit the form, we will post it manually.
           event.preventDefault();
     
-          // Get form
-          var form = $('#awsForm')[0];
-    
-          // FormData object 
-          var data = new FormData(form);
-    
-          // If you want to add an extra field for the FormData
-          data.append("selected_radio", selectedRadio);
-          data.append("other_resource", opval);
-    
-          // disabled the submit button
-          // $("#btnSubmit").prop("disabled", true);
+          var formData = {
+            region_name: $("#region_name").val(),
+            aws_access_key_id: $("#aws_access_key_id").val(),
+            aws_secret_access_key: $("#aws_secret_access_key").val(),
+            bucket_name: $("#bucket_name").val(),
+            file_name: $("#file_name").val(),
+            resource_type: opval,
+            source_type: selectedRadio
+          };
 
-          var object = {};
-          data.forEach((value, key) => object[key] = value);
-          console.log(JSON.stringify(object))
+          // var object = {};
+          // data.forEach((value, key) => object[key] = value);
+          // console.log(JSON.stringify(object))
     
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/app/resource",
-              data: data,
+              url: "/app/test-connection",
+              data: JSON.stringify(formData),
               processData: false,
               contentType: false,
               cache: false,
