@@ -1,11 +1,12 @@
 {% extends 'project_base.html' %}
 {% block content %}
+
 <div class="table2">
     <div class="jumbotron text-center jumbtron">
-        <h1>Show Dataset</h1>
-        <p>Get table view of your data, with custom selection options.</p> 
+        <h1>Handle Date Time</h1>
+        <p>This Function helps you to create new feature and handle date time effectively!</p>
       </div>
-      <form action="/eda/{{action}}" method="post">
+      <form action="/feature_engineering/{{action}}" method="post">
         <div class="form-group">
             <label for="pwd">Select Number of Records:</label>
             <div class="slidecontainer">
@@ -28,28 +29,28 @@
             </div>
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
                 <div class="form-group">
-                    <label for="pwd">Select Order:</label>
+                    <label for="pwd">Select Date Time Type</label>
                     <div class="radio">
-                        <label><input type="radio" name="optradio" id="optradio" value="top" {% if topselected %}checked{% endif %}>Show Top Rows</label>
+                        <label><input type="radio" name="optradio" id="optradio" value="top" {% if dt_splitted %}checked{% endif %}>Date Time Splitted </label>
                       </div>
                       <div class="radio">
-                        <label><input type="radio" name="optradio" id="optradio" value="bottom"  {% if bottomSelected %}checked{% endif %}>Show Bottom Rows</label>
+                        <label><input type="radio" name="optradio" id="optradio" value="bottom"  {% if not_dt_splitted %}checked{% endif %}>Date Time not Splitted </label>
                       </div>
                 </div>
             </div>
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
                 <button type="submit" class="btn btn-default">Show Result</button>
             </div>
-            </div>
+        </div>
       </form>
-      <h3 class="result">Result</h3>
+      <h2 class="result">Result</h2>
       {{data | safe}}
 </div>
 <script>
     var slider = document.getElementById("range");
     var output = document.getElementById("demo");
     output.innerHTML = slider.value;
-    
+
     slider.oninput = function() {
       output.innerHTML = this.value;
     }

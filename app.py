@@ -9,13 +9,14 @@ from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
 import time
-from src.utils.common.common_helper import decrypt, read_config, unique_id_generator,Hashing,encrypt
+from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from logger.logger import Logger
 from src.utils.common.data_helper import load_data, update_data
 from src.eda.eda_helper import EDA
 import numpy  as np
+import numpy as np
 import json
 import plotly
 import plotly.express as px
@@ -24,6 +25,9 @@ from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
+from lazypredict.Supervised import LazyRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -57,7 +61,6 @@ mongodb = MongoHelper()
 template_dir = config_args['dir_structure']['template_dir']
 static_dir = config_args['dir_structure']['static_dir']
 
-
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
 log.info(log_type='INFO', log_message='App Started')
 
@@ -79,22 +82,22 @@ def context_processor():
 def index():
     try:
         if 'loggedin' in session:
-            query=f'''
+            query = f'''
             select tp.Id,tp.Name,tp.Description,tp.Cassandra_Table_Name,ts.Name,ts.Indetifier,tp.Pid
             from tblProjects as tp
             join tblProjectStatus as ts
             on ts.Id=tp.Status
             where tp.UserId={session.get('id')} and tp.IsActive=1
             order by 1 desc;'''
-            
+
             projects = mysql.fetch_all(query)
-            project_lists=[]
-            
+            project_lists = []
+
             for project in projects:
                 projectid = encrypt(f"{project[6]}&{project[0]}").decode("utf-8")
-                project_lists.append(project+(projectid,))
-                
-            return render_template('index.html',projects=project_lists)
+                project_lists.append(project + (projectid,))
+
+            return render_template('index.html', projects=project_lists)
         else:
             return redirect(url_for('login'))
     except Exception as e:
@@ -130,7 +133,7 @@ def project():
                 file_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 f.save(file_path)
                 timestamp = round(time.time() * 1000)
-                name=name.replace(" ","_")
+                name = name.replace(" ", "_")
                 table_name = f"{name}_{timestamp}"
                 
                 df=pd.read_csv(file_path)
@@ -171,7 +174,8 @@ def login():
             if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
                 email = request.form['email']
                 password = request.form['password']
-                account = mysql.fetch_one(f'SELECT * FROM tblUsers WHERE Email = "{email}" AND Password = "{Hashing.hash_value(password)}"')
+                account = mysql.fetch_one(
+                    f'SELECT * FROM tblUsers WHERE Email = "{email}" AND Password = "{Hashing.hash_value(password)}"')
                 if account:
                     session['loggedin'] = True
                     session['id'] = account[0]
@@ -219,7 +223,8 @@ def signup():
                 else:
                     hashed_password = Hashing.hash_value(password)
                     # PANKAJ AUTH TOKEN PENDING
-                    rowcount = mysql.insert_record(f'INSERT INTO tblUsers (Name, Email, Password, AuthToken) VALUES ("{username}", "{email}", "{hashed_password}", "pankajtest")')
+                    rowcount = mysql.insert_record(
+                        f'INSERT INTO tblUsers (Name, Email, Password, AuthToken) VALUES ("{username}", "{email}", "{hashed_password}", "pankajtest")')
                     log.info(log_type='INFO', log_message='Data added successful')
                     if rowcount > 0:
                         return redirect(url_for('login'))
@@ -269,14 +274,17 @@ def stream(pid):
         if data:
             values = data.split("&")
             session['pid'] = values[1]
-            session['project_name']=values[0]
+            session['project_name'] = values[0]
+            print(values[0], values[1])
             mongodb.get_collection_data(values[0])
+            print('inside data')
             return redirect(url_for('module'))
         else:
-             return redirect(url_for('/'))
-    except Exception  as e:
-            print(e)
-            
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
+
+
 @app.route('/module')
 def module():
     try:
@@ -284,15 +292,15 @@ def module():
             return render_template('help.html')
         else:
             return redirect(url_for('/'))
-    except Exception  as e:
-            print(e)
-            
+    except Exception as e:
+        print(e)
+
+
 @app.route('/eda/<action>')
 def eda(action):
     try:
         if 'pid' in session:
-            df=None
-            df=load_data()
+            df = load_data()
             if df is not None:
                 if action=="5point":
                     ProjectReports.insert_record_eda('5 Points Summary')
@@ -303,7 +311,8 @@ def eda(action):
                 elif action=="profiler":
                     ProjectReports.insert_record_eda('Profiler')
                     log.info(log_type='Show Profiler Report', log_message='Redirect To Eda Show Dataset!')
-                    pr = ProfileReport(df, explorative=True, minimal=True,correlations={"cramers": {"calculate": False}})
+                    pr = ProfileReport(df, explorative=True, minimal=True,
+                                       correlations={"cramers": {"calculate": False}})
                     pr.to_widgets()
                     pr.to_file("your_report.html")
                 elif action=="show":
@@ -331,10 +340,11 @@ def eda(action):
                 elif action=="outlier":
                     ProjectReports.insert_record_eda('Outlier')
                     log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                    df=EDA.z_score_outlier_detection(df)
-                    graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
-                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:10,:], names='Features',values='Total outliers',title='Top 10 Outliers')
-
+                    df = EDA.z_score_outlier_detection(df)
+                    graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
+                    pie_graphJSON = PlotlyHelper.pieplot(
+                        df.sort_values(by='Total outliers', ascending=False).loc[:10, :], names='Features',
+                        values='Total outliers', title='Top 10 Outliers')
                     data=df.to_html()
                     return render_template('eda/outliers.html',data=data,method='zscore',action=action,barplot=graphJSON,pieplot=pie_graphJSON)
                 
@@ -355,29 +365,27 @@ def eda(action):
                 else:
                     return render_template('eda/help.html')
             else:
-                """Manage This"""
-                pass
-            
+                return 'Hello'
+
         else:
             return redirect(url_for('/'))
     except Exception as e:
         ProjectReports.insert_record_eda(e)
         print(e)
 
-@app.route('/eda/<action>',methods=['POST'])
+
+@app.route('/eda/<action>', methods=['POST'])
 def eda_post(action):
     try:
         if 'pid' in session:
-            df=None
-            df=load_data()
+            df = load_data()
             if df is not None:
-                if action=="show":
+                if action == "show":
                     range = request.form['range']
                     optradio = request.form['optradio']
-                    columns_for_list=df.columns
+                    columns_for_list = df.columns
                     columns = request.form.getlist('columns')
                     log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
-
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Show', input=input_str)
                     
@@ -397,31 +405,31 @@ def eda_post(action):
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Correlation', input=input_str)
                     
-                    if method is not None:                            
+                    if method is not None:
                         # df=df.loc[:,columns]
-                        _corr=EDA.correlation_report(df,method)
-                        if len(columns) ==0:
-                            columns=_corr.columns
-                        
-                        _corr=_corr.loc[:,columns]
-                        _data=list(np.around(np.array(_corr.values),2))
+                        _corr = EDA.correlation_report(df, method)
+                        if len(columns) == 0:
+                            columns = _corr.columns
+
+                        _corr = _corr.loc[:, columns]
+                        _data = list(np.around(np.array(_corr.values), 2))
                         fig = ff.create_annotated_heatmap(_data, x=list(_corr.columns),
-                                                        y=list(_corr.index), colorscale='Viridis')
+                                                          y=list(_corr.index), colorscale='Viridis')
                         # fig = ff.create_annotated_heatmap(_data, colorscale='Viridis')
                         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                        return render_template('eda/correlation.html',data=graphJSON,
-                                               columns=list(df.columns),action=action,method=method)
+                        return render_template('eda/correlation.html', data=graphJSON,
+                                               columns=list(df.columns), action=action, method=method)
                     else:
                         return render_template('eda/help.html')
-                    
-                elif action=="outlier":
+
+                elif action == "outlier":
                     method = request.form['method']
-                    lower=25
-                    upper=75
-                    if method=="iqr":
+                    lower = 25
+                    upper = 75
+                    if method == "iqr":
                         lower = request.form['lower']
                         upper = request.form['upper']
-                        df=EDA.outlier_detection_iqr(df,int(lower),int(upper))
+                        df = EDA.outlier_detection_iqr(df, int(lower), int(upper))
                     else:
                         df=EDA.z_score_outlier_detection(df)
 
@@ -430,17 +438,17 @@ def eda_post(action):
                     
                     graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
                     pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:9,:], names='Features',values='Total outliers',title='Top 10 Outliers')    
-                    
+
                     log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                    data=df.to_html()
-                    return render_template('eda/outliers.html',data=data,method=method,action=action,lower=lower,upper=upper,barplot=graphJSON,pieplot=pie_graphJSON)
-                
-                elif action=="plots":
+                    data = df.to_html()
+                    return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
+                                           upper=upper, barplot=graphJSON, pieplot=pie_graphJSON)
+
+                elif action == "plots":
                     """All Polots for all kind of features????"""
                     selected_graph_type = request.form['graph']
                     x_column = request.form['xcolumn']
                     y_column = request.form['ycolumn']
-
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Plot', input=input_str)
                     
@@ -468,13 +476,13 @@ def eda_post(action):
                     return render_template('eda/plots.html',selected_graph_type=selected_graph_type,
                                            columns=list(df.columns),graphs_2d=TWO_D_GRAPH_TYPES,
                                            action=action,graphJSON=graphJSON,x_column=x_column,y_column=y_column)
-                
+
                 else:
                     return render_template('eda/help.html')
             else:
                 """Manage This"""
                 pass
-            
+
         else:
             return redirect(url_for('/'))
     except Exception  as e:
@@ -659,6 +667,179 @@ def data_preprocessing_post(action):
     except Exception  as e:
             print(e)
             
+    except Exception as e:
+        print(e)
+
+
+@app.route('/feature_engineering/<action>', methods=['GET'])
+def feature_engineering(action):
+    try:
+        if 'pid' in session:
+            df = load_data()
+            if df is not None:
+                data = df.head().to_html()
+                if action == 'help':
+                    return render_template('feature_engineering/help.html')
+                elif action == 'handleDatetime':
+                    dt_splitted = False
+                    not_dt_splitted = True
+                    selectedCount = 100
+                    return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
+                                           not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
+                                           selectedCount=selectedCount, columns=df.columns)
+                elif action == 'encoding':
+                    return render_template('feature_engineering/encoding.html', data=data, columns=df.columns, action=action)
+                elif action == 'scaling':
+                    return render_template('feature_engineering/scaling.html', data=data)
+                elif action == 'feature_selection':
+                    return render_template('feature_engineering/feature_selection.html', data=data)
+                elif action == 'dimension_reduction':
+                    return render_template('feature_engineering/dimension_reduction.html', data=data)
+                elif action == 'train_test_split':
+                    return render_template('feature_engineering/train_test_split.html', data=data)
+                else:
+                    return 'Non-Implemented Action'
+            else:
+                return 'No Data'
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
+
+
+@app.route('/feature_engineering/<action>', methods=['POST'])
+def feature_engineering_post(action):
+    try:
+        if 'pid' in session:
+            df = load_data()
+            if df is not None:
+                data = df.head().to_html()
+                if action == 'help':
+                    return render_template('feature_engineering/help.html')
+                
+                elif action == 'handleDatetime':
+                    dt_splitted = False
+                    not_dt_splitted = True
+                    selectedCount = 100
+                    columns = request.form.getlist('columns')
+                    print(columns)
+                    data = df[columns].to_html()
+                    return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
+                                           not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
+                                           selectedCount=selectedCount, columns=df.columns)
+                elif action == 'encoding':
+                    return render_template('feature_engineering/encoding.html', data=data)
+                elif action == 'scaling':
+                    return render_template('feature_engineering/scaling.html', data=data)
+                elif action == 'feature_selection':
+                    return render_template('feature_engineering/feature_selection.html', data=data)
+                elif action == 'dimension_reduction':
+                    return render_template('feature_engineering/dimension_reduction.html', data=data)
+                elif action == 'train_test_split':
+                    return render_template('feature_engineering/train_test_split.html', data=data)
+                else:
+                    return 'Non-Implemented Action'
+            else:
+                return 'No Data'
+        else:
+            return redirect(url_for('/'))
+
+    except Exception as e:
+        print(e)
+
+
+@app.route('/systemlogs/<action>', methods=['GET'])
+def systemlogs(action):
+    try:
+        if action == 'terminal':
+            lines = []
+            with open(r"C:\Users\ketan\Desktop\Project\Projectathon\logger\logs\logs.log") as file_in:
+                for line in file_in:
+                    lines.append(line)
+            print(lines)
+            file_in.close()
+            return render_template('systemlogs/terminal.html', logs=lines)
+        else:
+            return 'Not Visible'
+    except Exception as e:
+        print(e)
+
+
+@app.route('/model_training/<action>', methods=['GET'])
+def model_training(action):
+    try:
+        if 'pid' in session:
+            df = load_data()
+            if df is not None:
+                if action == 'help':
+                    return render_template('model_training/help.html')
+                elif action == 'auto_training':
+                    ProjectReports.insert_record_eda('Show Dataset')
+                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
+                    data=EDA.get_no_records(df,100)
+                    data=data.to_html()
+                    topselected=True
+                    bottomSelected=False
+                    selectedCount=100
+                    return render_template('model_training/auto_training.html',data=data,length=len(df),
+                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
+                elif action == 'custom_training':
+                    typ = "Classification"
+                    if typ == "Regression":
+                        return render_template('model_training/regression.html')
+                    elif typ == "Classification":
+                        return render_template('model_training/classification.html')
+                    elif typ == "Clustering":
+                        return render_template('model_training/clustering.html')
+                    else:
+                        return render_template('model_training/custom_training.html')
+                else:
+                    return 'Non-Implemented Action'
+            else:
+                return 'No Data'
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
+
+
+@app.route('/model_training/<action>', methods=['POST'])
+def model_training_post(action):
+    try:
+        if 'pid' in session:
+            df = load_data()
+            if df is not None:
+                if action == 'help':
+                    return render_template('model_training/help.html')
+                elif action == 'auto_training':
+                    typ = 'Regression'
+                    df = pd.read_csv('AMES_Final_DF.csv')
+                    df = df[0:500]
+                    X = df.drop('SalePrice', axis=1)
+                    y = df['SalePrice']
+                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=123)
+                    scaler = StandardScaler()
+                    X_train = scaler.fit_transform(X_train)
+                    X_test = scaler.transform(X_test)
+                    if typ == 'Regression':
+                        clf = LazyRegressor(verbose=0, ignore_warnings=True, custom_metric=None)
+                        models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+                        return render_template('model_training/regression.html', data=predictions.sort_values('R-Squared',ascending=False)[:5])
+                    elif typ == 'Classification':
+                        pass
+                    else:
+                        return render_template('model_training/auto_training.html')
+                elif action == 'custom_training':
+                    return render_template('model_training/custom_training.html')
+                else:
+                    return 'Non-Implemented Action'
+            else:
+                return 'No Data'
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
+
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:

@@ -1,0 +1,177 @@
+{% extends 'project_base.html' %}
+{% block content %}
+<div class="table2">
+    <div class="jumbotron text-center jumbtron">
+        <h1>Regression Models</h1>
+        <p>Trains your data using regression models</p> 
+      </div>
+
+      <form action="/model_training/{{action}}" method="post">
+        <div class="form-group">
+            <label for="exampleFormControlSelect1">Select Model</label>
+            <select class="form-control" id="exampleFormControlSelect1" name="model">
+                <option value="linear">Linear Regression</option>
+                <option value="ridge">Ridge Regression</option>
+                <option value="lassso">Lasso Regression</option>
+                <option value="elastic">Elastic Net Regression</option>
+                <option value="polynomial">Polynomial Regression</option>
+                <option value="decision_tree">Decision Tree Regressor</option>
+                <option value="random_forest">Random Forest Regressor</option>
+                <option value="svr">Support Vector Regressor</option>
+                <option value="adr">AdaBoost Regressor</option>
+                <option value="gbr">Gradient Boost Regressor</option>
+            </select>
+        </div>
+
+            <div>
+                
+                  <script src=
+                "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js">
+                  </script>
+                 
+                  
+                  <script>
+                    $(document).ready(function () {
+                  
+                      // Denotes total number of rows
+                      var rowIdx = 0;
+                  
+                      // jQuery button click event to add a row
+                      $('#addBtn').on('click', function () {
+                  
+                        // Adding a row inside the tbody.
+                        $('#tbody').append(`<tr id="R${++rowIdx}">
+                             <td class="row-index text-center">
+                             <p>Row ${rowIdx}</p>
+                             </td>
+                              <td class="text-center">
+                                <button class="btn btn-danger remove"
+                                  type="button">Remove</button>
+                                </td>
+                              </tr>`);
+                      });
+                  
+                      // jQuery button click event to remove a row.
+                      $('#tbody').on('click', '.remove', function () {
+                  
+                        // Getting all the rows next to the row
+                        // containing the clicked button
+                        var child = $(this).closest('tr').nextAll();
+                  
+                        // Iterating across all the rows 
+                        // obtained to change the index
+                        child.each(function () {
+                  
+                          // Getting <tr> id.
+                          var id = $(this).attr('id');
+                  
+                          // Getting the <p> inside the .row-index class.
+                          var idx = $(this).children('.row-index').children('p');
+                  
+                          // Gets the row number from <tr> id.
+                          var dig = parseInt(id.substring(1));
+                  
+                          // Modifying row index.
+                          idx.html(`Row ${dig - 1}`);
+                  
+                          // Modifying row id.
+                          $(this).attr('id', `R${dig - 1}`);
+                        });
+                  
+                        // Removing the current row.
+                        $(this).closest('tr').remove();
+                  
+                        // Decreasing total number of rows by 1.
+                        rowIdx--;
+                      });
+                    });
+                  </script>
+                </head>
+                  
+                <body>
+                  <div class="container pt-4">
+                    <div class="table-responsive">
+                      <table class="table table-bordered">
+                        <thead>
+                          <tr>
+                            <th class="text-center">Row Number</th>
+                            <th class="text-center">Remove Row</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tbody">
+                  
+                        </tbody>
+                      </table>
+                    </div>
+                    <button class="btn btn-md btn-primary" 
+                      id="addBtn" type="button">
+                        Add new Row
+                    </button>
+                  </div>
+        
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <button type="submit" class="btn btn-default">Show Result</button>
+        </div>
+        </div>
+    </form>
+
+        
+      <h3 class="result">Result</h3>
+      {{data | safe}}
+</div>
+<script>
+    var slider = document.getElementById("range");
+    var output = document.getElementById("demo");
+    output.innerHTML = slider.value;
+    
+    slider.oninput = function() {
+      output.innerHTML = this.value;
+    }
+    </script>
+    <script>
+        $(document).ready(function() {
+        $('.dataframe').DataTable({
+            "sScrollX": "100%",
+            "bScrollCollapse": true,
+        });
+    } );
+
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+    </script>
+{% endblock %}
+
+
+
+        <!-- <div class="form-group">
+            <label for="exampleFormControlSelect1">Select Dataset</label>
+            <select class="form-control" id="exampleFormControlSelect1" name="dataset">
+                <option value="dataset1">Dataset 1</option>
+                <option value="dataset2">Dataset 2</option>
+                <option value="dataset3">Dataset 3</option>
+                <option value="dataset4">Dataset 4</option>
+                <option value="dataset5">Dataset 5</option>
+            </select>
+        </div> -->
+        <!-- <div class="form-group">
+            <label for="exampleFormControlSelect1">Select Target</label>
+            <select class="form-control" id="exampleFormControlSelect1" name="target">
+                <option value="target1">Target 1</option>
+                <option value="target2">Target 2</option>
+                <option value="target3">Target 3</option>
+                <option value="target4">Target 4</option>
+                <option value="target5">Target 5</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="exampleFormControlSelect1">Select Features</label>
+            <select class="form-control" id="exampleFormControlSelect1" name="features">
+                <option value="feature1">Feature 1</option>
+                <option value="feature2">Feature 2</option>
+                <option value="feature3">Feature 3</option>
+                <option value="feature4">Feature 4</option>
+                <option value="feature5">Feature 5</option>
+            </select>   
+        </div> -->
+        <!-- create form connected to linear regression -->

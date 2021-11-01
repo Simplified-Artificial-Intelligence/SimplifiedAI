@@ -2,12 +2,13 @@ import os
 from flask import session
 import pandas as pd
 
-updated_time=None
+updated_time = None
+
 
 def get_filename():
     try:
-        project_name=session.get('project_name')
-        filename=os.path.join(os.path.join('src','data'),f"{project_name}.csv")
+        project_name = session.get('project_name')
+        filename = os.path.join(os.path.join('src', 'data'), f"{project_name}.csv")
         return filename
         
     except Exception as e:
@@ -18,8 +19,8 @@ def get_filename():
     
 def load_data():
     try:
-        filename=get_filename()
-        df=pd.read_csv(filename)
+        filename = get_filename()
+        df = pd.read_csv(filename)
         return df
         
     except Exception as e:
@@ -27,9 +28,10 @@ def load_data():
     finally:
         pass
 
+
 def update_data(df):
     try:
-        filename=get_filename()
+        filename = get_filename()
         os.remove(filename)
         df.to_csv(filename,index=False)
         return df
@@ -38,7 +40,3 @@ def update_data(df):
         print(e)
     finally:
         pass
-    
-
-
-

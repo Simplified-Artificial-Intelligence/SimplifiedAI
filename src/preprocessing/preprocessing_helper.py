@@ -147,10 +147,6 @@ class Preprocessing():
         else:
             pass
 
-
-
-
-
     @staticmethod
     def balance_data(df, kind: str, target):
         if len(df[(df[target] == 0)]) >= df[(df[target] == 1)]:
@@ -203,7 +199,7 @@ class Preprocessing():
         return new_df
     
     @staticmethod
-    def handle_high_variance(f, var_range):
+    def handle_high_variance(df, var_range):
         Categorical_columns = df.select_dtypes(include='object')
         df = df.drop(Categorical_columns, axis=1, inplace=True)
         normalize_df = normalize(df)
