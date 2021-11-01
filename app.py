@@ -20,7 +20,9 @@ from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
-
+from src.model.auto.Auto_regression import ModelTrain_Regression
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
 
@@ -766,15 +768,8 @@ def model_training(action):
                 if action == 'help':
                     return render_template('model_training/help.html')
                 elif action == 'auto_training':
-                    ProjectReports.insert_record_eda('Show Dataset')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
-                    data=EDA.get_no_records(df,100)
-                    data=data.to_html()
-                    topselected=True
-                    bottomSelected=False
-                    selectedCount=100
-                    return render_template('model_training/auto_training.html',data=data,length=len(df),
-                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
+                    data = df.head().to_html()
+                    return render_template('model_training/auto_training.html', data=data)
                 elif action == 'custom_training':
                     typ = "Classification"
                     if typ == "Regression":
@@ -801,14 +796,23 @@ def model_training_post(action):
         if 'pid' in session:
             df = load_data()
             if df is not None:
+
                 if action == 'help':
                     return render_template('model_training/help.html')
                 elif action == 'auto_training':
                     typ = 'Regression'
                     if typ == 'Regression':
-                        return render_template('model_training/regression.html')
+                        df = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\AMES_Final_DF.csv')
+                        X = df.drop('SalePrice', axis=1)
+                        y = df['SalePrice']
+                        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=42)
+                        scaler = StandardScaler()
+                        X_train = scaler.fit_transform(X_train)
+                        X_test = scaler.transform(X_test)
+                        data = ModelTrain_Regression(X_train, X_test, y_train, y_test, True)
+                        return render_template('model_training/auto_training.html', data=data.results().to_html())
                     elif typ == 'Classification':
-                        pass
+                        return render_template('model_training/auto_training.html')
                     else:
                         return render_template('model_training/auto_training.html')
                 elif action == 'custom_training':
