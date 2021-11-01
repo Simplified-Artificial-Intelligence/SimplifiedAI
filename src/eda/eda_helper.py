@@ -1,13 +1,14 @@
 import pandas as pd
 import numpy as np
 from math import floor
+from sklearn.preprocessing import StandardScaler
 
 """[summary]
 Class for EDA Operations
 Returns:
     [type]: [description]
 """
-class EDA:
+class EDA():
     data_types = ['bool', "int_", "int8", "int16", "int32", "int64", "uint8", "uint16",
                  "uint32", "uint64", "float_","float16", "float32", "float64" ]
     

@@ -1,0 +1,39 @@
+{% extends 'project_base.html' %}
+{% block content %}
+<div class="table2">
+    <div class="jumbotron text-center jumbtron">
+        <h1>Automatic ML Model Training</h1>
+        <p> On this module you can train the spcefied ML types automatically .</p> 
+      </div>
+
+
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <button type="submit" class="btn btn-default">Start Automated Training</button>
+            </div>
+            </div>
+      </form>
+    </br>
+      <h3 class="result">Result</h3>
+</div>
+<script>
+    var slider = document.getElementById("range");
+    var output = document.getElementById("demo");
+    output.innerHTML = slider.value;
+    
+    slider.oninput = function() {
+      output.innerHTML = this.value;
+    }
+    </script>
+    <script>
+        $(document).ready(function() {
+        $('.dataframe').DataTable({
+            "sScrollX": "100%",
+            "bScrollCollapse": true,
+        });
+    } );
+
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
+    </script>
+{% endblock %}

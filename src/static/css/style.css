@@ -193,6 +193,23 @@ width:60px
   padding-bottom: 10px;
 }
 
+.eda-image{
+
+}
+
+.terminal{
+    background-color: black;
+    margin-top: 51px;
+    height: 500px;
+}
+
+.terminal_table{
+    margin-left: 5rem;
+    margin-right: 5rem;
+    height: 200px;
+
+}
+
 .slidecontainer {
   width: 100%;
 }
@@ -267,4 +284,19 @@ width:60px
     padding-top: 25px;
     padding-bottom: 25px;
     padding-left: 30px;
+}
+
+.imbalance-form{
+  color: #fff;
+    align-items: center;
+    margin-top: 30px;
+    background-color: #212529c7;
+    border-radius: 12px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    padding-left: 30px;
+    width: 100%;
+}
+.margin-23{
+  margin-top: 22px !important;
 }
