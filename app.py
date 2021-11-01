@@ -1,6 +1,8 @@
 from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
+
+from imblearn import under_sampling
 from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
@@ -125,13 +127,13 @@ def project():
                     return render_template('new_project.html', msg=msg)
 
                 filename = secure_filename(f.filename)
-                f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                file_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                f.save(file_path)
                 timestamp = round(time.time() * 1000)
                 name=name.replace(" ","_")
                 table_name = f"{name}_{timestamp}"
-                file = f"src/store/{filename}"
                 
-                df=pd.read_csv(file)
+                df=pd.read_csv(file_path)
                 project_id=unique_id_generator()
                 inserted_rows=mongodb.create_new_project(project_id,df)
                                
@@ -499,11 +501,21 @@ def data_preprocessing(action):
                     columns=Preprocessing.col_seperator(df,'Numerical_columns')
                     log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
                     return render_template('dp/outliers.html',columns=columns,action=action)
+
+                elif action=="missing-values":
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return render_template('dp/missing_values.html',columns=columns,action=action)
                 
                 elif  action=="delete-outlier" or action=="remove-duplicate-data":
                     columns=Preprocessing.col_seperator(df,'Numerical_columns')
                     log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
                     return redirect(('/dp/outlier'))
+                        
+                elif  action=="imbalance-data":
+                    columns=list(df.columns)
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handle Imbalance Data!')
+                    return render_template('dp/handle_imbalance.html',action=action,columns=columns)
                 else:
                     return render_template('eda/help.html')
             else:
@@ -522,6 +534,7 @@ def data_preprocessing_post(action):
         if 'pid' in session:
             df=None
             df=load_data()
+            template='dp/help.html'
             if df is not None:
                 if action=="delete-columns":
                     columns = request.form.getlist('columns')
@@ -604,6 +617,36 @@ def data_preprocessing_post(action):
                     log.info(log_type='Delete Outlier', log_message='Redirect To Handler Outlier!')
                     return render_template('dp/outliers.html',columns=columns,action="outlier",status="success")
                 
+                elif action=="imbalance-data":
+                    try:
+                        if 'perform_action' in request.form:
+                            target_column=request.form['target_column']
+                            method=request.form['method']
+                            range=request.form['range']
+                            
+                            if method=='OS':
+                                new_df=Preprocessing.over_sample(df,target_column,float(range))
+                            elif method=='US':
+                                new_df=Preprocessing.under_sample(df,target_column,float(range))   
+                            else:
+                                new_df=Preprocessing.smote_technique(df,target_column,float(range)) 
+                            
+                            df=update_data(new_df)  
+                            return render_template('dp/handle_imbalance.html',columns=list(df.columns),target_column=target_column,success=True)
+                        else:
+                            target_column=request.form['target_column']
+                            df_counts=pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
+                            y=list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
+                            graphJSON =  PlotlyHelper.barplot(df_counts, x=target_column,y=y)
+                            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=target_column,values=y,title='')
+                            
+                            log.info(log_type='Delete Outlier', log_message='Redirect To Handler Outlier!')
+                            return render_template('dp/handle_imbalance.html',columns=list(df.columns),target_column=target_column,action="imbalance-data",
+                                                pie_graphJSON=pie_graphJSON,graphJSON=graphJSON,perform_action=True)
+                                
+                    except Exception as e:
+                         return render_template('dp/handle_imbalance.html',action=action,columns=list(df.columns),error=str(e))
+                        
                 
                 else:
                     return redirect('dp/help.html')
