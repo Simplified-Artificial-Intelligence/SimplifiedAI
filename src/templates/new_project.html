@@ -99,10 +99,10 @@
   </div>
 
   <script>
-    $(document).ready(function(){   
-      var opval = ""            //Make script DOM ready
+    $(document).ready(function(){               //Make script DOM ready
+      var opval = ""            
       $('#resourceFile').change(function(e) {   //jQuery Change Function
-        opval = $(this).val();              //Get value from select element
+        opval = $(this).val();                  //Get value from select element
         if(opval=="awsS3bucket"){               //Compare it and if true
           $('#resourceModal').modal("show");    //Open Modal
         } else if(opval=="gcpStorage") {
