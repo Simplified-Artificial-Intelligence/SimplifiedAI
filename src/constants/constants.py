@@ -1,1 +1,5 @@
 TWO_D_GRAPH_TYPES=["Bar Graph", "Histogram" ,"Scatter Plot", "Pie Chart",   "Line Chart"]
+encoding_list = ["Label/Ordinal Encoder", "One Hot Encoder", "Hash Encoder", "Target Encoder"]
+scaling_list = ["Standard Scaler", "Min Max Scaler", "Max Abs Scaler", "Robust Scaler"]
+feature_selection_list = ["SelectKBest", "Extra Trees Classifier", "Extra Trees Regressor", "SelectFpr", "SelectFdr", "SelectFwe"]
+dimenstion_reduction_list = ["PCA"]
