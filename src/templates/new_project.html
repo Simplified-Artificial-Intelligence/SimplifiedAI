@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <form class="project-form" enctype = "multipart/form-data">
+  <form id="project_form" class="project-form" enctype = "multipart/form-data">
 
     <div class="container col-lg-6 col-sm-6">
       {% if msg %}
@@ -15,21 +15,21 @@
       <h3 class="header">Add New project</h3>
 
       <label for="name"><b>Name:</b></label>
-      <input type="text" placeholder="Add your project name" name="name" id="project_name" required>
+      <input type="text" placeholder="Add your project name" name="project_name" id="project_name" required>
 
       <label for="description"><b>Description</b></label>
-      <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="description" id="project_desc" required >
+      <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="project_desc" id="project_desc" required >
       </textarea>
 
       <!-- Upload File -->
-      <input class="" type="radio" name="resourceFileRadio" id="uploadFile">
+      <input class="" type="radio" name="uploadFile" id="uploadFile">
       <label for="uploadFile" class="label1"><b>Upload Your File:</b></label>
       <input type="file" id="file" name="file">
       <p>allowed file *.csv, .tsv, .xml, .json</p>
       
 
       <!-- Other Resources -->
-      <input class="" type="radio" name="resourceFileRadio" id="uploadResource">
+      <input class="" type="radio" name="uploadResource" id="uploadResource">
       <label for="uploadResource" class="resource-file-label"><b>Upload From Various Resource:</b></label>
       <select class="form-control" name="resourceFile" id="resourceFile">
         <option value=""> Select any one </option>
@@ -140,32 +140,36 @@
       $("label[for='uploadResource']").addClass('disabled-label');
       $('#resourceFile').addClass('disabled-input');
       $('#resourceFile').prop('disabled', true);
+      var selectedRadio = $('input:radio[id=uploadFile]')[0].id
 
-      var selectedRadio = ''
-      $("input:radio[name=resourceFileRadio]").click(function(e) {
+      $("input:radio[name=uploadFile]").click(function(e) {
         selectedRadio = $(this)[0].id
-        // console.log($(this))
-        if($(this)[0].id === "uploadFile") {
-          $('#awsS3bucket').hide();
 
-          $("label[for='uploadFile']").removeClass('disabled-label');
-          $('#file').removeClass('disabled-input');
-          $('#file').prop('disabled', false);
+        $('#awsS3bucket').hide();
 
-          $("label[for='uploadResource']").addClass('disabled-label');
-          $('#resourceFile').addClass('disabled-input');
-          $('#resourceFile').prop('disabled', true);
+        $("label[for='uploadFile']").removeClass('disabled-label');
+        $('#file').removeClass('disabled-input');
+        $('#file').prop('disabled', false);
+
+        $('input:radio[id=uploadResource]').prop('checked', false);
+        $("label[for='uploadResource']").addClass('disabled-label');
+        $('#resourceFile').addClass('disabled-input');
+        $('#resourceFile').prop('disabled', true);
           
-        } else if($(this)[0].id === "uploadResource") {
+      })
 
-          $("label[for='uploadFile']").addClass('disabled-label');
-          $('#file').addClass('disabled-input');
-          $('#file').prop('disabled', true);
+      $("input:radio[name=uploadResource]").click(function(e) {
+        selectedRadio = $(this)[0].id
 
-          $("label[for='uploadResource']").removeClass('disabled-label');
-          $('#resourceFile').removeClass('disabled-input');
-          $('#resourceFile').prop('disabled', false);
-        }
+        $('input:radio[id=uploadFile]').prop('checked', false);
+        $("label[for='uploadFile']").addClass('disabled-label');
+        $('#file').addClass('disabled-input');
+        $('#file').prop('disabled', true);
+
+        $("label[for='uploadResource']").removeClass('disabled-label');
+        $('#resourceFile').removeClass('disabled-input');
+        $('#resourceFile').prop('disabled', false);
+
       })
 
       $("#testConnection").click(function (event) {
@@ -211,28 +215,30 @@
       $("#addProject").click(function (event) {
           //stop submit the form, we will post it manually.
           event.preventDefault();
-    
-          var formData = {
-            project_name: $("#project_name").val(),
-            project_desc: $("#project_desc").val(),
-            region_name: $("#region_name").val(),
-            aws_access_key_id: $("#aws_access_key_id").val(),
-            aws_secret_access_key: $("#aws_secret_access_key").val(),
-            bucket_name: $("#bucket_name").val(),
-            file_name: $("#file_name").val(),
-            resource_type: opval,
-            source_type: selectedRadio
-          };
 
-          // var object = {};
-          // data.forEach((value, key) => object[key] = value);
-          // console.log(JSON.stringify(object))
+          // Get form
+          var form = $('#project_form')[0];
+         
+          // FormData object 
+          var data = new FormData(form);
+    
+          // If you want to add an extra field for the FormData
+          data.append("resource_type", opval);
+          data.append("source_type", selectedRadio);
+    
+          // disabled the submit button
+          // $("#btnSubmit").prop("disabled", true);
+
+          // console the Form Data
+          var object = {};
+          data.forEach((value, key) => object[key] = value);
+          console.log(JSON.stringify(object))
     
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
               url: "/project",
-              data: JSON.stringify(formData),
+              data: data,
               processData: false,
               contentType: false,
               cache: false,

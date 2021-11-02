@@ -112,9 +112,10 @@ def project():
             if request.method == "GET":
                 return render_template('new_project.html', loggedin=True)
             else:
-                name = request.form['name']
-                description = request.form['description']
-                f = request.files['file']
+                name = request.form['project_name']
+                description = request.form['project_desc']
+                if len(request.files) > 0:
+                    f = request.files['file']
 
                 ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json', 'xml']
                 msg = ''
