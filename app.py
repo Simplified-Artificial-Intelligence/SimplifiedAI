@@ -598,7 +598,7 @@ def model_training(action):
                     return render_template('model_training/auto_training.html',data=data,length=len(df),
                                            bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
                 elif action == 'custom_training':
-                    typ = "Classification"
+                    typ = "Regression"
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
@@ -627,10 +627,10 @@ def model_training_post(action):
                     return render_template('model_training/help.html')
                 elif action == 'auto_training':
                     typ = 'Regression'
-                    df = pd.read_csv('AMES_Final_DF.csv')
+                    df = pd.read_csv('bitcoin_price.csv')
                     df = df[0:500]
-                    X = df.drop('SalePrice', axis=1)
-                    y = df['SalePrice']
+                    X = df.drop('Market Cap', axis=1)
+                    y = df['Market Cap']
                     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=123)
                     scaler = StandardScaler()
                     X_train = scaler.fit_transform(X_train)
@@ -642,6 +642,7 @@ def model_training_post(action):
                     elif typ == 'Classification':
                         pass
                     else:
+                        pass
                         return render_template('model_training/auto_training.html')
                 elif action == 'custom_training':
                     return render_template('model_training/custom_training.html')
