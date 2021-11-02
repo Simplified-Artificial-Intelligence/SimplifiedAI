@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <form action="/project" method="post" class="project-form" enctype = "multipart/form-data">
+  <form class="project-form" enctype = "multipart/form-data">
 
     <div class="container col-lg-6 col-sm-6">
       {% if msg %}
@@ -15,10 +15,10 @@
       <h3 class="header">Add New project</h3>
 
       <label for="name"><b>Name:</b></label>
-      <input type="text" placeholder="Add your project name" name="name" required>
+      <input type="text" placeholder="Add your project name" name="name" id="project_name" required>
 
       <label for="description"><b>Description</b></label>
-      <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="description" required >
+      <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="description" id="project_desc" required >
       </textarea>
 
       <!-- Upload File -->
@@ -58,7 +58,7 @@
       </div>
 
       
-      <button class="btn btn-success" type="submit">Add Project</button>
+      <button class="btn btn-success" type="button" id="addProject">Add Project</button>
       <a href="/">
         <button type="button" class="btn btn-danger back">Back</button>
       </a>
@@ -146,6 +146,7 @@
         selectedRadio = $(this)[0].id
         // console.log($(this))
         if($(this)[0].id === "uploadFile") {
+          $('#awsS3bucket').hide();
 
           $("label[for='uploadFile']").removeClass('disabled-label');
           $('#file').removeClass('disabled-input');
@@ -188,7 +189,49 @@
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/app/test-connection",
+              url: "/project",
+              data: JSON.stringify(formData),
+              processData: false,
+              contentType: false,
+              cache: false,
+              timeout: 800000,
+              success: function (data) {
+                  $("#output").text(data);
+                  console.log("SUCCESS : ", data);
+                  $("#btnSubmit").prop("disabled", false);
+              },
+              error: function (e) {
+                  $("#output").text(e.responseText);
+                  console.log("ERROR : ", e);
+                  $("#btnSubmit").prop("disabled", false);
+              }
+          });
+      });
+
+      $("#addProject").click(function (event) {
+          //stop submit the form, we will post it manually.
+          event.preventDefault();
+    
+          var formData = {
+            project_name: $("#project_name").val(),
+            project_desc: $("#project_desc").val(),
+            region_name: $("#region_name").val(),
+            aws_access_key_id: $("#aws_access_key_id").val(),
+            aws_secret_access_key: $("#aws_secret_access_key").val(),
+            bucket_name: $("#bucket_name").val(),
+            file_name: $("#file_name").val(),
+            resource_type: opval,
+            source_type: selectedRadio
+          };
+
+          // var object = {};
+          // data.forEach((value, key) => object[key] = value);
+          // console.log(JSON.stringify(object))
+    
+          $.ajax({
+              type: "POST",
+              enctype: 'multipart/form-data',
+              url: "/project",
               data: JSON.stringify(formData),
               processData: false,
               contentType: false,
