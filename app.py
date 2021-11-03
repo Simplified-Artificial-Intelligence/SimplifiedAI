@@ -1,10 +1,11 @@
+from enum import unique
 from dns.rcode import NOERROR
-from flask import Flask, redirect, url_for, render_template, request, session
+from flask import Flask, redirect, url_for, render_template, request, session,jsonify
 import re
 
 from imblearn import under_sampling
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import TWO_D_GRAPH_TYPES
+from src.constants.constants import NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER, TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -25,7 +26,6 @@ from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
-from lazypredict.Supervised import LazyRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -511,7 +511,7 @@ def data_preprocessing(action):
                     return render_template('dp/outliers.html',columns=columns,action=action)
 
                 elif action=="missing-values":
-                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    columns=list(df.columns)
                     log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
                     return render_template('dp/missing_values.html',columns=columns,action=action)
                 
@@ -600,7 +600,8 @@ def data_preprocessing_post(action):
                     else:
                         result=EDA.z_score_outlier_detection(df.loc[:,[column]])
                         if len(result)>0:
-                            graphJSON =  PlotlyHelper.distplot(list(df.loc[:,column]),column)  
+                            list_=list(df[~df.loc[:,column].isnull()][column])
+                            graphJSON =  PlotlyHelper.distplot(list_,column)  
                         data=result.to_html()   
                         
                         outliers_list=EDA.outlier_detection(list(df.loc[:,column]),'z-score')
@@ -616,6 +617,53 @@ def data_preprocessing_post(action):
                                            action=action,data=data,
                                            outliercount=result['Total outliers'][0] if len(result['Total outliers'])>0 else 0,
                                            graphJSON=graphJSON)
+                    
+                
+                elif action=="missing-values":
+                    if 'method' in request.form:
+                         method=request.form['method']
+                         selected_column=request.form['selected_column']
+                         success=False
+                         if method=='Mean':
+                             df[selected_column]=Preprocessing.fill_numerical(df,'Mean',[selected_column])
+                         elif method=='Median':
+                             df[selected_column]=Preprocessing.fill_numerical(df,'Median',[selected_column])
+                         elif method=='Arbitrary Value':
+                             df[selected_column]=Preprocessing.fill_numerical(df,'Median',[selected_column],request.form['arbitrary'])
+                         elif method=='Interpolate':
+                              df[selected_column]=Preprocessing.fill_numerical(df,'Interpolate',[selected_column],request.form['interpolate'])
+                         elif method=='Mode':
+                              df[selected_column]=Preprocessing.fill_categorical(df,'Mode',selected_column)
+                         elif method=='New Category':
+                              df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.form['newcategory'])
+                         elif method=='Select Exist':
+                              df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.form['selectcategory'])
+                                
+                         df=update_data(df)
+                         success=True
+                         columns=list(df.columns)
+                         return render_template('dp/missing_values.html',columns=columns,action=action,success=success)
+                    else:
+                        columns=list(df.columns)
+                        selected_column=request.form['columns']
+                        data=EDA.missing_cells_table(df.loc[:,[selected_column]])
+                        null_value_count=0
+                        unique_category=[]
+                        outlier_handler_methods=[]
+                        if len(data)>0:
+                            unique_category=list(df[df[selected_column].notna()][selected_column].unique())
+                            null_value_count=data['Missing values'][0]
+                            if df[selected_column].dtype=='object':
+                                outlier_handler_methods=OBJECT_MISSING_HANDLER
+                                
+                            else:
+                                outlier_handler_methods=NUMERIC_MISSING_HANDLER
+                            
+                        
+                        data=data.to_html()
+                        log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                        return render_template('dp/missing_values.html',unique_category=unique_category,columns=columns,selected_column=selected_column,action=action,data=data,null_value_count=null_value_count,handler_methods=outlier_handler_methods)
+                    
                 elif action=="delete-outlier":
                     values = request.form.getlist('columns')
                     selected_column=request.form['selected_column']
@@ -822,9 +870,9 @@ def model_training_post(action):
                     X_train = scaler.fit_transform(X_train)
                     X_test = scaler.transform(X_test)
                     if typ == 'Regression':
-                        clf = LazyRegressor(verbose=0, ignore_warnings=True, custom_metric=None)
-                        models, predictions = clf.fit(X_train, X_test, y_train, y_test)
-                        return render_template('model_training/regression.html', data=predictions.sort_values('R-Squared',ascending=False)[:5])
+                        # clf = LazyRegressor(verbose=0, ignore_warnings=True, custom_metric=None)
+                        # models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+                        return render_template('model_training/regression.html', data='')
                     elif typ == 'Classification':
                         pass
                     else:
@@ -841,6 +889,85 @@ def model_training_post(action):
         print(e)
 
 
+    """APIS"""
+@app.route('/api/missing-data', methods=['GET', 'POST'])
+def missing_data():
+    try:
+        df = load_data()
+        selected_column=request.json['selected_column']
+        method=request.json['method']
+        if method=='Mean' or  method=='Median' or  method=='Arbitrary Value' or  method=='Interpolate':
+            before={}
+            after={}
+            list_=list(df[~df.loc[:,selected_column].isnull()][selected_column])
+            before['graph'] =  PlotlyHelper.distplot(list_,selected_column)  
+            before['skewness'] =  Preprocessing.find_skewness(list_)  
+            before['kurtosis'] =  Preprocessing.find_kurtosis(list_)  
+            
+            if method=='Mean':
+                new_df=Preprocessing.fill_numerical(df,'Mean',[selected_column])
+            elif method=='Median':
+                new_df=Preprocessing.fill_numerical(df,'Median',[selected_column])
+            elif method=='Arbitrary Value':
+                new_df=Preprocessing.fill_numerical(df,'Median',[selected_column],request.json['Arbitrary_Value'])
+            elif method=='Interpolate':
+                new_df=Preprocessing.fill_numerical(df,'Interpolate',[selected_column],request.json['Interpolate'])
+            
+                
+            new_list=list(new_df.loc[:,selected_column])
+            
+            after['graph'] =  PlotlyHelper.distplot(new_list,selected_column)  
+            after['skewness'] =  Preprocessing.find_skewness(new_list)  
+            after['kurtosis'] =  Preprocessing.find_kurtosis(new_list)    
+                      
+            d={
+                'success':True,
+                'before':before,
+                'after':after
+            }
+            return jsonify(d)
+
+        if method=='Mode' or  method=='New Category' or  method=='Select Exist':
+            before={}
+            after={}
+            df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+            y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
+            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')
+            before['graph']=pie_graphJSON  
+            
+            if method=='Mode':
+                df[selected_column]=Preprocessing.fill_categorical(df,'Mode',selected_column)
+                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')  
+                
+                after['graph'] =  pie_graphJSON
+            elif method=='New Category':
+                df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.json['newcategory'])
+                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='') 
+                after['graph'] =  pie_graphJSON
+                
+            elif method=='Select Exist':
+                df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.json['selectcategory'])
+                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')  
+                
+                after['graph'] =  pie_graphJSON
+                                      
+            d={
+                'success':True,
+                'before':before,
+                'after':after
+            }
+            return jsonify(d)
+
+    except Exception as e:
+       return jsonify({'success':False})
+
+    return "Hello World!"
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("OOPS!!!!Somethong went wrong")

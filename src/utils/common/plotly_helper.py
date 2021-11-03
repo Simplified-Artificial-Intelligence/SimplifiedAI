@@ -2,7 +2,7 @@ import json
 import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
-
+import numpy as np
 
 class PlotlyHelper():
     @staticmethod
