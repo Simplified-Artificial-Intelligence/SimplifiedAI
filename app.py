@@ -116,6 +116,8 @@ def project():
                 description = request.form['project_desc']
                 if len(request.files) > 0:
                     f = request.files['file']
+                else:
+                    f = ''
 
                 ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json', 'xml']
                 msg = ''
@@ -123,7 +125,7 @@ def project():
                     msg = 'Please enter project name'
                 elif not description.strip():
                     msg = 'Please enter project description'
-                elif f.filename.strip() == '':
+                elif f.filename.strip() == '' | f == '':
                     msg = 'Please select a file to upload'
                 elif f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
                     msg = 'This file format is not allowed, please select mentioned one'
@@ -158,7 +160,8 @@ def project():
             return redirect(url_for('login'))
 
     except Exception as e:
-        pass
+        print(e)
+        return e.__str__()
 
 
 @app.route('/login', methods=['GET', 'POST'])
