@@ -1,6 +1,6 @@
-from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
+from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
@@ -10,21 +10,19 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from logger.logger import Logger
-from src.utils.common.data_helper import load_data
-from src.utils.modules.eda_helper import EDA
+from src.utils.common.data_helper import load_data, update_data
+from src.eda.eda_helper import EDA
 import numpy as np
 import json
 import plotly
-import plotly.express as px
 import plotly.figure_factory as ff
 from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
-from lazypredict.Supervised import LazyRegressor
-from sklearn.model_selection import train_test_split
+from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.model_selection import train_test_split
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
 
@@ -126,17 +124,17 @@ def project():
                     return render_template('new_project.html', msg=msg)
 
                 filename = secure_filename(f.filename)
-                f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                file_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                f.save(file_path)
                 timestamp = round(time.time() * 1000)
                 name = name.replace(" ", "_")
                 table_name = f"{name}_{timestamp}"
-                file = f"src/store/{filename}"
-
-                df = pd.read_csv(file)
-                project_id = unique_id_generator()
-                inserted_rows = mongodb.create_new_project(project_id, df)
-
-                if inserted_rows > 0:
+                
+                df=pd.read_csv(file_path)
+                project_id=unique_id_generator()
+                inserted_rows=mongodb.create_new_project(project_id,df)
+                               
+                if inserted_rows>0:
                     userId = session.get('id')
                     status = 1
                     query = f"""INSERT INTO tblProjects (UserId, Name, Description, Status, 
@@ -481,6 +479,188 @@ def eda_post(action):
 
         else:
             return redirect(url_for('/'))
+    except Exception  as e:
+        ProjectReports.insert_record_eda(e)
+            
+            
+@app.route('/dp/<action>')
+def data_preprocessing(action):
+    try:
+        if 'pid' in session:
+            df=None
+            df=load_data()
+            if df is not None:
+                if action=="delete-columns":
+                    log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
+                    return render_template('dp/delete_columns.html',columns=list(df.columns),action=action)
+                elif action=="duplicate-data":
+                    duplicate_data=df[df.duplicated()].head(500)
+                    data=duplicate_data.to_html()  
+                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
+                    return render_template('dp/duplicate.html',columns=list(df.columns),action=action,data=data,duplicate_count=len(duplicate_data))
+                
+                elif action=="outlier":
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return render_template('dp/outliers.html',columns=columns,action=action)
+
+                elif action=="missing-values":
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return render_template('dp/missing_values.html',columns=columns,action=action)
+                
+                elif  action=="delete-outlier" or action=="remove-duplicate-data":
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                    return redirect(('/dp/outlier'))
+                        
+                elif  action=="imbalance-data":
+                    columns=list(df.columns)
+                    log.info(log_type='Handle Outlier', log_message='Redirect To Handle Imbalance Data!')
+                    return render_template('dp/handle_imbalance.html',action=action,columns=columns)
+                else:
+                    return render_template('eda/help.html')
+            else:
+                """Manage This"""
+                pass
+            
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
+            
+            
+@app.route('/dp/<action>',methods=['POST'])
+def data_preprocessing_post(action):
+    try:
+        if 'pid' in session:
+            df=None
+            df=load_data()
+            template='dp/help.html'
+            if df is not None:
+                if action=="delete-columns":
+                    columns = request.form.getlist('columns')
+                    df=Preprocessing.delete_col(df,columns)
+                    df=update_data(df)
+                    log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
+                    return render_template('dp/delete_columns.html',columns=list(df.columns),action=action,status='success')
+                
+                elif action=="duplicate-data":
+                    columns = request.form.getlist('columns')
+                    if len(columns)>0:
+                        df=df[df.duplicated(columns)]
+                    else:
+                        df=df[df.duplicated()]
+                    data=df.head(500).to_html()  
+                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
+                    return render_template('dp/duplicate.html',columns=list(df.columns),action=action,
+                                           data=data,duplicate_count=len(df),selected_column=','.join(columns))
+                    
+                elif action=="remove-duplicate-data":
+                    columns =request.form['selected_column']
+                    
+                    if len(columns)>0:
+                        data=df.drop_duplicates(subset=list(columns.split(",")), keep='last')  
+                    else:
+                        data=df.drop_duplicates(keep='last') 
+                                        
+                    df=update_data(data)
+                    
+                    duplicate_data=df[df.duplicated()]
+                    data=duplicate_data.head(500).to_html()  
+                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
+                    return render_template('dp/duplicate.html',columns=list(df.columns),action="duplicate-data",data=data,
+                                           duplicate_count=len(duplicate_data),success=True)
+                
+                elif action=="outlier":
+                    method = request.form['method']
+                    column = request.form['columns']
+                    lower=25
+                    upper=75
+                    graphJSON=""
+                    pie_graphJSON=""
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    outliers_list=[]
+                    if method=="iqr":
+                        # lower = request.form['lower']
+                        # upper = request.form['upper']
+                        result=EDA.outlier_detection_iqr(df.loc[:,[column]],int(lower),int(upper))
+                        if len(result)>0:
+                            graphJSON =  PlotlyHelper.boxplot(df,column)  
+                        data=result.to_html()
+                        
+                        outliers_list=EDA.outlier_detection(list(df.loc[:,column]),'iqr')
+                        unique_outliers=np.unique(outliers_list)
+                    else:
+                        result=EDA.z_score_outlier_detection(df.loc[:,[column]])
+                        if len(result)>0:
+                            graphJSON =  PlotlyHelper.distplot(list(df.loc[:,column]),column)  
+                        data=result.to_html()   
+                        
+                        outliers_list=EDA.outlier_detection(list(df.loc[:,column]),'z-score')
+                        unique_outliers=np.unique(outliers_list)
+                    
+                    df_outliers=pd.DataFrame(pd.Series(outliers_list).value_counts(),columns=['value']).reset_index(level=0)
+                    if len(df_outliers)>0:
+                        pie_graphJSON = PlotlyHelper.pieplot(df_outliers, names='index',values='value',title='Missing Values Count') 
+                        
+                    log.info(log_type='Outlier Report', log_message='Post: Redirect To Delete Columns!')
+                    return render_template('dp/outliers.html',columns=columns,method=method,selected_column=column,
+                                           outliers_list=outliers_list,unique_outliers=unique_outliers,pie_graphJSON=pie_graphJSON,
+                                           action=action,data=data,
+                                           outliercount=result['Total outliers'][0] if len(result['Total outliers'])>0 else 0,
+                                           graphJSON=graphJSON)
+                elif action=="delete-outlier":
+                    values = request.form.getlist('columns')
+                    selected_column=request.form['selected_column']
+                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    df=df[~df[selected_column].isin(list(values))]
+                    df=update_data(df)
+                    log.info(log_type='Delete Outlier', log_message='Redirect To Handler Outlier!')
+                    return render_template('dp/outliers.html',columns=columns,action="outlier",status="success")
+                
+                elif action=="imbalance-data":
+                    try:
+                        if 'perform_action' in request.form:
+                            target_column=request.form['target_column']
+                            method=request.form['method']
+                            range=request.form['range']
+                            
+                            if method=='OS':
+                                new_df=Preprocessing.over_sample(df,target_column,float(range))
+                            elif method=='US':
+                                new_df=Preprocessing.under_sample(df,target_column,float(range))   
+                            else:
+                                new_df=Preprocessing.smote_technique(df,target_column,float(range)) 
+                            
+                            df=update_data(new_df)  
+                            return render_template('dp/handle_imbalance.html',columns=list(df.columns),target_column=target_column,success=True)
+                        else:
+                            target_column=request.form['target_column']
+                            df_counts=pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
+                            y=list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
+                            graphJSON =  PlotlyHelper.barplot(df_counts, x=target_column,y=y)
+                            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=target_column,values=y,title='')
+                            
+                            log.info(log_type='Delete Outlier', log_message='Redirect To Handler Outlier!')
+                            return render_template('dp/handle_imbalance.html',columns=list(df.columns),target_column=target_column,action="imbalance-data",
+                                                pie_graphJSON=pie_graphJSON,graphJSON=graphJSON,perform_action=True)
+                                
+                    except Exception as e:
+                         return render_template('dp/handle_imbalance.html',action=action,columns=list(df.columns),error=str(e))
+                        
+                
+                else:
+                    return redirect('dp/help.html')
+            else:
+                """Manage This"""
+                pass
+            
+        else:
+            return redirect(url_for('/'))
+    except Exception  as e:
+            print(e)
+            
     except Exception as e:
         print(e)
 
@@ -588,15 +768,8 @@ def model_training(action):
                 if action == 'help':
                     return render_template('model_training/help.html')
                 elif action == 'auto_training':
-                    ProjectReports.insert_record_eda('Show Dataset')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
-                    data=EDA.get_no_records(df,100)
-                    data=data.to_html()
-                    topselected=True
-                    bottomSelected=False
-                    selectedCount=100
-                    return render_template('model_training/auto_training.html',data=data,length=len(df),
-                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
+                    data = df.head().to_html()
+                    return render_template('model_training/auto_training.html', data=data)
                 elif action == 'custom_training':
                     typ = "Regression"
                     if typ == "Regression":
@@ -623,24 +796,23 @@ def model_training_post(action):
         if 'pid' in session:
             df = load_data()
             if df is not None:
+
                 if action == 'help':
                     return render_template('model_training/help.html')
                 elif action == 'auto_training':
                     typ = 'Regression'
-                    df = pd.read_csv('bitcoin_price.csv')
-                    df = df[0:500]
-                    X = df.drop('Market Cap', axis=1)
-                    y = df['Market Cap']
-                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=123)
-                    scaler = StandardScaler()
-                    X_train = scaler.fit_transform(X_train)
-                    X_test = scaler.transform(X_test)
                     if typ == 'Regression':
-                        clf = LazyRegressor(verbose=0, ignore_warnings=True, custom_metric=None)
-                        models, predictions = clf.fit(X_train, X_test, y_train, y_test)
-                        return render_template('model_training/regression.html', data=predictions.sort_values('R-Squared',ascending=False)[:5])
+                        df = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\AMES_Final_DF.csv')
+                        X = df.drop('SalePrice', axis=1)
+                        y = df['SalePrice']
+                        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=42)
+                        scaler = StandardScaler()
+                        X_train = scaler.fit_transform(X_train)
+                        X_test = scaler.transform(X_test)
+                        data = ModelTrain_Regression(X_train, X_test, y_train, y_test, True)
+                        return render_template('model_training/auto_training.html', data=data.results().to_html())
                     elif typ == 'Classification':
-                        pass
+                        return render_template('model_training/auto_training.html')
                     else:
                         pass
                         return render_template('model_training/auto_training.html')
@@ -661,4 +833,5 @@ if __name__ == '__main__':
         print("OOPS!!!!Somethong went wrong")
     else:
         app.run(host="127.0.0.1", port=5000, debug=True)
+
 

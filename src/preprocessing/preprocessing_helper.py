@@ -4,19 +4,22 @@ import category_encoders as ce
 import seaborn as sns
 from sklearn.preprocessing import normalize
 from sklearn.utils import resample
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE, BorderlineSMOTE, ADASYN, RandomOverSampler, SMOTENC, SVMSMOTE
+from imblearn.under_sampling import TomekLinks, NearMiss, RandomUnderSampler
 
 class Preprocessing():
 
-    def get_data(self, filepath):
+    @staticmethod
+    def get_data(filepath):
         try:
             data = filepath
             df = pd.read_csv(data)
             return df
         except Exception as e:
             return e
-
-    def col_seperator(self, df, typ: str):
+        
+    @staticmethod
+    def col_seperator(df, typ: str):
         try:
             if typ == 'Numerical_columns':
                 Numerical_columns = df.select_dtypes(exclude='object')
@@ -29,12 +32,13 @@ class Preprocessing():
                 return 'Type Not Found'
         except Exception as e:
             return e
-
-    def delete_col(self, df, cols:list):
+        
+    @staticmethod
+    def delete_col(df, cols:list):
 
         temp_list = []
         for i in cols:
-            if i in df.cols:
+            if i in df.columns:
                 temp_list.append(i)
             else:
                 return 'Column Not Found'
@@ -44,8 +48,9 @@ class Preprocessing():
             return df
         except Exception as e:
             return e
-
-    def missing_values(self, df):
+        
+    @staticmethod
+    def missing_values(df):
         try:
             columns = df.isnull().sum()[df.isnull().sum() > 0].sort_values(ascending=False).index
             values = df.isnull().sum()[df.isnull().sum() > 0].sort_values(ascending=False).values
@@ -59,8 +64,9 @@ class Preprocessing():
 
         except Exception as e:
             return e
-
-    def fill_numerical(self, df, typ, cols):
+        
+    @staticmethod
+    def fill_numerical(df, typ, cols):
         for i in cols:
             if i in df.cols:
                 continue
@@ -84,8 +90,9 @@ class Preprocessing():
                 return e
         else:
             return 'Type Not present'
-
-    def fill_categorical(self, df, typ=None, col=None, value=None):
+        
+    @staticmethod
+    def fill_categorical(df, typ=None, col=None, value=None):
         # Replace na with some meaning of na
         if typ == 'replace':
             temp_list = []
@@ -106,8 +113,8 @@ class Preprocessing():
                 return 'Please give provide values and columns'
         else:
             return 'Type not found'
-
-    def Unique(self, df, percent):
+    @staticmethod
+    def Unique(df, percent):
         percent = percent/25
         holder = []
         for column in df.columns:
@@ -116,9 +123,11 @@ class Preprocessing():
                 holder.append(column)
         return holder
 
+            
 
     #https://www.analyticsvidhya.com/blog/2020/08/types-of-categorical-data-encoding/
-    def encodings(self, df, cols, kind: str):
+    @staticmethod
+    def encodings(df, cols, kind: str):
         if kind == 'Label/Ordinal Encoder':
             label = ce.OrdinalEncoder(cols=cols)
             label_df = label.fit_transform(df)
@@ -138,6 +147,7 @@ class Preprocessing():
         else:
             pass
 
+    @staticmethod
     def balance_data(df, kind: str, target):
         if len(df[(df[target] == 0)]) >= df[(df[target] == 1)]:
             df_majority = df[(df[target] == 0)]
@@ -168,13 +178,13 @@ class Preprocessing():
             return oversampled
         else:
             return 'Please specify correct mtd'
-
-    def drop_duplicate(self, df, cols: list):
+    @staticmethod
+    def drop_duplicate(df, cols: list):
         df = df.drop_duplicates(subset=cols, inplace=True)
         return df
 
-    #https://www.analyticsvidhya.com/blog/2021/04/beginners-guide-to-low-variance-filter-and-its-implementation/
-    def handle_low_variance(self, df, var_range):
+    @staticmethod
+    def handle_low_variance(df, var_range):
         Categorical_columns = df.select_dtypes(include='object')
         df = df.drop(Categorical_columns, axis=1, inplace=True)
         normalize_df = normalize(df)
@@ -187,8 +197,9 @@ class Preprocessing():
                 variable.append(cols[i])
         new_df = df[variable]
         return new_df
-
-    def handle_high_variance(self,df, var_range):
+    
+    @staticmethod
+    def handle_high_variance(df, var_range):
         Categorical_columns = df.select_dtypes(include='object')
         df = df.drop(Categorical_columns, axis=1, inplace=True)
         normalize_df = normalize(df)
@@ -201,3 +212,53 @@ class Preprocessing():
                 variable.append(cols[i])
         new_df = df[variable]
         return new_df
+    
+    @staticmethod
+    def under_sample(dataframe, target_col, ratio=None):
+        X = dataframe.drop(columns=[target_col])
+        y = dataframe[target_col]
+        
+        if ratio:
+             ns=NearMiss(sampling_strategy=ratio)
+             X_resampled, y_resampled = ns.fit_resample(X, y)
+        else:  
+            ns=NearMiss()
+            X_resampled, y_resampled = ns.fit_resample(X, y)
+        
+        resampled_dataset = X_resampled.join(y_resampled)
+            
+        return resampled_dataset 
+    
+    @staticmethod
+    def over_sample(dataframe, target_col, ratio=None):
+    
+        X = dataframe.drop(columns=[target_col])
+        y = dataframe[target_col]
+        
+        if ratio:
+                ros = RandomOverSampler(sampling_strategy=ratio)
+                X_resampled, y_resampled = ros.fit_resample(X, y)
+        else:  
+            ros = RandomOverSampler()
+            X_resampled, y_resampled = ros.fit_resample(X, y)
+        
+        resampled_dataset = X_resampled.join(y_resampled)
+            
+        return resampled_dataset 
+    
+    @staticmethod
+    def smote_technique(dataframe, target_col, ratio=None):
+    
+        X = dataframe.drop(columns=[target_col])
+        y = dataframe[target_col]
+        
+        if ratio:
+            sm = SMOTE(sampling_strategy=ratio)
+            X_resampled, y_resampled = sm.fit_resample(X, y)
+        else:  
+            sm = SMOTE()
+            X_resampled, y_resampled = sm.fit_resample(X, y)
+        
+        resampled_dataset = X_resampled.join(y_resampled)
+            
+        return resampled_dataset 

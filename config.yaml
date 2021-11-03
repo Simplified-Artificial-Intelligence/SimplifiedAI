@@ -1,7 +1,7 @@
 dir_structure:
   template_dir: src/templates
   static_dir: src/static
-  upload_folder: src/store
+  upload_folder: src/temp_data_store
 
 logs:
   logger: src/logger

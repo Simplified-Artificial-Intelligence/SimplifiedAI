@@ -1,31 +1,189 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<form action="/project" method="post" class="project-form" enctype = "multipart/form-data">
-  <div class="container col-lg-6 col-sm-6">
-    {% if msg %}
-     <div class="col-lg-12 col-sm-12 col-md-12">
-      <div class="alert alert-danger">
-        <strong>Alert!  </strong>{{msg}}.
-      </div>
-    </div>
-    {% endif %}
-    <h3 class="header">Add New project</h3>
-    <label for="name"><b>Name:</b></label>
-    <input type="text" placeholder="Add your project name" name="name" required>
+  <form action="/project" method="post" class="project-form" enctype = "multipart/form-data">
 
-    <label for="description"><b>Description</b></label>
-    <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="description" required >
-    </textarea>
-       <label for="file" class="label1"><b>Upload Your File:</b></label>
+    <div class="container col-lg-6 col-sm-6">
+      {% if msg %}
+      <div class="col-lg-12 col-sm-12 col-md-12">
+        <div class="alert alert-danger">
+          <strong>Alert!  </strong>{{msg}}.
+        </div>
+      </div>
+      {% endif %}
+
+      <h3 class="header">Add New project</h3>
+
+      <label for="name"><b>Name:</b></label>
+      <input type="text" placeholder="Add your project name" name="name" required>
+
+      <label for="description"><b>Description</b></label>
+      <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="description" required >
+      </textarea>
+
+      <!-- Upload File -->
+      <input class="" type="radio" name="resourceFileRadio" id="uploadFileRadio">
+      <label for="uploadFileRadio" class="label1"><b>Upload Your File:</b></label>
       <input type="file" id="file" name="file">
       <p>allowed file *.csv, .tsv, .xml, .json</p>
-    <button class="btn btn-success" type="submit">Add Project</button>
+      
+
+      <!-- Other Resources -->
+      <input class="" type="radio" name="resourceFileRadio" id="resourceRadio">
+      <label for="resourceRadio" class="resource-file-label"><b>Upload From Various Resource:</b></label>
+      <select class="form-control" name="resourceFile" id="resourceFile">
+        <option value=""> Select any one </option>
+        <option value="awsS3bucket"> AWS S3 Bucket </option>
+        <option value="gcpStorage"> GCP Blob Storage </option>
+        <option value="mySql"> MySql </option>
+      </select>      
+
+      <button class="btn btn-success" type="submit">Add Project</button>
       <a href="/">
         <button type="button" class="btn btn-danger back">Back</button>
       </a>
-  </div>
+
+    </div>
+
+  </form>
+
+  <!-- Modal-->
+  <div class="modal fade" id="resourceModal" tabindex="-1" role="dialog" aria-labelledby="resourceModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document" style="max-width: 600px;">
+      <div class="modal-content" style="color: black;">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resourceModalLabel">Resource:</h5>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" id="awsForm">
+          <div class="modal-body">
+            <div class="form-group row">
+              <label for="region_name" class="col-sm-4 col-form-label">Region Name</label>
+              <div class="col-sm-8">
+                <input type="text" class="form-control" id="region_name" name="region_name" placeholder="" required>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="aws_access_key_id" class="col-sm-4 col-form-label">AWS Access Key Id</label>
+              <div class="col-sm-8">
+                <input type="text" class="form-control" id="aws_access_key_id" name="aws_access_key_id" placeholder="" required>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="aws_secret_access_key" class="col-sm-4 col-form-label">AWS Secret Access Key</label>
+              <div class="col-sm-8">
+                <input type="text" class="form-control" id="aws_secret_access_key" name="aws_secret_access_key" placeholder="" required>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="bucket_name" class="col-sm-4 col-form-label">Bucket Name</label>
+              <div class="col-sm-8">
+                <input type="text" class="form-control" id="bucket_name" name="bucket_name" placeholder="" required>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="file_name" class="col-sm-4 col-form-label">File Name</label>
+              <div class="col-sm-8">
+                <input type="text" class="form-control" id="file_name" name="file_name" placeholder="" required>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary" id="submitModal">Submit</button>
+          </div>
+        </form>
+          
+      </div>
+    </div>
   </div>
 
-</form>
+  <script>
+    $(document).ready(function(){               //Make script DOM ready
+      var opval = ""            
+      $('#resourceFile').change(function(e) {   //jQuery Change Function
+        opval = $(this).val();                  //Get value from select element
+        if(opval=="awsS3bucket"){               //Compare it and if true
+          $('#resourceModal').modal("show");    //Open Modal
+        } else if(opval=="gcpStorage") {
+          $('#resourceModal').modal("show");
+        } else if(opval=="mySql") {
+          $('#resourceModal').modal("show");
+        }
+      });
+
+      var selectedRadio = ''
+      $("input:radio[name=resourceFileRadio]").click(function(e) {
+        selectedRadio = $(this)[0].id
+        // console.log($(this))
+        if($(this)[0].id === "uploadFileRadio") {
+
+          $("label[for='uploadFileRadio']").removeClass('disabled-label');
+          $('#file').removeClass('disabled-input');
+          $('#file').prop('disabled', false);
+
+          $("label[for='resourceRadio']").addClass('disabled-label');
+          $('#resourceFile').addClass('disabled-input');
+          $('#resourceFile').prop('disabled', true);
+          
+        } else if($(this)[0].id === "resourceRadio") {
+
+          $("label[for='uploadFileRadio']").addClass('disabled-label');
+          $('#file').addClass('disabled-input');
+          $('#file').prop('disabled', true);
+
+          $("label[for='resourceRadio']").removeClass('disabled-label');
+          $('#resourceFile').removeClass('disabled-input');
+          $('#resourceFile').prop('disabled', false);
+        }
+      })
+
+      $("#submitModal").click(function (event) {
+          //stop submit the form, we will post it manually.
+          event.preventDefault();
+    
+          // Get form
+          var form = $('#awsForm')[0];
+    
+          // FormData object 
+          var data = new FormData(form);
+    
+          // If you want to add an extra field for the FormData
+          data.append("selected_radio", selectedRadio);
+          data.append("other_resource", opval);
+    
+          // disabled the submit button
+          // $("#btnSubmit").prop("disabled", true);
+
+          var object = {};
+          data.forEach((value, key) => object[key] = value);
+          console.log(JSON.stringify(object))
+    
+          $.ajax({
+              type: "POST",
+              enctype: 'multipart/form-data',
+              url: "/app/resource",
+              data: data,
+              processData: false,
+              contentType: false,
+              cache: false,
+              timeout: 800000,
+              success: function (data) {
+                  $("#output").text(data);
+                  console.log("SUCCESS : ", data);
+                  $("#btnSubmit").prop("disabled", false);
+              },
+              error: function (e) {
+                  $("#output").text(e.responseText);
+                  console.log("ERROR : ", e);
+                  $("#btnSubmit").prop("disabled", false);
+              }
+          });
+      });
+
+    });
+  </script>
+
 {% endblock %}
+
+
