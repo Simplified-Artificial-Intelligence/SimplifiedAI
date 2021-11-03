@@ -6,26 +6,28 @@
         <h1>Feature Encoding</h1>
         <p>This Function helps you to Encode your data into Numerical Data for future training!</p>
     </div>
- <div class="row">
-        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-            <div class="form-group">
-                <label for="exampleFormControlSelect1">Select Type of Encoding</label>
-                <select class="js-example-basic-multiple form-control" name="columns" multiple="multiple">
-                    {% for encode in encode_list %}
-                    <option value="{{col}}">{{encode}}</option>
-                    {% endfor %}
-                </select>
+    <form action="/feature_engineering/encoding" method="post">
+     <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Select Type of Encoding</label>
+                    <select class="form-control" name="columns">
+                        <option value="label">Label/Ordinal Encoder</option>
+                        <option value="oneHot">One Hot Encoder</option>
+                        <option value="hash">Hash Encoder</option>
+                    </select>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div>
-    <div class="row">
-        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-            <button type="submit" class="btn btn-default">Show Result</button>
+
+        <div>
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <button type="submit" class="btn btn-default">Submit Encoder</button>
+            </div>
         </div>
-    </div>
-    </div>
+    </form>
+</div>
     <h2 class="result">Result</h2>
     {{data | safe}}
 </div>
