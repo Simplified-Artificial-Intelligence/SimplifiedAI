@@ -230,9 +230,9 @@
           // $("#btnSubmit").prop("disabled", true);
 
           // console the Form Data
-          var object = {};
-          data.forEach((value, key) => object[key] = value);
-          console.log(JSON.stringify(object))
+          // var object = {};
+          // data.forEach((value, key) => object[key] = value);
+          // console.log(JSON.stringify(object))
     
           $.ajax({
               type: "POST",
@@ -243,15 +243,11 @@
               contentType: false,
               cache: false,
               timeout: 800000,
-              success: function (data) {
-                  $("#output").text(data);
-                  console.log("SUCCESS : ", data);
-                  $("#btnSubmit").prop("disabled", false);
+              success: function(response) {
+                  window.location.href = response
               },
               error: function (e) {
-                  $("#output").text(e.responseText);
                   console.log("ERROR : ", e);
-                  $("#btnSubmit").prop("disabled", false);
               }
           });
       });
