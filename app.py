@@ -178,14 +178,40 @@ def project():
                         aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
                         msg = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
                         print(name, description, resource_type, msg)
-                        return url_for('index')
+
+                    timestamp = round(time.time() * 1000)
+                    name = name.replace(" ", "_")
+                    table_name = f"{name}_{timestamp}"
+
+                    df = pd.read_csv(file_path)
+                    project_id = unique_id_generator()
+                    inserted_rows = mongodb.create_new_project(project_id, df)
+
+                    if inserted_rows > 0:
+                        userId = session.get('id')
+                        status = 1
+                        query = f"""INSERT INTO tblProjects (UserId, Name, Description, Status, 
+                                           Cassandra_Table_Name,Pid) VALUES
+                                           ("{userId}", "{name}", "{description}", "1", "{table_name}","{project_id}")"""
+
+                        rowcount = mysql.insert_record(query)
+                        if rowcount > 0:
+                            return redirect(url_for('index'))
+                        else:
+                            msg = "Error while creating new Project"
+                            return render_template('new_project.html', msg=msg)
+
+                    else:
+                        msg = "Error while creating new Project"
+                        return render_template('new_project.html', msg=msg)
 
         else:
             return redirect(url_for('login'))
 
     except Exception as e:
         print(e)
-        return e.__str__()
+        #print().__str__()
+        return render_template('new_project.html', msg=msg)
 
 
 @app.route('/login', methods=['GET', 'POST'])
