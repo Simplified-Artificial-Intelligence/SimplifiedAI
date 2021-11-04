@@ -6,20 +6,45 @@
         <h1>Feature Encoding</h1>
         <p>This Function helps you to Encode your data into Numerical Data for future training!</p>
     </div>
-    <form action="/feature_engineering/encoding" method="post">
-     <div class="row">
-            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-                <div class="form-group">
-                    <label for="exampleFormControlSelect1">Select Type of Encoding</label>
-                    <select class="form-control" name="columns">
-                        <option value="label">Label/Ordinal Encoder</option>
-                        <option value="oneHot">One Hot Encoder</option>
-                        <option value="hash">Hash Encoder</option>
-                    </select>
+</div>
+<form action="/feature_engineering/encoding" method="post">
+    <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Select Type of Encoding</label>
+                <select class="form-control" name="columns">
+                    <option value="oneHot">One Hot Encoder</option>
+                    <option value="dummy">Dummy Encoder</option>
+                    <option value="effective">Effective Encoder</option>
+                    <option value="binary">Binary Encoder</option>
+                    <option value="basen">Base N Encoder</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Select Columns</label>
+                <select class="js-example-basic-multiple form-control" name="columns" multiple="multiple">
+                    {% for col in columns %}
+                    <option value="{{col}}">{{col}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <div class="form-group">
+                <label for="pwd">Select Type:</label>
+                <div class="radio">           
+                    <label><input type="radio" name="optradio" id="optradio" value="selectall" {% if selectall %}checked{% endif %}>Select All</label>
+                </div>
+                    <div class="radio">
+                        <label><input type="radio" name="optradio" id="optradio" value="custom"  {% if custom %}checked{% endif %}>Select Custom</label>
+                    </div>
                 </div>
             </div>
         </div>
-
         <div>
         <div class="row">
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">

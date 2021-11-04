@@ -128,24 +128,27 @@ class Preprocessing():
     #https://www.analyticsvidhya.com/blog/2020/08/types-of-categorical-data-encoding/
     @staticmethod
     def encodings(df, cols, kind: str):
-        if kind == 'Label/Ordinal Encoder':
-            label = ce.OrdinalEncoder(cols=cols)
-            label_df = label.fit_transform(df)
-            return label_df
-        elif kind == 'One Hot Encoder':
+        if kind == 'One Hot Encoder':
             onehot=ce.OneHotEncoder(cols=cols)
             onehot_df = onehot.fit_transform(df)
             return onehot_df
-        elif kind == 'Hash Encoder':
-            hash = ce.HashingEncoder(cols=cols)
-            hash_df = hash.fit_transform(df)
-            return hash_df
-        elif kind == 'Target Encoder':
+        elif kind == 'Dummy Encoder':
+            dummy_df = pd.get_dummies(data=cols, drop_first=True)
+            return dummy_df
+        elif kind == 'Effective Encoder':
             target = ce.TargetEncoder(cols=cols)
             target_df = target.fit_transform(df)
             return target_df
+        elif kind == 'Binary Encoder':
+            binary = ce.BinaryEncoder(cols=cols,return_df=True)
+            binary_df = binary.fit_transform(df)
+            return binary_df
+        elif kind == 'Base N Encoder':
+            basen = ce.BaseNEncoder(cols=cols)
+            basen_df = basen.fit_transform(df)
+            return basen_df
         else:
-            pass
+            "Wrong Input!!"
 
     @staticmethod
     def balance_data(df, kind: str, target):

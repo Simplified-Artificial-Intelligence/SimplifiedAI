@@ -722,10 +722,14 @@ def feature_engineering_post(action):
                                            not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
                                            selectedCount=selectedCount, columns=df.columns)
                 elif action == 'encoding':
-                    return render_template('feature_engineering/encoding.html', data=data)
+                    df = pd.read_csv(r'AMES_Final_DF.csv')
+                    Categorical_columns = df.select_dtypes(include='object')
+                    custom = True
+                    selectall=False
+                    return render_template('feature_engineering/encoding.html', data=data, custom=custom, selectall=selectall, action=action, columns=Categorical_columns.columns)
                 elif action == 'scaling':
                     try:
-                        df = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\AMES_Final_DF.csv')
+                        df = pd.read_csv(r'AMES_Final_DF.csv')
                         X = df.drop('SalePrice', axis=1)
                         y = df['SalePrice']
                         obj = FeatureEngineering()
