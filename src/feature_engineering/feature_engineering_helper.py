@@ -7,39 +7,36 @@ from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.decomposition import PCA
 
 
-class FreatureEngineering():
+class FeatureEngineering:
     def __init__(self):
         pass
 
-    def train_test_Split(self, cleanedData, label, test_size):
+    def train_test_Split(self, cleanedData, label, test_size, random_state):
 
         X_train, X_test, y_train, y_test = train_test_split(cleanedData,
                                                             label,
                                                             test_size=test_size,
-                                                            random_state=42)
+                                                            random_state=random_state)
         return X_train, X_test, y_train, y_test
 
-    def scaler(self, train, test, typ):
-        if typ == 'MinMax Scaler':
+    def scaler_(self, data, typ):
+        if typ == 'MinMaxScaler':
             scaler = MinMaxScaler()
-            scaled_train = scaler.fit_transform(train)
-            scaled_test = scaler.transform(test)
+            scaled_data = scaler.fit_transform(data)
 
-            return scaled_train, scaled_test
+            return scaled_data
 
-        elif typ == 'Standerd Scaler':
+        elif typ == 'StandardScaler':
             scaler = StandardScaler()
-            scaled_train = scaler.fit_transform(train)
-            scaled_test = scaler.transform(test)
+            scaled_data = scaler.fit_transform(data)
 
-            return scaled_train, scaled_test
+            return scaled_data
 
-        elif typ == 'Robust Scaler':
+        elif typ == 'RobustScaler':
             scaler = RobustScaler()
-            scaled_train = scaler.fit_transform(train)
-            scaled_test = scaler.transform(test)
+            scaled_data = scaler.fit_transform(data)
 
-            return scaled_train, scaled_test
+            return scaled_data
 
         else:
             return 'Please Specify type correclty'
@@ -115,13 +112,6 @@ class FreatureEngineering():
             return important_features.sort_values('scores', ascending=False)
         else:
             return 'Please Specify type correclty'
-
-    # Needs some addtion function
-    # encode
-    # train -test
-    # scale
-    # combine
-    # dim_reduction
 
     def dimenstion_reduction(self, features, target, comp):
         model = PCA(n_components=comp)

@@ -2,8 +2,6 @@ from enum import unique
 from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session,jsonify
 import re
-
-from imblearn import under_sampling
 from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER, TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
@@ -16,19 +14,18 @@ import pandas as pd
 from logger.logger import Logger
 from src.utils.common.data_helper import load_data, update_data
 from src.eda.eda_helper import EDA
-import numpy  as np
 import numpy as np
 import json
 import plotly
-import plotly.express as px
 import plotly.figure_factory as ff
 from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
 from sklearn.model_selection import train_test_split
+from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
-
+from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
 
@@ -776,15 +773,26 @@ def feature_engineering_post(action):
                                            not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
                                            selectedCount=selectedCount, columns=df.columns)
                 elif action == 'encoding':
-                    return render_template('feature_engineering/encoding.html', data=data)
+                    df = pd.read_csv(r'AMES_Final_DF.csv')
+                    Categorical_columns = df.select_dtypes(include='object')
+                    custom = True
+                    selectall=False
+                    return render_template('feature_engineering/encoding.html', data=data, custom=custom, selectall=selectall, action=action, columns=Categorical_columns.columns)
                 elif action == 'scaling':
+                    try:
+                        df = pd.read_csv(r'AMES_Final_DF.csv')
+                        X = df.drop('SalePrice', axis=1)
+                        y = df['SalePrice']
+                        obj = FeatureEngineering()
+                        scaler = request.form['scaler']
+                        data = obj.scaler_(X, scaler)
+                    except:
+                        return render_template('feature_engineering/encoding.html', data=data)
                     return render_template('feature_engineering/scaling.html', data=data)
                 elif action == 'feature_selection':
                     return render_template('feature_engineering/feature_selection.html', data=data)
                 elif action == 'dimension_reduction':
                     return render_template('feature_engineering/dimension_reduction.html', data=data)
-                elif action == 'train_test_split':
-                    return render_template('feature_engineering/train_test_split.html', data=data)
                 else:
                     return 'Non-Implemented Action'
             else:
@@ -818,21 +826,18 @@ def model_training(action):
     try:
         if 'pid' in session:
             df = load_data()
+            data = df.head().to_html()
             if df is not None:
                 if action == 'help':
                     return render_template('model_training/help.html')
+                elif action == 'train_test_split':
+                    columns_for_list = df.columns
+                    return render_template('model_training/train_test_split.html', data=data, columns = columns_for_list, action='train_test_split')
                 elif action == 'auto_training':
-                    ProjectReports.insert_record_eda('Show Dataset')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
-                    data=EDA.get_no_records(df,100)
-                    data=data.to_html()
-                    topselected=True
-                    bottomSelected=False
-                    selectedCount=100
-                    return render_template('model_training/auto_training.html',data=data,length=len(df),
-                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
+                    data = df.head().to_html()
+                    return render_template('model_training/auto_training.html', data=data)
                 elif action == 'custom_training':
-                    typ = "Classification"
+                    typ = "Regression"
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
@@ -851,31 +856,45 @@ def model_training(action):
         print(e)
 
 
+X_train, X_test, y_train, y_test = None, None, None, None
+
+
 @app.route('/model_training/<action>', methods=['POST'])
 def model_training_post(action):
     try:
         if 'pid' in session:
             df = load_data()
+            data = df.head().to_html()
             if df is not None:
                 if action == 'help':
                     return render_template('model_training/help.html')
+                elif action == 'train_test_split':
+                    global X_test
+                    global X_train
+                    global y_test
+                    global y_train
+
+                    percent = int(request.form['range'])
+                    target = request.form['columns']
+                    Random_State = int(request.form['Random_State'])
+                    df = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\AMES_Final_DF.csv')
+                    X = df.drop(target, axis=1)
+                    y = df[target]
+                    X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(self=None, cleanedData=X, label=y, test_size=(1-(percent/100)), random_state=Random_State)
+                    return render_template('model_training/train_test_split.html', data=data)
                 elif action == 'auto_training':
                     typ = 'Regression'
-                    df = pd.read_csv('AMES_Final_DF.csv')
-                    df = df[0:500]
-                    X = df.drop('SalePrice', axis=1)
-                    y = df['SalePrice']
-                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=123)
-                    scaler = StandardScaler()
-                    X_train = scaler.fit_transform(X_train)
-                    X_test = scaler.transform(X_test)
                     if typ == 'Regression':
-                        # clf = LazyRegressor(verbose=0, ignore_warnings=True, custom_metric=None)
-                        # models, predictions = clf.fit(X_train, X_test, y_train, y_test)
-                        return render_template('model_training/regression.html', data='')
+
+                        scaler = StandardScaler()
+                        X_train = scaler.fit_transform(X_train)
+                        X_test = scaler.transform(X_test)
+                        data = ModelTrain_Regression(X_train, X_test, y_train, y_test, True)
+                        return render_template('model_training/auto_training.html', data=data.results().to_html())
                     elif typ == 'Classification':
-                        pass
+                        return render_template('model_training/auto_training.html')
                     else:
+                        pass
                         return render_template('model_training/auto_training.html')
                 elif action == 'custom_training':
                     return render_template('model_training/custom_training.html')
@@ -887,6 +906,10 @@ def model_training_post(action):
             return redirect(url_for('/'))
     except Exception as e:
         print(e)
+
+@app.route('/Machine/<action>', methods=['GET'])
+def machine(action):
+    return render_template('Machine/system.html')
 
 
     """APIS"""
