@@ -174,7 +174,6 @@ def project():
                         bucket_name = request.form['bucket_name']
                         file_name = request.form['file_name']
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
-
                         aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
                         msg = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
                         print(name, description, resource_type, msg)
@@ -196,7 +195,7 @@ def project():
 
                         rowcount = mysql.insert_record(query)
                         if rowcount > 0:
-                            return redirect(url_for('index'))
+                            return url_for('index')
                         else:
                             msg = "Error while creating new Project"
                             return render_template('new_project.html', msg=msg)
@@ -211,7 +210,7 @@ def project():
     except Exception as e:
         print(e)
         #print().__str__()
-        return render_template('new_project.html', msg=msg)
+        return render_template('new_project.html', msg=e)
 
 
 @app.route('/login', methods=['GET', 'POST'])
