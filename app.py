@@ -185,7 +185,6 @@ def project():
                         bucket_name = request.form['bucket_name']
                         file_name = request.form['file_name']
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
-
                         aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
                         conn_msg = aws_s3.check_connection(bucket_name, file_name)
                         if conn_msg != 'Successful':
@@ -250,7 +249,6 @@ def project():
         print(e)
         #print().__str__()
         return render_template('new_project.html', msg=e.__str__())
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

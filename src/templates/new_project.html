@@ -38,21 +38,57 @@
         <option value="mySql"> MySql </option>
       </select>  
       
-      <div id="awsS3bucket">
+      <div id="awsS3bucket" class="upload-other-resource">
         <label for="region_name" class="col-form-label"><b> Region Name </b></label>
-        <input type="text" class="form-control" id="region_name" name="region_name" placeholder="" required>
+        <input type="text" class="form-control awsS3bucket" id="region_name" name="region_name" placeholder="" required>
         
         <label for="aws_access_key_id" class="col-form-label"><b> AWS Access Key Id </b></label>
-        <input type="text" class="form-control" id="aws_access_key_id" name="aws_access_key_id" placeholder="" required>
+        <input type="text" class="form-control awsS3bucket" id="aws_access_key_id" name="aws_access_key_id" placeholder="" required>
         
         <label for="aws_secret_access_key" class="col-form-label"><b> AWS Secret Access Key </b></label>
-        <input type="text" class="form-control" id="aws_secret_access_key" name="aws_secret_access_key" placeholder="" required>
+        <input type="text" class="form-control awsS3bucket" id="aws_secret_access_key" name="aws_secret_access_key" placeholder="" required>
         
         <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
-        <input type="text" class="form-control" id="bucket_name" name="bucket_name" placeholder="" required>
+        <input type="text" class="form-control awsS3bucket" id="bucket_name" name="bucket_name" placeholder="" required>
         
         <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
-        <input type="text" class="form-control" id="file_name" name="file_name" placeholder="" required>
+        <input type="text" class="form-control awsS3bucket" id="file_name" name="file_name" placeholder="" required>
+
+        <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
+      </div>
+
+      <div id="gcpStorage" class="upload-other-resource">
+        <label for="GCP_credentials_file" class="col-form-label"><b> GCP Credentials file </b></label>
+        <input type="file" class="form-control gcpStorage" id="GCP_credentials_file" name="GCP_credentials_file">
+        <p>allowed file *.json</p>
+        
+        <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
+        <input type="text" class="form-control gcpStorage" id="bucket_name" name="bucket_name" placeholder="" required>
+        
+        <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
+        <input type="text" class="form-control gcpStorage" id="file_name" name="file_name" placeholder="" required>
+        
+        <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
+      </div>
+
+      <div id="mySql" class="upload-other-resource">
+        <label for="host" class="col-form-label"><b> Host </b></label>
+        <input type="text" class="form-control mySql" id="host" name="host" placeholder="" required>
+        
+        <label for="port" class="col-form-label"><b> Port </b></label>
+        <input type="text" class="form-control mySql" id="port" name="port" placeholder="" required>
+        
+        <label for="user" class="col-form-label"><b> User </b></label>
+        <input type="text" class="form-control mySql" id="user" name="user" placeholder="" required>
+        
+        <label for="password" class="col-form-label"><b> Password </b></label>
+        <input type="password" class="form-control mySql" id="password" name="password" placeholder="" required>
+        
+        <label for="database" class="col-form-label"><b> Database </b></b></label>
+        <input type="text" class="form-control mySql" id="database" name="database" placeholder="" required>
+
+        <label for="table_name" class="col-form-label"><b> Table name </b></b></label>
+        <input type="text" class="form-control mySql" id="table_name" name="table_name" placeholder="" required>
 
         <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
       </div>
@@ -122,11 +158,24 @@
     $(document).ready(function(){               //Make script DOM ready
       var opval = "" 
 
-      $('#awsS3bucket').hide();  
+      function hideUploadOtherResource() {
+        $('.upload-other-resource').each(function(i, obj) {
+          $( '#' + $(this).attr('id') ).hide();
+        });
+      }
+
+      hideUploadOtherResource()
 
       $('#resourceFile').change(function(e) {   //jQuery Change Function
         opval = $(this).val();                  //Get value from select element
-        $('#awsS3bucket').show();
+        // $('#awsS3bucket').show();
+        $('.upload-other-resource').each(function(i, obj) {
+          if (opval === $(this).attr('id') ) {
+            $('#' + opval).show();
+          } else {
+            $( '#' + $(this).attr('id') ).hide();
+          }
+        });
         // if(opval=="awsS3bucket"){               //Compare it and if true
         //   $('#resourceModal').modal("show");    //Open Modal
         // } else if(opval=="gcpStorage") {
@@ -218,6 +267,15 @@
 
           // Get form
           var form = $('#project_form')[0];
+
+          $('.upload-other-resource').each(function(i, obj) {
+            var id = $(this).attr('id')
+            if ($(this).attr('id') !== opval) {
+              $(form).each(function(){
+                $(this).find('.' + id).remove()
+              });
+            }
+          });
          
           // FormData object 
           var data = new FormData(form);
@@ -244,10 +302,19 @@
               cache: false,
               timeout: 800000,
               success: function(response) {
+                if(response === '/') {
                   window.location.href = response
+                }
+                else {
+                  document.write(response)
+                  document.close();
+                  window.onload = (event) => {
+                    hideUploadOtherResource()
+                  };
+                }
               },
               error: function (e) {
-                  console.log("ERROR : ", e);
+                console.log("ERROR : ", e);
               }
           });
       });
