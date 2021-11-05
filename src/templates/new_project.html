@@ -269,9 +269,10 @@
           var form = $('#project_form')[0];
 
           $('.upload-other-resource').each(function(i, obj) {
+            var id = $(this).attr('id')
             if ($(this).attr('id') !== opval) {
               $(form).each(function(){
-                $(this).find('.' + opval).remove()
+                $(this).find('.' + id).remove()
               });
             }
           });
