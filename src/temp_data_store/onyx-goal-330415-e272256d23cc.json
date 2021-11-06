@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "onyx-goal-330415",
+  "private_key_id": "e272256d23cc1fe8470219e40806381d78f47f61",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDNNefmyFXQNJxc\ng/lFESeR1MOVoK7qbg4NKBvfTgQ0xwGNuzqW+4ZRZ+O+AVrVKHBV64h1tODRuwo7\ndUfSCQlr5xO3+E8T+U4IJCI7i8DCsBD0jgL0D2MzBItTJ2WfBN+UOA0fnnH4zOzL\ntHUvd4KWNZELUP+sA0qZlZsID5sbVkUfXHL0XHeGbzHojLV6Vxv+NnGYJiZ/mWQw\nmjVNWCRGs6I0AwXooYrPVrF2y63sFcxJxO1Y9f9vhONkiOKQSjEEGKIwDhfMQMj3\nnCHwyMgMav3WEPJW6PkUNzTZgUBeOLrkz5Wgx+OMLnf21z379Dd1F2jU/61m6OGo\n7ZJfQ4lZAgMBAAECggEAAvoA/Uh18l/k/KMCPnRLCrXdPWgJbGSX3ltlSQM3KnLn\ntYXthAWiBMs5DR6GUhu0wle+yv+QRs+dQPMgB4um3/Jq3o3uhbYf4bOq1qGvP/DI\nK6If+cvkV6w3loGToPsz9L90Bo0ud7dMVHVGwWrvv+hYgMZQYxTU3jSrZeaOxsq7\nS2PNMoPDg44AdxJCLzo+neJTN7+THwey3L73xKGUpzHrTjhVBqfx7z2UgQuipfZq\nQyOciNpf/Ad0Y8ogKVuundQfAs59WZg9FFmUOAqFvY3foYwWtUoiRg7tmSy0MOzq\nIT5vNV3mL2dmgGhtXm1Gs3hvG5c+T9D62x83rNmaFQKBgQDmYOJByKbU78DITASV\nKxIPhhfDz6Xf8GfJuOED0VE/hYCCIEE4SX8XLstkxFVNc29aYveAYSjQZCtvWF2Z\nzzcw6bPlaYXwufdOZoux1KBTsuuwNEY0OMIecLvDDu8dNNMIMMgxqSHza6BRuoUv\n7LbK8plyBEI3qBYbwCaxv1FrDQKBgQDkCHdN4d1TG79z4Va7jW4DEGysxZzvo54D\nZjjJ4zjA9iWIGXxFFW6p4LT8x3qtIldFftA03xMkM0PYcVxEXsXgmShN8QBglLh0\n8U71SHjvnokss2otyy0yOCxR6z8Aswk6SJkCQLvtUNppPrVT12HkSz/NWUpnREZM\nkxbUEmpUfQKBgH4fll7bYfJ7m3hMncmofce/6qzJto8GB1wZeh7j7m4vQW58CBiv\nrANeG/37upOfWdwLCGLhTj3gSSM5Jm05U4bUuycigTCMLwdd/qaJuIh6EKwzwid+\n109g+npMZ73+mHYIduExLiQczPVRfu8A0gYDkNwp1rKvtALXTJfNHN7VAoGBALmT\npjwsv2j+YP3WejZicBBwUnD81a40ssjDbR3oHGz1JTAwxXCXc5suszwwv0addvao\nsJsGnFZOnj1MbDF8C3+wRRvBMXRoNAF/zKlTlJA1rh9B1/xyqFKBYpg8YeaYzb6w\nDE3IDuigb09NaFZWJ2WaU88zhpip+Kgi4GYwonYlAoGBAKj1n3fLAUNtGMOJZgon\nf2DqM/DKjj6biGTNFMVjpYhoZdEmyRJtd0MU46cZkR5scAnRgEzv2BeUbRKbOAVQ\nml7QxN8wCGUmFwb3xtveW6+pOdgEGudXGRVuYINUmbsECFDMY6B8ON8YRcLYQXve\nyKD94gMqlLwjaTCYtX1bs6cc\n-----END PRIVATE KEY-----\n",
+  "client_email": "neurodata@onyx-goal-330415.iam.gserviceaccount.com",
+  "client_id": "103974346583379490872",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/neurodata%40onyx-goal-330415.iam.gserviceaccount.com"
+}

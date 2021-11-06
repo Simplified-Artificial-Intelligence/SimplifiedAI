@@ -28,6 +28,7 @@ from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
+from src.utils.common.database_helper import mysql_data_helper
 from lazypredict.Supervised import LazyRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -195,21 +196,44 @@ def project():
                         print(name, description, resource_type, download_status, file_path)
 
                     elif resource_type == "gcpStorage":
-                        credentials_file = request.files['credentials_file']
+                        credentials_file = request.files['GCP_credentials_file']
                         bucket_name = request.form['bucket_name']
                         file_name = request.form['file_name']
                         credentials_filename = secure_filename(credentials_file.filename)
                         credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
+                        credentials_file.save(credentials_file_path)
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+                        print(credentials_file_path, file_path, file_name, bucket_name)
 
                         gcp = gcp_browser_storage(credentials_file_path)
                         conn_msg = gcp.check_connection(bucket_name, file_name)
+                        print(conn_msg)
                         if conn_msg != 'Successful':
                             print(conn_msg)
                             return render_template('new_project.html', msg=conn_msg)
 
                         download_status = gcp.download_file_from_bucket(file_name, file_path, bucket_name)
+                        print(download_status)
 
+                    elif resource_type == "mySql":
+                        host = request.form['host']
+                        port = request.form['port']
+                        user = request.form['user']
+                        password = request.form['password']
+                        database = request.form['database']
+                        table_name = request.form['table_name']
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], (table_name+".csv"))
+                        print(file_path)
+
+                        mysql_data = mysql_data_helper(host, port, user, password, database)
+                        conn_msg = mysql_data.check_connection(table_name)
+                        print(conn_msg)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
+
+                        download_status = mysql_data.retrive_dataset_from_table(table_name, file_path)
+                        print(download_status)
 
                     if download_status == 'Successful':
                         timestamp = round(time.time() * 1000)
