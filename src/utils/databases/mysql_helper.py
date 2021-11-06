@@ -1,12 +1,9 @@
 import mysql.connector as connector
 import mysql.connector.pooling
 from src.utils.common.common_helper import read_config
-import os
 
-dir=os.getcwd()
-path=os.path.join(dir,"config.csv")
-config_args = read_config("./config.yaml")
-
+# Path has to be managed here
+config_args = read_config(r"C:\Users\ketan\Desktop\Project\Projectathon\config.yaml")
 
 """
     [summary]
