@@ -1,5 +1,10 @@
 from dns.rcode import NOERROR
-from flask import Flask, redirect, url_for, render_template, request, session
+from flask import Flask, redirect, url_for, render_template, request, session, send_file
+from werkzeug.wrappers import Response
+
+from io import BytesIO
+from openpyxl import Workbook
+
 import re
 import certifi
 
@@ -14,7 +19,7 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from logger.logger import Logger
-from src.utils.common.data_helper import load_data, update_data
+from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, to_excel, to_json, csv_to_excel
 from src.eda.eda_helper import EDA
 import numpy  as np
 import numpy as np
@@ -349,7 +354,7 @@ def signup():
 
 
 @app.route('/exportFile/<id>', methods=['GET'])
-def export_form(id):
+def exportForm(id):
     if 'loggedin' in session:
         log.info(log_type='ACTION', log_message='Redirect To Export File Page')
         return render_template('exportFile.html', data={"id": id})
@@ -358,21 +363,65 @@ def export_form(id):
 
 
 @app.route('/exportFile', methods=['POST'])
-def export_form():
+def exportFile():
 
-    if 'loggedin' in session:
-        log.info(log_type='ACTION', log_message='Export File')
+    try:
+        if 'loggedin' in session:
+            log.info(log_type='ACTION', log_message='Export File')
 
-        fileType = request.form['fileType']
-        with open("outputs/Adjacency.csv") as fp:
-            csv = fp.read()
+            fileType = request.form['fileType']
+            filename = get_filename()
 
-        return Flask.Response(
-            csv,
-            mimetype="text/csv",
-            headers={"Content-disposition": "attachment; filename=myplot.csv"})
-    else:
-        return redirect(url_for('login'))
+            if fileType == 'csv':
+                with open(filename) as fp:
+                    content = fp.read()
+                return Response(
+                    content,
+                    mimetype="text/csv",
+                    headers={"Content-disposition": "attachment; filename=test.csv"})
+
+            elif fileType == 'tsv':
+                filename = filename.rsplit('.', 1)[0]
+                to_tsv()
+                with open(filename + '.tsv') as fp:
+                    content = fp.read()
+                    
+                if os.path.isfile(filename + '.tsv'):
+                    os.remove(filename + '.tsv')
+                else:
+                    print(filename + '.tsv file doesnt exist')
+                return Response(
+                    content,
+                    mimetype="text/csv",
+                    headers={"Content-disposition": "attachment; filename=test.tsv"})
+
+            elif fileType == 'excel':
+                wb = csv_to_excel()
+                
+                file_stream = BytesIO()
+                wb.save(file_stream)
+                file_stream.seek(0)
+    
+                filename = filename.rsplit('.', 1)[0]
+                if os.path.isfile(filename + '.xlsx'):
+                    os.remove(filename + '.xlsx')
+                else:
+                    print(filename + '.xlsx file doesnt exist')
+
+                return send_file(file_stream, attachment_filename="tdd-excel.xlsx", as_attachment=True)
+
+            elif fileType == 'json':
+                content = csv_to_json(filename)
+                return Response(
+                    content,
+                    mimetype="text/json",
+                    headers={"Content-disposition": "attachment; filename=test.json"})
+            
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        print(e)
+        return render_template('exportFile.html', msg=e.__str__())
 
 
 @app.route('/deletePage/<id>', methods=['GET'])
