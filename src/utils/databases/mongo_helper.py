@@ -4,7 +4,7 @@ import time
 from src.utils.common.common_helper import read_config
 import os
 
-config_args = read_config("./config.yaml")
+config_args = read_config(r"C:\Users\ketan\Desktop\Project\Projectathon\config.yaml")
 
 
 class MongoHelper:

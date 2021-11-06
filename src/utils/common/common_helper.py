@@ -5,6 +5,7 @@ from cryptography.fernet import Fernet
 import os
 import json
 
+
 def read_config(config):
     with open(config) as config:
         content = yaml.safe_load(config)
