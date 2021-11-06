@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<form  id="project_form" class="project-form" enctype = "multipart/form-data">
+<form  action="/exportFile" method="POST" id="project_form" class="project-form" enctype="multipart/form-data">
 
     <div class="container col-lg-6 col-sm-6">
         {% if msg %}
@@ -16,14 +16,13 @@
         <h3 class="header">Export File</h3>
 
         <!-- Other Resources -->
-        <input class="" type="radio" name="uploadResource" id="uploadResource">
-        <label for="uploadResource" class="resource-file-label"><b>Upload From Various Resource:</b></label>
-        <select class="form-control" name="resourceFile" id="resourceFile">
+        <label for="fileTpye" class="resource-file-label mb-3"><b> Choose a file type: </b></label>
+        <select class="form-control mb-3" name="fileTpye" id="fileTpye">
             <option value=""> Select any one </option>
-            <option value="awsS3bucket"> AWS S3 Bucket </option>
-            <option value="gcpStorage"> GCP Blob Storage </option>
-            <option value="mySql"> MySql </option>
-            <option value="cassandra"> Cassandra </option>
+            <option value="csv"> csv </option>
+            <option value="tsv"> tsv </option>
+            <option value="json"> json </option>
+            <option value="text"> text </option>
         </select> 
 
         <button type="submit" class="btn btn-primary">Download</button>
