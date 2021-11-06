@@ -1,15 +1,35 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="home">
-        <div class="row">
 
-            {% for item in projects %}
+<form  id="project_form" class="project-form" enctype = "multipart/form-data">
 
-                
-
-            {% endfor %}
-
+    <div class="container col-lg-6 col-sm-6">
+        {% if msg %}
+        <div class="col-lg-12 col-sm-12 col-md-12">
+            <div class="alert alert-danger">
+                <strong> Alert! </strong>{{msg}}.
+            </div>
         </div>
+        {% endif %}
+
+        <h3 class="header">Export File</h3>
+
+        <!-- Other Resources -->
+        <input class="" type="radio" name="uploadResource" id="uploadResource">
+        <label for="uploadResource" class="resource-file-label"><b>Upload From Various Resource:</b></label>
+        <select class="form-control" name="resourceFile" id="resourceFile">
+            <option value=""> Select any one </option>
+            <option value="awsS3bucket"> AWS S3 Bucket </option>
+            <option value="gcpStorage"> GCP Blob Storage </option>
+            <option value="mySql"> MySql </option>
+            <option value="cassandra"> Cassandra </option>
+        </select> 
+
+        <button type="submit" class="btn btn-primary">Download</button>
+        
     </div>
+
+</form>
+
 {% endblock %}

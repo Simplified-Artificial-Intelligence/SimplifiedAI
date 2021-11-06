@@ -75,7 +75,7 @@
       <div id="cassandra" class="upload-other-resource">
 
         <div class="form-check" style="margin-top: 20px;">
-          <input class="form-check-input cassandra" type="checkbox" value="" id="data_in_tabular"  name="data_in_tabular" checked>
+          <input class="form-check-input cassandra" type="checkbox" id="data_in_tabular"  name="data_in_tabular" >
           <label class="form-check-label" for="data_in_tabular"> Is Data in tabular format? </label>
         </div>
 
@@ -91,6 +91,9 @@
 
         <label for="keyspace" class="col-form-label"><b> Keyspace </b></b></label>
         <input type="text" class="form-control cassandra" id="keyspace" name="keyspace" placeholder="" required>
+
+        <label for="table_name" class="col-form-label"><b> Table name </b></b></label>
+        <input type="text" class="form-control cassandra" id="table_name" name="table_name" placeholder="" required>
         
         <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
       </div>
@@ -245,6 +248,20 @@
 
       })
 
+
+      var tabularData = false
+      $('input[name="data_in_tabular"]').click(function(){
+        if($(this).prop("checked") == true){
+          tabularData = true
+          console.log("Checkbox is checked.");
+        }
+        else if($(this).prop("checked") == false){
+          tabularData = false
+          console.log("Checkbox is unchecked.");
+        }
+      });
+
+
       $("#testConnection").click(function (event) {
           //stop submit the form, we will post it manually.
           event.preventDefault();
@@ -307,6 +324,11 @@
           // If you want to add an extra field for the FormData
           data.append("resource_type", opval);
           data.append("source_type", selectedRadio);
+          data.delete("data_in_tabular");
+
+          if (opval === "cassandra" ) {
+            data.append("data_in_tabular", tabularData);
+          }
     
           // disabled the submit button
           // $("#btnSubmit").prop("disabled", true);
