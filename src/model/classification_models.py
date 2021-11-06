@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 
 import pickle
 
+
 class ClassificationModels:
     def __init__(self, x, y):
         self.x = x
