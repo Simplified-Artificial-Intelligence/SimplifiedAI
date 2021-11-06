@@ -1,6 +1,7 @@
 from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session
 import re
+import certifi
 
 from imblearn import under_sampling
 from src.preprocessing.preprocessing_helper import Preprocessing
@@ -26,6 +27,7 @@ from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
 from src.utils.common.cloud_helper import aws_s3_helper
+from src.utils.common.cloud_helper import gcp_browser_storage
 from lazypredict.Supervised import LazyRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -167,6 +169,15 @@ def project():
                     name = request.form['project_name']
                     description = request.form['project_desc']
                     resource_type = request.form['resource_type']
+
+                    if not name.strip():
+                        msg = 'Please enter project name'
+                        return render_template('new_project.html', msg=msg)
+                    elif not description.strip():
+                        msg = 'Please enter project description'
+                        return render_template('new_project.html', msg=msg)
+
+
                     if resource_type == "awsS3bucket":
                         region_name = request.form['region_name']
                         aws_access_key_id = request.form['aws_access_key_id']
@@ -175,31 +186,58 @@ def project():
                         file_name = request.form['file_name']
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
                         aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
-                        msg = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
-                        print(name, description, resource_type, msg)
+                        conn_msg = aws_s3.check_connection(bucket_name, file_name)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
 
-                    timestamp = round(time.time() * 1000)
-                    name = name.replace(" ", "_")
-                    table_name = f"{name}_{timestamp}"
+                        download_status = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
+                        print(name, description, resource_type, download_status, file_path)
 
-                    df = pd.read_csv(file_path)
-                    project_id = unique_id_generator()
-                    inserted_rows = mongodb.create_new_project(project_id, df)
+                    elif resource_type == "gcpStorage":
+                        credentials_file = request.files['credentials_file']
+                        bucket_name = request.form['bucket_name']
+                        file_name = request.form['file_name']
+                        credentials_filename = secure_filename(credentials_file.filename)
+                        credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
 
-                    if inserted_rows > 0:
-                        userId = session.get('id')
-                        status = 1
-                        query = f"""INSERT INTO tblProjects (UserId, Name, Description, Status, 
-                                           Cassandra_Table_Name,Pid) VALUES
-                                           ("{userId}", "{name}", "{description}", "1", "{table_name}","{project_id}")"""
+                        gcp = gcp_browser_storage(credentials_file_path)
+                        conn_msg = gcp.check_connection(bucket_name, file_name)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
 
-                        rowcount = mysql.insert_record(query)
-                        if rowcount > 0:
-                            return url_for('index')
+                        download_status = gcp.download_file_from_bucket(file_name, file_path, bucket_name)
+
+
+                    if download_status == 'Successful':
+                        timestamp = round(time.time() * 1000)
+                        name = name.replace(" ", "_")
+                        table_name = f"{name}_{timestamp}"
+
+                        df = pd.read_csv(file_path)
+                        project_id = unique_id_generator()
+                        inserted_rows = mongodb.create_new_project(project_id, df)
+
+                        if inserted_rows > 0:
+                            print('project created !!')
+                            userId = session.get('id')
+                            status = 1
+                            query = f"""INSERT INTO tblProjects (UserId, Name, Description, Status, 
+                                               Cassandra_Table_Name,Pid) VALUES
+                                               ("{userId}", "{name}", "{description}", "1", "{table_name}","{project_id}")"""
+
+                            rowcount = mysql.insert_record(query)
+                            if rowcount > 0:
+                                return redirect(url_for('index'))
+                            else:
+                                msg = "Error while creating new Project"
+                                return render_template('new_project.html', msg=msg)
+
                         else:
                             msg = "Error while creating new Project"
                             return render_template('new_project.html', msg=msg)
-
                     else:
                         msg = "Error while creating new Project"
                         return render_template('new_project.html', msg=msg)
@@ -210,8 +248,7 @@ def project():
     except Exception as e:
         print(e)
         #print().__str__()
-        return render_template('new_project.html', msg=e)
-
+        return render_template('new_project.html', msg=e.__str__())
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
