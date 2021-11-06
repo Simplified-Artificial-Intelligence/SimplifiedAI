@@ -758,7 +758,7 @@ def systemlogs(action):
     try:
         if action == 'terminal':
             lines = []
-            with open(r"C:\Users\ketan\Desktop\Project\Projectathon\logger\logs\logs.log") as file_in:
+            with open(r"logger\logs\logs.log") as file_in:
                 for line in file_in:
                     lines.append(line)
             print(lines)
@@ -859,6 +859,16 @@ def model_training_post(action):
 @app.route('/Machine/<action>', methods=['GET'])
 def machine(action):
     return render_template('Machine/system.html')
+
+# @app.route('/schedular/<action>', methods=['GET'])
+# def schedular(action):
+#     if action == 'help':
+#         return render_template('schedular/help.html')
+
+# @app.route('/schedular/<action>', methods=['POST'])
+# def schedular(action):
+#     if action == 'help':
+#         return render_template('schedular/help.html')
 
 
 if __name__ == '__main__':
