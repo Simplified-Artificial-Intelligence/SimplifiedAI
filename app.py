@@ -287,6 +287,36 @@ def signup():
             return render_template('signup.html', msg=msg)
 
 
+@app.route('/exportFile/<id>', methods=['GET'])
+def export_form(id):
+    if 'loggedin' in session:
+        log.info(log_type='ACTION', log_message='Redirect To Export File Page')
+        return render_template('exportFile.html', data={"id": id})
+    else:
+        return redirect(url_for('login'))
+
+
+# @app.route('/exportFile', methods=['POST'])
+# def export_form():
+
+#     if 'loggedin' in session:
+#         log.info(log_type='ACTION', log_message='Export File')
+
+#         name = request.form['project_name']
+#         if len(request.files) > 0:
+#             f = request.files['file']
+#         with open("outputs/Adjacency.csv") as fp:
+#             csv = fp.read()
+
+#         return Response(
+#             csv,
+#             mimetype="text/csv",
+#             headers={"Content-disposition":
+#                     "attachment; filename=myplot.csv"})
+#     else:
+#         return redirect(url_for('login'))
+
+
 @app.route('/deletePage/<id>', methods=['GET'])
 def renderDeleteProject(id):
     if 'loggedin' in session:
