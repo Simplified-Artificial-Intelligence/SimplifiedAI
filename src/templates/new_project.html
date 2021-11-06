@@ -36,6 +36,7 @@
         <option value="awsS3bucket"> AWS S3 Bucket </option>
         <option value="gcpStorage"> GCP Blob Storage </option>
         <option value="mySql"> MySql </option>
+        <option value="cassandra"> Cassandra </option>
       </select>  
       
       <div id="awsS3bucket" class="upload-other-resource">
@@ -71,16 +72,25 @@
         <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
       </div>
 
-      <div id="gcpStorage" class="upload-other-resource">
+      <div id="cassandra" class="upload-other-resource">
+
+        <div class="form-check" style="margin-top: 20px;">
+          <input class="form-check-input cassandra" type="checkbox" value="" id="data_in_tabular"  name="data_in_tabular" checked>
+          <label class="form-check-label" for="data_in_tabular"> Is Data in tabular format? </label>
+        </div>
+
         <label for="secure_connect_bundle" class="col-form-label"><b> Secure Connect Bundle </b></label>
-        <input type="file" class="form-control gcpStorage" id="secure_connect_bundle" name="secure_connect_bundle">
-        <p>allowed file *.json</p>
+        <input type="file" accept=".zip,.rar,.7zip" class="form-control cassandra" id="secure_connect_bundle" name="secure_connect_bundle">
+        <p>allowed file *.zip</p>
         
-        <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
-        <input type="text" class="form-control gcpStorage" id="bucket_name" name="bucket_name" placeholder="" required>
+        <label for="client_id" class="col-form-label"><b> Client Id </b></label>
+        <input type="text" class="form-control cassandra" id="client_id" name="client_id" placeholder="" required>
         
-        <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
-        <input type="text" class="form-control gcpStorage" id="file_name" name="file_name" placeholder="" required>
+        <label for="client_secret" class="col-form-label"><b> Client Secret </b></b></label>
+        <input type="text" class="form-control cassandra" id="client_secret" name="client_secret" placeholder="" required>
+
+        <label for="keyspace" class="col-form-label"><b> Keyspace </b></b></label>
+        <input type="text" class="form-control cassandra" id="keyspace" name="keyspace" placeholder="" required>
         
         <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
       </div>
