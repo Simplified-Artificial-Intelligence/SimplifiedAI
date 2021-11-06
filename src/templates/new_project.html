@@ -71,6 +71,20 @@
         <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
       </div>
 
+      <div id="gcpStorage" class="upload-other-resource">
+        <label for="secure_connect_bundle" class="col-form-label"><b> Secure Connect Bundle </b></label>
+        <input type="file" class="form-control gcpStorage" id="secure_connect_bundle" name="secure_connect_bundle">
+        <p>allowed file *.json</p>
+        
+        <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
+        <input type="text" class="form-control gcpStorage" id="bucket_name" name="bucket_name" placeholder="" required>
+        
+        <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
+        <input type="text" class="form-control gcpStorage" id="file_name" name="file_name" placeholder="" required>
+        
+        <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
+      </div>
+
       <div id="mySql" class="upload-other-resource">
         <label for="host" class="col-form-label"><b> Host </b></label>
         <input type="text" class="form-control mySql" id="host" name="host" placeholder="" required>
