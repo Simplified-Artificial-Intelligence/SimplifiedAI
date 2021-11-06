@@ -99,6 +99,7 @@ class gcp_browser_storage():
     def __init__(self, credentials_file):
         try:
             self.storage_client = storage.Client.from_service_account_json(credentials_file)
+            print('done')
         except Exception as e:
             print(e.__str__())
             # return 'Provide proper credentials file in json'
@@ -164,10 +165,10 @@ class gcp_browser_storage():
         '''
 
         try:
-            bucket = storage_client.get_bucket(bucket_name)
+            bucket = self.storage_client.get_bucket(bucket_name)
             blob = bucket.blob(blob_name)
             with open(file_path, 'wb') as f:
-                storage_client.download_blob_to_file(blob, f)
+                self.storage_client.download_blob_to_file(blob, f)
             print('Saved')
             return 'Successful'
 
