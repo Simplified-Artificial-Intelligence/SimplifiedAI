@@ -357,25 +357,22 @@ def export_form(id):
         return redirect(url_for('login'))
 
 
-# @app.route('/exportFile', methods=['POST'])
-# def export_form():
+@app.route('/exportFile', methods=['POST'])
+def export_form():
 
-#     if 'loggedin' in session:
-#         log.info(log_type='ACTION', log_message='Export File')
+    if 'loggedin' in session:
+        log.info(log_type='ACTION', log_message='Export File')
 
-#         name = request.form['project_name']
-#         if len(request.files) > 0:
-#             f = request.files['file']
-#         with open("outputs/Adjacency.csv") as fp:
-#             csv = fp.read()
+        fileType = request.form['fileType']
+        with open("outputs/Adjacency.csv") as fp:
+            csv = fp.read()
 
-#         return Response(
-#             csv,
-#             mimetype="text/csv",
-#             headers={"Content-disposition":
-#                     "attachment; filename=myplot.csv"})
-#     else:
-#         return redirect(url_for('login'))
+        return Flask.Response(
+            csv,
+            mimetype="text/csv",
+            headers={"Content-disposition": "attachment; filename=myplot.csv"})
+    else:
+        return redirect(url_for('login'))
 
 
 @app.route('/deletePage/<id>', methods=['GET'])
