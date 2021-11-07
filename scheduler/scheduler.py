@@ -65,7 +65,6 @@ def get_names_from_files(path=None):
 
     return backup_files, normal_files
 
-
 def file_path(path=None, backup=None, normal=None):
     backup_data_path = []
     normal_data_path = []
@@ -87,4 +86,16 @@ def data_updater(path=r"C:\Users\ketan\Desktop\Project\Projectathon\src\data"):
     for pid, data_path in zip(backup, backup_data_path):
         print(upload_checkpoint(pid, data_path))
 
-data_updater()
+
+#
+# schedule.every(10).seconds.do(upload_to_mongo)
+# schedule.every(10).seconds.do(download_from_mongo)
+# # Loop so that the scheduling task
+# # keeps on running all time.
+# while True:
+#
+# 	# Checks whether a scheduled task
+# 	# is pending to run or not
+# 	schedule.run_pending()
+# 	time.sleep(1)
+
