@@ -1,3 +1,4 @@
+
 import schedule
 import time
 import pymongo
@@ -98,4 +99,3 @@ def data_updater(path=r"C:\Users\ketan\Desktop\Project\Projectathon\src\data"):
 # 	# is pending to run or not
 # 	schedule.run_pending()
 # 	time.sleep(1)
-

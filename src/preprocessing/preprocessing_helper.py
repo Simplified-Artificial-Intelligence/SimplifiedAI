@@ -6,6 +6,7 @@ from sklearn.preprocessing import normalize
 from sklearn.utils import resample
 from imblearn.over_sampling import SMOTE, BorderlineSMOTE, ADASYN, RandomOverSampler, SMOTENC, SVMSMOTE
 from imblearn.under_sampling import TomekLinks, NearMiss, RandomUnderSampler
+from scipy.stats import skew,kurtosis
 
 class Preprocessing():
 
@@ -66,9 +67,17 @@ class Preprocessing():
             return e
         
     @staticmethod
-    def fill_numerical(df, typ, cols):
+    def find_skewness(x):
+        return skew(x)
+    
+    @staticmethod
+    def find_kurtosis(x):
+        return kurtosis(x)
+    
+    @staticmethod
+    def fill_numerical(df, typ, cols,value=None):
         for i in cols:
-            if i in df.cols:
+            if i in df.columns:
                 continue
             else:
                 return 'Column Not Found'
@@ -82,10 +91,15 @@ class Preprocessing():
                 return df[cols].fillna(df[cols].median())
             except Exception as e:
                 return e
-
+        elif typ == 'Arbitrary Value':
+            try:
+                return df[cols].fillna(value)
+            except Exception as e:
+                return e
+            
         elif typ == 'Interpolate':
             try:
-                return df[cols].interpolate()
+                return df[cols].interpolate(value)
             except Exception as e:
                 return e
         else:
@@ -106,9 +120,16 @@ class Preprocessing():
                 return df[col].fillna(value)
             else:
                 return 'Please give provide values and columns'
+            
         elif typ == 'Mode':
-            if col and value is not None:
-                return df[col].fillna(df[col].mode()[0])
+            if col is not None:
+                return df[col].fillna(df.mode()[col][0])
+            else:
+                return 'Please give provide values and columns'
+            
+        elif typ == 'New Category':
+            if col is not None:
+                return df[col].fillna(value)
             else:
                 return 'Please give provide values and columns'
         else:

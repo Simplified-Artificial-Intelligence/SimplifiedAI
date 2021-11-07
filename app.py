@@ -1,7 +1,9 @@
-from flask import Flask, redirect, url_for, render_template, request, session
+from enum import unique
+from dns.rcode import NOERROR
+from flask import Flask, redirect, url_for, render_template, request, session,jsonify
 import re
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import TWO_D_GRAPH_TYPES
+from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES, TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -20,6 +22,7 @@ from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
+from sklearn.model_selection import train_test_split
 from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
@@ -505,7 +508,7 @@ def data_preprocessing(action):
                     return render_template('dp/outliers.html',columns=columns,action=action)
 
                 elif action=="missing-values":
-                    columns=Preprocessing.col_seperator(df,'Numerical_columns')
+                    columns=list(df.columns)
                     log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
                     return render_template('dp/missing_values.html',columns=columns,action=action)
                 
@@ -594,7 +597,8 @@ def data_preprocessing_post(action):
                     else:
                         result=EDA.z_score_outlier_detection(df.loc[:,[column]])
                         if len(result)>0:
-                            graphJSON =  PlotlyHelper.distplot(list(df.loc[:,column]),column)  
+                            list_=list(df[~df.loc[:,column].isnull()][column])
+                            graphJSON =  PlotlyHelper.distplot(list_,column)  
                         data=result.to_html()   
                         
                         outliers_list=EDA.outlier_detection(list(df.loc[:,column]),'z-score')
@@ -610,6 +614,53 @@ def data_preprocessing_post(action):
                                            action=action,data=data,
                                            outliercount=result['Total outliers'][0] if len(result['Total outliers'])>0 else 0,
                                            graphJSON=graphJSON)
+                    
+                
+                elif action=="missing-values":
+                    if 'method' in request.form:
+                         method=request.form['method']
+                         selected_column=request.form['selected_column']
+                         success=False
+                         if method=='Mean':
+                             df[selected_column]=Preprocessing.fill_numerical(df,'Mean',[selected_column])
+                         elif method=='Median':
+                             df[selected_column]=Preprocessing.fill_numerical(df,'Median',[selected_column])
+                         elif method=='Arbitrary Value':
+                             df[selected_column]=Preprocessing.fill_numerical(df,'Median',[selected_column],request.form['arbitrary'])
+                         elif method=='Interpolate':
+                              df[selected_column]=Preprocessing.fill_numerical(df,'Interpolate',[selected_column],request.form['interpolate'])
+                         elif method=='Mode':
+                              df[selected_column]=Preprocessing.fill_categorical(df,'Mode',selected_column)
+                         elif method=='New Category':
+                              df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.form['newcategory'])
+                         elif method=='Select Exist':
+                              df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.form['selectcategory'])
+                                
+                         df=update_data(df)
+                         success=True
+                         columns=list(df.columns)
+                         return render_template('dp/missing_values.html',columns=columns,action=action,success=success)
+                    else:
+                        columns=list(df.columns)
+                        selected_column=request.form['columns']
+                        data=EDA.missing_cells_table(df.loc[:,[selected_column]])
+                        null_value_count=0
+                        unique_category=[]
+                        outlier_handler_methods=[]
+                        if len(data)>0:
+                            unique_category=list(df[df[selected_column].notna()][selected_column].unique())
+                            null_value_count=data['Missing values'][0]
+                            if df[selected_column].dtype=='object':
+                                outlier_handler_methods=OBJECT_MISSING_HANDLER
+                                
+                            else:
+                                outlier_handler_methods=NUMERIC_MISSING_HANDLER
+                            
+                        
+                        data=data.to_html()
+                        log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                        return render_template('dp/missing_values.html',unique_category=unique_category,columns=columns,selected_column=selected_column,action=action,data=data,null_value_count=null_value_count,handler_methods=outlier_handler_methods)
+                    
                 elif action=="delete-outlier":
                     values = request.form.getlist('columns')
                     selected_column=request.form['selected_column']
@@ -665,7 +716,7 @@ def data_preprocessing_post(action):
         print(e)
 
 
-@app.route('/feature_engineering/<action>', methods=['GET'])
+@app.route('/fe/<action>', methods=['GET'])
 def feature_engineering(action):
     try:
         if 'pid' in session:
@@ -673,24 +724,24 @@ def feature_engineering(action):
             if df is not None:
                 data = df.head().to_html()
                 if action == 'help':
-                    return render_template('feature_engineering/help.html')
-                elif action == 'handleDatetime':
-                    dt_splitted = False
-                    not_dt_splitted = True
-                    selectedCount = 100
-                    return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
-                                           not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
-                                           selectedCount=selectedCount, columns=df.columns)
+                    return render_template('fe/help.html')
+                elif action == 'handle-datatype':
+                    return render_template('fe/handle_datatype.html', action=action, columns=df.dtypes.apply(lambda x: x.name).to_dict(),supported_dtypes=SUPPORTED_DATA_TYPES)
                 elif action == 'encoding':
-                    return render_template('feature_engineering/encoding.html', data=data, columns=df.columns, action=action)
+                    return render_template('fe/encoding.html',encoding_types=ENCODING_TYPES, columns=list(df.columns[df.dtypes=='object']), action=action)
+                elif action == 'change-column-name':
+                    return render_template('fe/change_column_name.html',columns=list(df.columns), action=action)
                 elif action == 'scaling':
-                    return render_template('feature_engineering/scaling.html', data=data)
+                    return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,columns=list(df.columns[df.dtypes!='object']))
                 elif action == 'feature_selection':
-                    return render_template('feature_engineering/feature_selection.html', data=data)
+                    return render_template('fe/feature_selection.html',methods=FEATURE_SELECTION_METHODS_CLASSIFICATION)
                 elif action == 'dimension_reduction':
-                    return render_template('feature_engineering/dimension_reduction.html', data=data)
+                    ### Check this remove target column
+                    data=df.head(200).to_html()
+                    return render_template('fe/dimension_reduction.html', action=action,data=data)
+                
                 elif action == 'train_test_split':
-                    return render_template('feature_engineering/train_test_split.html', data=data)
+                    return render_template('fe/train_test_split.html', data=data)
                 else:
                     return 'Non-Implemented Action'
             else:
@@ -701,47 +752,87 @@ def feature_engineering(action):
         print(e)
 
 
-@app.route('/feature_engineering/<action>', methods=['POST'])
+@app.route('/fe/<action>', methods=['POST'])
 def feature_engineering_post(action):
     try:
         if 'pid' in session:
             df = load_data()
             if df is not None:
-                data = df.head().to_html()
-                if action == 'help':
-                    return render_template('feature_engineering/help.html')
-                
-                elif action == 'handleDatetime':
-                    dt_splitted = False
-                    not_dt_splitted = True
-                    selectedCount = 100
-                    columns = request.form.getlist('columns')
-                    print(columns)
-                    data = df[columns].to_html()
-                    return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
-                                           not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
-                                           selectedCount=selectedCount, columns=df.columns)
+                data = df.head().to_html()                
+                if action == 'handle-datatype':
+                    try:
+                        selected_column=request.form['column']
+                        datatype=request.form['datatype']
+                        df=FeatureEngineering.change_data_type(df,selected_column,datatype)
+                        df=update_data(df)
+                        return render_template('fe/handle_datatype.html',status="success", action=action, columns=df.dtypes.apply(lambda x: x.name).to_dict(),supported_dtypes=SUPPORTED_DATA_TYPES)
+                        
+                    except Exception as e:
+                        return render_template('fe/handle_datatype.html',status="error", action=action, columns=df.dtypes.apply(lambda x: x.name).to_dict(),supported_dtypes=SUPPORTED_DATA_TYPES)
+                elif action == 'change-column-name':
+                    try:
+                        selected_column=request.form['selected_column']
+                        column_name=request.form['column_name']
+                        df=FeatureEngineering.change_column_name(df,selected_column,column_name.strip())
+                        df=update_data(df)
+                        return render_template('fe/change_column_name.html', status="success", columns=list(df.columns), action=action)
+                    except Exception as e:
+                        return render_template('fe/change_column_name.html', status="error", columns=list(df.columns), action=action)
                 elif action == 'encoding':
-                    df = pd.read_csv(r'AMES_Final_DF.csv')
-                    Categorical_columns = df.select_dtypes(include='object')
-                    custom = True
-                    selectall=False
-                    return render_template('feature_engineering/encoding.html', data=data, custom=custom, selectall=selectall, action=action, columns=Categorical_columns.columns)
+                    try:
+                        encoding_type=request.form['encoding_type']
+                        columns=request.form.getlist('columns')
+                        d={'success':True}
+                        df_=df.loc[:,columns]
+                        scaling_method=request.form['scaling_method']
+                        if encoding_type=="Base N Encoder":
+                            df_=FeatureEngineering.encodings(df_,columns,encoding_type,base=int(request.form['base']))
+                        elif encoding_type=="Target Encoder":
+                            df_=FeatureEngineering.encodings(df_,columns,encoding_type,n_components=request.form['target'])
+                        elif encoding_type=="Hash Encoder":
+                            """This is remaining to handle"""
+                            df_=FeatureEngineering.encodings(df_,columns,encoding_type,n_components=int(request.form['hash']))
+                        else:
+                            df_=FeatureEngineering.encodings(df_,columns,encoding_type)
+                        
+                        df=Preprocessing.delete_col(df,columns)
+                        frames = [df, df_]
+                        df = pd.concat(frames)
+                        df=update_data(df)
+                        return render_template('fe/encoding.html', status="success",encoding_types=ENCODING_TYPES, columns=list(df.columns[df.dtypes=='object']), action=action)
+                    except Exception as e:
+                        return render_template('fe/encoding.html', status="error",encoding_types=ENCODING_TYPES, columns=list(df.columns[df.dtypes=='object']), action=action)
+
                 elif action == 'scaling':
                     try:
-                        df = pd.read_csv(r'AMES_Final_DF.csv')
-                        X = df.drop('SalePrice', axis=1)
-                        y = df['SalePrice']
-                        obj = FeatureEngineering()
-                        scaler = request.form['scaler']
-                        data = obj.scaler_(X, scaler)
+                        scaling_method=request.form['scaling_method']
+                        columns = request.form.getlist('columns')
+                        if len(columns)<=0:
+                            raise Exception("Column can not be zero")
+                        
+                        df[columns]=FeatureEngineering.scaler(df[columns],scaling_method)
+                        df=update_data(df)
+                        return render_template('fe/scaling.html',status="success", scaler_types=SUPPORTED_SCALING_TYPES,columns=list(df.columns[df.dtypes!='object']))
+                            
                     except:
-                        return render_template('feature_engineering/encoding.html', data=data)
-                    return render_template('feature_engineering/scaling.html', data=data)
+                         return render_template('fe/scaling.html',status="error", scaler_types=SUPPORTED_SCALING_TYPES,columns=list(df.columns[df.dtypes!='object']))
                 elif action == 'feature_selection':
-                    return render_template('feature_engineering/feature_selection.html', data=data)
+                    return render_template('fe/feature_selection.html', data=data)
                 elif action == 'dimension_reduction':
-                    return render_template('feature_engineering/dimension_reduction.html', data=data)
+                    ### Check this remove target column
+                    try:
+                        df_=df.loc[:, df.columns != 'Label']
+                        no_pca_selected=request.form['range']
+                        df_,evr_=FeatureEngineering.dimenstion_reduction(df_,len(df_.columns))
+                        df_=df_[:,:int(no_pca_selected)]                        
+                        df_evr=pd.DataFrame()                    
+                        data=pd.DataFrame(df_,columns=[f"Col_{col+1}" for col in np.arange(0,df_.shape[1])])
+                        data['Label']=df.loc[:,'Label']
+                        df=update_data(data)
+                        data=df.head(200).to_html()
+                        return render_template('fe/dimension_reduction.html',status="success", action=action,data=data)
+                    except Exception as e:
+                        return render_template('fe/dimension_reduction.html',status="error", action=action,data=data)
                 else:
                     return 'Non-Implemented Action'
             else:
@@ -882,6 +973,167 @@ def scheduler_post(action):
     if action == 'help':
         return render_template('scheduler/help.html')
 
+
+    """APIS"""
+@app.route('/api/missing-data', methods=['GET', 'POST'])
+def missing_data():
+    try:
+        df = load_data()
+        selected_column=request.json['selected_column']
+        method=request.json['method']
+        if method=='Mean' or  method=='Median' or  method=='Arbitrary Value' or  method=='Interpolate':
+            before={}
+            after={}
+            list_=list(df[~df.loc[:,selected_column].isnull()][selected_column])
+            before['graph'] =  PlotlyHelper.distplot(list_,selected_column)  
+            before['skewness'] =  Preprocessing.find_skewness(list_)  
+            before['kurtosis'] =  Preprocessing.find_kurtosis(list_)  
+            
+            if method=='Mean':
+                new_df=Preprocessing.fill_numerical(df,'Mean',[selected_column])
+            elif method=='Median':
+                new_df=Preprocessing.fill_numerical(df,'Median',[selected_column])
+            elif method=='Arbitrary Value':
+                new_df=Preprocessing.fill_numerical(df,'Median',[selected_column],request.json['Arbitrary_Value'])
+            elif method=='Interpolate':
+                new_df=Preprocessing.fill_numerical(df,'Interpolate',[selected_column],request.json['Interpolate'])
+            
+                
+            new_list=list(new_df.loc[:,selected_column])
+            
+            after['graph'] =  PlotlyHelper.distplot(new_list,selected_column)  
+            after['skewness'] =  Preprocessing.find_skewness(new_list)  
+            after['kurtosis'] =  Preprocessing.find_kurtosis(new_list)    
+                      
+            d={
+                'success':True,
+                'before':before,
+                'after':after
+            }
+            return jsonify(d)
+
+        if method=='Mode' or  method=='New Category' or  method=='Select Exist':
+            before={}
+            after={}
+            df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+            y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
+            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')
+            before['graph']=pie_graphJSON  
+            
+            if method=='Mode':
+                df[selected_column]=Preprocessing.fill_categorical(df,'Mode',selected_column)
+                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')  
+                
+                after['graph'] =  pie_graphJSON
+            elif method=='New Category':
+                df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.json['newcategory'])
+                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='') 
+                after['graph'] =  pie_graphJSON
+                
+            elif method=='Select Exist':
+                df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.json['selectcategory'])
+                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')  
+                
+                after['graph'] =  pie_graphJSON
+                                      
+            d={
+                'success':True,
+                'before':before,
+                'after':after
+            }
+            return jsonify(d)
+
+    except Exception as e:
+       return jsonify({'success':False})
+
+    return "Hello World!"
+
+@app.route('/api/encoding', methods=['GET', 'POST'])
+def fe_encoding():
+    try:
+        df = load_data()
+        encoding_type=request.json['encoding_type']
+        columns=request.json['columns']
+        d={'success':True}
+        df=df.loc[:,columns]
+        if encoding_type=="Base N Encoder":
+            df=FeatureEngineering.encodings(df,columns,encoding_type,base=request.json['base'])
+        elif encoding_type=="Target Encoder":
+            df=FeatureEngineering.encodings(df,columns,encoding_type,n_components=request.json['target'])
+        elif encoding_type=="Hash Encoder":
+            """This is remaining to handle"""
+            df=FeatureEngineering.encodings(df,columns,encoding_type,n_components=request.json['hash'])
+        else:
+            df=FeatureEngineering.encodings(df,columns,encoding_type)
+        data=df.head(200).to_html() 
+        d['data']=data
+        return jsonify(d)
+
+    except Exception as e:
+       return jsonify({'success':False})
+   
+   
+@app.route('/api/pca', methods=['POST'])
+def fe_pca():
+    try:
+        df = load_data()
+        df_=df.loc[:, df.columns != 'Label']
+        df_,evr_=FeatureEngineering.dimenstion_reduction(df_,len(df_.columns))
+        d={'success':True}
+        
+        df_evr=pd.DataFrame()
+        df_evr['No of Components']=np.arange(0,len(evr_))+1
+        df_evr['Variance %']=evr_.round(2)
+        
+        data=pd.DataFrame(df_,columns=[f"Col_{col+1}" for col in np.arange(0,df_.shape[1])]).head(200).to_html()
+        graph=PlotlyHelper.line(df_evr,'No of Components','Variance %')
+        
+        d['data']=data
+        d['graph']=graph
+        d['no_pca']=len(evr_)
+        return jsonify(d)
+
+    except Exception as e:
+       return jsonify({'success':False})
+   
+@app.route('/api/feature_selection', methods=['POST'])
+def fe_feature_selection():
+    try:
+        df = load_data()
+        df_=df.loc[:, df.columns != 'Label']
+        method=request.json['method']
+        d={'success':True}
+        
+        if method=="Find Constant Features":
+            threshold=request.json['threshold']
+            high_variance_columns=FeatureEngineering.feature_selection(df_,'Label',method,threshold=float(threshold))
+            high_variance_columns=list(high_variance_columns)
+            low_variance_columns=[col for col in df_.columns
+                                  if col  not in high_variance_columns]
+            d['high_variance_columns']=high_variance_columns
+            d['low_variance_columns']=list(low_variance_columns)
+            
+        elif method=="Mutual Info Classification" or method=="Extra Trees Classifier":
+            df_=FeatureEngineering.feature_selection(df_,df.loc[:,'Label'],method)
+            graph=PlotlyHelper.barplot(df_,'Feature','Value')
+            d['graph']=graph
+            
+        elif method=="Correlation":
+            graph=PlotlyHelper.heatmap(df)
+            d['graph']=graph
+        
+        return jsonify(d)
+
+    except Exception as e:
+       return jsonify({'success':False})
+
+    return "Hello World!"
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
