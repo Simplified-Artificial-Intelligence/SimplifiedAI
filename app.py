@@ -34,6 +34,8 @@ from src.utils.common.common_helper import immutable_multi_dict_to_str
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
 from src.utils.common.database_helper import mysql_data_helper
+from src.utils.common.database_helper import cassandra_connector
+from src.utils.common.database_helper import mongo_data_helper
 from lazypredict.Supervised import LazyRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -115,7 +117,7 @@ def index():
 
 @app.route('/project', methods=['GET', 'POST'])
 def project():
-    global status
+    global status, download_status
     try:
         if 'loggedin' in session:
             if request.method == "GET":
@@ -129,7 +131,7 @@ def project():
                     if len(request.files) > 0:
                         f = request.files['file']
 
-                    ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json', 'xml']
+                    ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json']
                     msg = ''
                     if not name.strip():
                         msg = 'Please enter project name'
@@ -149,7 +151,16 @@ def project():
                     name = name.replace(" ", "_")
                     table_name = f"{name}_{timestamp}"
 
-                    df=pd.read_csv(file_path)
+                    if file_path.endswith('.csv'):
+                        df = pd.read_csv(file_path)
+                    elif file_path.endswith('.tsv'):
+                        df = pd.read_csv(file_path, sep='\t')
+                    elif file_path.endswith('.json'):
+                        df = pd.read_json(file_path)
+                    else:
+                        msg = 'This file format is currently not supported'
+                        return render_template('new_project.html', msg=msg)
+
                     project_id=unique_id_generator()
                     inserted_rows=mongodb.create_new_project(project_id,df)
 
@@ -240,12 +251,49 @@ def project():
                         download_status = mysql_data.retrive_dataset_from_table(table_name, file_path)
                         print(download_status)
 
+                    elif resource_type == "cassandra":
+                        secure_connect_bundle = request.files['secure_connect_bundle']
+                        client_id = request.form['client_id']
+                        client_secret = request.form['client_secret']
+                        keyspace = request.form['keyspace']
+                        table_name = request.form['table_name']
+                        data_in_tabular = request.form['data_in_tabular']
+                        secure_connect_bundle_filename = secure_filename(secure_connect_bundle.filename)
+                        secure_connect_bundle_file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_connect_bundle_filename)
+                        secure_connect_bundle.save(secure_connect_bundle_file_path)
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], (table_name+".csv"))
+                        print(secure_connect_bundle_file_path, file_path)
+
+                        cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret, keyspace)
+                        conn_msg = cassandra_db.check_connection(table_name)
+                        print(conn_msg)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
+
+                        if data_in_tabular == 'true':
+                            download_status = cassandra_db.retrive_table(table_name, file_path)
+                            print(download_status)
+                        elif data_in_tabular == 'false':
+                            download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
+                            print(download_status)
+
+
                     if download_status == 'Successful':
                         timestamp = round(time.time() * 1000)
                         name = name.replace(" ", "_")
                         table_name = f"{name}_{timestamp}"
 
-                        df = pd.read_csv(file_path)
+                        if file_path.endswith('.csv'):
+                            df = pd.read_csv(file_path)
+                        elif file_path.endswith('.tsv'):
+                            df = pd.read_csv(file_path, sep='\t')
+                        elif file_path.endswith('.json'):
+                            df = pd.read_json(file_path)
+                        else:
+                            msg = 'This file format is currently not supported'
+                            return render_template('new_project.html', msg=msg)
+
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
 
@@ -1035,6 +1083,6 @@ if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("OOPS!!!!Somethong went wrong")
     else:
-        app.run(host="127.0.0.1", port=5000, debug=True)
+        app.run(host="127.0.0.1", port=5000, debug=False)
 
 
