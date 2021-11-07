@@ -1,0 +1,175 @@
+{% extends 'project_base.html' %}
+{% block content %}
+
+<div class="table2">
+    {% if status=="success" %}
+    <div class="alert alert-success">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Success!</strong> Encoding Performed Successfully.
+      </div>
+    {% endif %}
+    {% if status=="error" %}
+    <div class="alert alert-danger">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Error!</strong> This encdoing can't performed, please select other method.
+      </div>
+    {% endif %}
+    <div class="jumbotron text-center">
+        <h1>Feature Encoding</h1>
+        <p>This Function helps you to Encode your data into Numerical Data for future training!</p>
+    </div>
+</div>
+<form action="/fe/encoding" method="post">
+    <div class="row">
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Select Type of Encoding</label>
+                <select class="form-control" name="encoding_type" id="encoding_type">
+                    {% for col in encoding_types %}
+                    <option value="{{col}}">{{col}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12" id="base_div">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Select value For N</label>
+                <input type="number" id="base" name="base" value="2" min="2" class="form-control" />
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12" id="hash_div">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Select Bits Values(Components)</label>
+                <input type="number" id="hash" name="hash" value="8" min="8" class="form-control" />
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Select Columns</label>
+                <select class="js-example-basic-multiple form-control" name="columns" id="columns" multiple="multiple">
+                    {% for col in columns %}
+                    <option value="{{col}}">{{col}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+            <div class="form-group">
+                <div class="checkbox" id="">
+                    <input type="checkbox" value="" id="selectall"/><label>&nbsp; Select All</label>
+                  </div>
+                </div>
+        </div>
+        </div>
+        <div>
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                <button type="button" class="btn btn-default" id="check_result">Check Result</button>
+            </div>
+        </div>
+        <div class="result"><h2>Encoding Result</h2>
+            <div class="table"></div>
+            <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#exampleModal">Save Result</button>
+                </div>
+            </div>
+             <!-- Modal-->
+             <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="exampleModalLabel">Are you sure??</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Please make sure,because you can't revert this operation
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-danger">Save Result</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+        </div>
+    </form>
+</div>
+</div>
+<script>
+    $(document).ready(function() {
+        $("#selectall").on('change',()=>{
+            if($("#selectall").prop('checked')){
+                $('select.js-example-basic-multiple option').attr('selected', true).parent().trigger('change')
+            }else{
+                $('select.js-example-basic-multiple option').attr('selected', false).parent().trigger('change')
+            }
+        })
+} );
+
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+        $(".result").hide()
+        $("#base_div").hide()
+        $("#hash_div").hide()
+        $("#encoding_type").on('change',()=>{
+
+           if($("#encoding_type").val()=="Base N Encoder"){
+            $("#base_div").show()
+           }else{
+            $("#base_div").hide()
+           }
+
+           if($("#encoding_type").val()=="Hash Encoder"){
+            $("#hash_div").show()
+           }else{
+            $("#hash_div").hide()
+           }
+
+        })
+        $("#check_result").on('click',()=>{
+          if($("#columns :selected").length>0){
+            var data={
+                'encoding_type':$("#encoding_type").val(),
+                'columns':$("#columns").select2('val')
+            }
+
+            if($("#base").is(':visible')){
+                data['base']=parseFloat($("#base").val())
+            }
+
+            if($("#hash").is(':visible')){
+                data['hash']=parseFloat($("#hash").val())
+            }
+            $.ajax({
+                type: "POST",
+                url: `${window.location.origin}/api/encoding`,
+                data: JSON.stringify(data),
+                dataType:'json',
+                contentType:'application/json',
+                cache: false})
+            .done(function(data) {
+                if(data?.success){
+                    $(".table").empty()
+                    $(".result").show()
+                    $(".table").append(data.data)
+                    $('.dataframe').DataTable({
+                        "sScrollX": "100%",
+                        "bScrollCollapse": true,
+                    });
+                }
+     
+        })
+        .fail(function(err) {
+            // do stuff here
+        })
+        .always(function(info) {
+            // do stuff here
+        });
+          }else{
+              alert('Please select column for encoding')
+          }
+        })
+    });
+</script>
+{% endblock %}

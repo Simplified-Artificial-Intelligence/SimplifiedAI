@@ -310,3 +310,23 @@ width:60px
 .margin-23{
   margin-top: 22px !important;
 }
+.kurtosis{
+  color: #ff8100;
+    font-weight: 700;
+}
+
+.skewness{
+  color: #ffc107;
+    font-weight: 700;
+}
+.margion0{
+  padding-top: unset !important;
+  margin-top: unset !important;
+}
+.no-padding{
+  margin:unset !important;
+  padding: 6px 0px !important;
+}
+.margin-top-20{
+  margin-top: 20px;
+}
