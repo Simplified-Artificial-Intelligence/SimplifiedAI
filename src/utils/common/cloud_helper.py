@@ -193,6 +193,6 @@ class gcp_browser_storage():
                 return f'The {bucket_name} bucket does not exist!!'
 
         except Exception as e:
-            return 'Provide valid credentials json file provided by gcp after creating key in gcp service account'
+            return 'Provide valid credentials json file provided by gcp during the creation of gcp service account'
 
 
