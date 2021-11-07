@@ -313,3 +313,10 @@ width:60px
   padding-top: unset !important;
   margin-top: unset !important;
 }
+.no-padding{
+  margin:unset !important;
+  padding: 6px 0px !important;
+}
+.margin-top-20{
+  margin-top: 20px;
+}

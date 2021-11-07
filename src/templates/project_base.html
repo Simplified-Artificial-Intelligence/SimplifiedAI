@@ -11,6 +11,7 @@
   <script src="https://cdn.plot.ly/plotly-2.4.2.min.js"></script>
   <link rel="stylesheet" href="{{url_for('static', filename='/css/style.css')}}">
   <link rel="stylesheet" href="{{url_for('static', filename='/css/style2.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='/css/loader.css')}}">
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
   <link href="https://cdn.rawgit.com/harvesthq/chosen/gh-pages/chosen.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -68,12 +69,13 @@
         <li class="active">
             <a href="#FeatureEngineeringSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Feature Engineering</a>
             <ul class="collapse list-unstyled" id="FeatureEngineeringSubmenu">
-                  <li><a href="/feature_engineering/help">Help</a></li>
-                  <li><a href="/feature_engineering/handleDatetime">Handle Date Time</a></li>
-                  <li><a href="/feature_engineering/encoding">Encoding</a></li>
-                  <li><a href="/feature_engineering/scaling">Scaling</a></li>
-                  <li><a href="/feature_engineering/feature_selection">Feature Selection</a></li>
-                  <li><a href="/feature_engineering/dimension_reduction">Dimension Reduction</a></li>
+                  <li><a href="/fe/help">Help</a></li>
+                  <li><a href="/fe/handle-datatype">Handle Data Type</a></li>
+                  <li><a href="/fe/encoding">Encoding</a></li>
+                  <li><a href="/fe/change-column-name">Change Column Name</a></li>
+                  <li><a href="/fe/scaling">Scaling</a></li>
+                  <li><a href="/fe/feature_selection">Feature Selection</a></li>
+                  <li><a href="/fe/dimension_reduction">Dimension Reduction</a></li>
             </ul>
         </li>
 
@@ -122,36 +124,26 @@
 
   <!-- Page Content  -->
   <div id="content">
-<!--
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-
-            <button type="button" id="sidebarCollapse" class="navbar-btn">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <i class="fas fa-align-justify"></i>
-            </button>
-        </div>
-    </nav> -->
     {% block content %}{% endblock %}
-
 </div>
-
+<!-- <div class="container">
+    <div class="row mt">
+       <div class="col-md-3">
+          <div class="panel panel-default">
+             <div class="adjust">
+                <div class="loader3"></div>
+             </div>
+          </div>
+       </div>
+    </div>
+ </div> -->
 
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script type="text/javascript">
   $(document).ready(function () {
       $("#sidebar").mCustomScrollbar({
           theme: "minimal"
-      });
-
-      $('#sidebarCollapse').on('click', function () {
-          $('#sidebar, #content').toggleClass('active');
-          $('.collapse.in').toggleClass('in');
-          $('a[aria-expanded=true]').attr('aria-expanded', 'false');
       });
   });
 </script>

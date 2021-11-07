@@ -1,8 +1,12 @@
 TWO_D_GRAPH_TYPES=["Bar Graph", "Histogram" ,"Scatter Plot", "Pie Chart",   "Line Chart"]
 encoding_list = ["Label/Ordinal Encoder", "One Hot Encoder", "Hash Encoder", "Target Encoder"]
 scaling_list = ["Standard Scaler", "Min Max Scaler", "Max Abs Scaler", "Robust Scaler"]
-feature_selection_list = ["SelectKBest", "Extra Trees Classifier", "Extra Trees Regressor", "SelectFpr", "SelectFdr", "SelectFwe"]
+FEATURE_SELECTION_METHODS_CLASSIFICATION = ["Find Constant Features","Mutual Info Classification", "Extra Trees Classifier", "Correlation"]
 dimenstion_reduction_list = ["PCA"]
 
 NUMERIC_MISSING_HANDLER=['Mean','Median','Arbitrary Value','Interpolate']
 OBJECT_MISSING_HANDLER=['Mode','New Category','Select Exist']
+
+SUPPORTED_DATA_TYPES=['object','int64','float64','bool','datetime64','category','timedelta']
+ENCODING_TYPES=['One Hot Encoder','Label/Ordinal Encoder','Hash Encoder','Binary Encoder','Base N Encoder','Target Encoder']
+SUPPORTED_SCALING_TYPES=['MinMax Scaler','Standard Scaler','Max Abs Scaler','Robust Scaler','Power Transformer Scaler']

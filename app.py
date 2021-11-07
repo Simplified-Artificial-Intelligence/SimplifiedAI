@@ -3,7 +3,7 @@ from dns.rcode import NOERROR
 from flask import Flask, redirect, url_for, render_template, request, session,jsonify
 import re
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER, TWO_D_GRAPH_TYPES
+from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES, TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -716,7 +716,7 @@ def data_preprocessing_post(action):
         print(e)
 
 
-@app.route('/feature_engineering/<action>', methods=['GET'])
+@app.route('/fe/<action>', methods=['GET'])
 def feature_engineering(action):
     try:
         if 'pid' in session:
@@ -724,24 +724,24 @@ def feature_engineering(action):
             if df is not None:
                 data = df.head().to_html()
                 if action == 'help':
-                    return render_template('feature_engineering/help.html')
-                elif action == 'handleDatetime':
-                    dt_splitted = False
-                    not_dt_splitted = True
-                    selectedCount = 100
-                    return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
-                                           not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
-                                           selectedCount=selectedCount, columns=df.columns)
+                    return render_template('fe/help.html')
+                elif action == 'handle-datatype':
+                    return render_template('fe/handle_datatype.html', action=action, columns=df.dtypes.apply(lambda x: x.name).to_dict(),supported_dtypes=SUPPORTED_DATA_TYPES)
                 elif action == 'encoding':
-                    return render_template('feature_engineering/encoding.html', data=data, columns=df.columns, action=action)
+                    return render_template('fe/encoding.html',encoding_types=ENCODING_TYPES, columns=list(df.columns[df.dtypes=='object']), action=action)
+                elif action == 'change-column-name':
+                    return render_template('fe/change_column_name.html',columns=list(df.columns), action=action)
                 elif action == 'scaling':
-                    return render_template('feature_engineering/scaling.html', data=data)
+                    return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,columns=list(df.columns[df.dtypes!='object']))
                 elif action == 'feature_selection':
-                    return render_template('feature_engineering/feature_selection.html', data=data)
+                    return render_template('fe/feature_selection.html',methods=FEATURE_SELECTION_METHODS_CLASSIFICATION)
                 elif action == 'dimension_reduction':
-                    return render_template('feature_engineering/dimension_reduction.html', data=data)
+                    ### Check this remove target column
+                    data=df.head(200).to_html()
+                    return render_template('fe/dimension_reduction.html', action=action,data=data)
+                
                 elif action == 'train_test_split':
-                    return render_template('feature_engineering/train_test_split.html', data=data)
+                    return render_template('fe/train_test_split.html', data=data)
                 else:
                     return 'Non-Implemented Action'
             else:
@@ -752,47 +752,87 @@ def feature_engineering(action):
         print(e)
 
 
-@app.route('/feature_engineering/<action>', methods=['POST'])
+@app.route('/fe/<action>', methods=['POST'])
 def feature_engineering_post(action):
     try:
         if 'pid' in session:
             df = load_data()
             if df is not None:
-                data = df.head().to_html()
-                if action == 'help':
-                    return render_template('feature_engineering/help.html')
-                
-                elif action == 'handleDatetime':
-                    dt_splitted = False
-                    not_dt_splitted = True
-                    selectedCount = 100
-                    columns = request.form.getlist('columns')
-                    print(columns)
-                    data = df[columns].to_html()
-                    return render_template('feature_engineering/handleDatetime.html', data=data, length=len(df),
-                                           not_dt_splitted=not_dt_splitted, dt_splitted=dt_splitted, action=action,
-                                           selectedCount=selectedCount, columns=df.columns)
+                data = df.head().to_html()                
+                if action == 'handle-datatype':
+                    try:
+                        selected_column=request.form['column']
+                        datatype=request.form['datatype']
+                        df=FeatureEngineering.change_data_type(df,selected_column,datatype)
+                        df=update_data(df)
+                        return render_template('fe/handle_datatype.html',status="success", action=action, columns=df.dtypes.apply(lambda x: x.name).to_dict(),supported_dtypes=SUPPORTED_DATA_TYPES)
+                        
+                    except Exception as e:
+                        return render_template('fe/handle_datatype.html',status="error", action=action, columns=df.dtypes.apply(lambda x: x.name).to_dict(),supported_dtypes=SUPPORTED_DATA_TYPES)
+                elif action == 'change-column-name':
+                    try:
+                        selected_column=request.form['selected_column']
+                        column_name=request.form['column_name']
+                        df=FeatureEngineering.change_column_name(df,selected_column,column_name.strip())
+                        df=update_data(df)
+                        return render_template('fe/change_column_name.html', status="success", columns=list(df.columns), action=action)
+                    except Exception as e:
+                        return render_template('fe/change_column_name.html', status="error", columns=list(df.columns), action=action)
                 elif action == 'encoding':
-                    df = pd.read_csv(r'AMES_Final_DF.csv')
-                    Categorical_columns = df.select_dtypes(include='object')
-                    custom = True
-                    selectall=False
-                    return render_template('feature_engineering/encoding.html', data=data, custom=custom, selectall=selectall, action=action, columns=Categorical_columns.columns)
+                    try:
+                        encoding_type=request.form['encoding_type']
+                        columns=request.form.getlist('columns')
+                        d={'success':True}
+                        df_=df.loc[:,columns]
+                        scaling_method=request.form['scaling_method']
+                        if encoding_type=="Base N Encoder":
+                            df_=FeatureEngineering.encodings(df_,columns,encoding_type,base=int(request.form['base']))
+                        elif encoding_type=="Target Encoder":
+                            df_=FeatureEngineering.encodings(df_,columns,encoding_type,n_components=request.form['target'])
+                        elif encoding_type=="Hash Encoder":
+                            """This is remaining to handle"""
+                            df_=FeatureEngineering.encodings(df_,columns,encoding_type,n_components=int(request.form['hash']))
+                        else:
+                            df_=FeatureEngineering.encodings(df_,columns,encoding_type)
+                        
+                        df=Preprocessing.delete_col(df,columns)
+                        frames = [df, df_]
+                        df = pd.concat(frames)
+                        df=update_data(df)
+                        return render_template('fe/encoding.html', status="success",encoding_types=ENCODING_TYPES, columns=list(df.columns[df.dtypes=='object']), action=action)
+                    except Exception as e:
+                        return render_template('fe/encoding.html', status="error",encoding_types=ENCODING_TYPES, columns=list(df.columns[df.dtypes=='object']), action=action)
+
                 elif action == 'scaling':
                     try:
-                        df = pd.read_csv(r'AMES_Final_DF.csv')
-                        X = df.drop('SalePrice', axis=1)
-                        y = df['SalePrice']
-                        obj = FeatureEngineering()
-                        scaler = request.form['scaler']
-                        data = obj.scaler_(X, scaler)
+                        scaling_method=request.form['scaling_method']
+                        columns = request.form.getlist('columns')
+                        if len(columns)<=0:
+                            raise Exception("Column can not be zero")
+                        
+                        df[columns]=FeatureEngineering.scaler(df[columns],scaling_method)
+                        df=update_data(df)
+                        return render_template('fe/scaling.html',status="success", scaler_types=SUPPORTED_SCALING_TYPES,columns=list(df.columns[df.dtypes!='object']))
+                            
                     except:
-                        return render_template('feature_engineering/encoding.html', data=data)
-                    return render_template('feature_engineering/scaling.html', data=data)
+                         return render_template('fe/scaling.html',status="error", scaler_types=SUPPORTED_SCALING_TYPES,columns=list(df.columns[df.dtypes!='object']))
                 elif action == 'feature_selection':
-                    return render_template('feature_engineering/feature_selection.html', data=data)
+                    return render_template('fe/feature_selection.html', data=data)
                 elif action == 'dimension_reduction':
-                    return render_template('feature_engineering/dimension_reduction.html', data=data)
+                    ### Check this remove target column
+                    try:
+                        df_=df.loc[:, df.columns != 'Label']
+                        no_pca_selected=request.form['range']
+                        df_,evr_=FeatureEngineering.dimenstion_reduction(df_,len(df_.columns))
+                        df_=df_[:,:int(no_pca_selected)]                        
+                        df_evr=pd.DataFrame()                    
+                        data=pd.DataFrame(df_,columns=[f"Col_{col+1}" for col in np.arange(0,df_.shape[1])])
+                        data['Label']=df.loc[:,'Label']
+                        df=update_data(data)
+                        data=df.head(200).to_html()
+                        return render_template('fe/dimension_reduction.html',status="success", action=action,data=data)
+                    except Exception as e:
+                        return render_template('fe/dimension_reduction.html',status="error", action=action,data=data)
                 else:
                     return 'Non-Implemented Action'
             else:
@@ -986,6 +1026,87 @@ def missing_data():
                 'after':after
             }
             return jsonify(d)
+
+    except Exception as e:
+       return jsonify({'success':False})
+
+    return "Hello World!"
+
+@app.route('/api/encoding', methods=['GET', 'POST'])
+def fe_encoding():
+    try:
+        df = load_data()
+        encoding_type=request.json['encoding_type']
+        columns=request.json['columns']
+        d={'success':True}
+        df=df.loc[:,columns]
+        if encoding_type=="Base N Encoder":
+            df=FeatureEngineering.encodings(df,columns,encoding_type,base=request.json['base'])
+        elif encoding_type=="Target Encoder":
+            df=FeatureEngineering.encodings(df,columns,encoding_type,n_components=request.json['target'])
+        elif encoding_type=="Hash Encoder":
+            """This is remaining to handle"""
+            df=FeatureEngineering.encodings(df,columns,encoding_type,n_components=request.json['hash'])
+        else:
+            df=FeatureEngineering.encodings(df,columns,encoding_type)
+        data=df.head(200).to_html() 
+        d['data']=data
+        return jsonify(d)
+
+    except Exception as e:
+       return jsonify({'success':False})
+   
+   
+@app.route('/api/pca', methods=['POST'])
+def fe_pca():
+    try:
+        df = load_data()
+        df_=df.loc[:, df.columns != 'Label']
+        df_,evr_=FeatureEngineering.dimenstion_reduction(df_,len(df_.columns))
+        d={'success':True}
+        
+        df_evr=pd.DataFrame()
+        df_evr['No of Components']=np.arange(0,len(evr_))+1
+        df_evr['Variance %']=evr_.round(2)
+        
+        data=pd.DataFrame(df_,columns=[f"Col_{col+1}" for col in np.arange(0,df_.shape[1])]).head(200).to_html()
+        graph=PlotlyHelper.line(df_evr,'No of Components','Variance %')
+        
+        d['data']=data
+        d['graph']=graph
+        d['no_pca']=len(evr_)
+        return jsonify(d)
+
+    except Exception as e:
+       return jsonify({'success':False})
+   
+@app.route('/api/feature_selection', methods=['POST'])
+def fe_feature_selection():
+    try:
+        df = load_data()
+        df_=df.loc[:, df.columns != 'Label']
+        method=request.json['method']
+        d={'success':True}
+        
+        if method=="Find Constant Features":
+            threshold=request.json['threshold']
+            high_variance_columns=FeatureEngineering.feature_selection(df_,'Label',method,threshold=float(threshold))
+            high_variance_columns=list(high_variance_columns)
+            low_variance_columns=[col for col in df_.columns
+                                  if col  not in high_variance_columns]
+            d['high_variance_columns']=high_variance_columns
+            d['low_variance_columns']=list(low_variance_columns)
+            
+        elif method=="Mutual Info Classification" or method=="Extra Trees Classifier":
+            df_=FeatureEngineering.feature_selection(df_,df.loc[:,'Label'],method)
+            graph=PlotlyHelper.barplot(df_,'Feature','Value')
+            d['graph']=graph
+            
+        elif method=="Correlation":
+            graph=PlotlyHelper.heatmap(df)
+            d['graph']=graph
+        
+        return jsonify(d)
 
     except Exception as e:
        return jsonify({'success':False})
