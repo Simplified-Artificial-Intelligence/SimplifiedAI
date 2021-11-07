@@ -1133,7 +1133,6 @@ def fe_feature_selection():
     except Exception as e:
        return jsonify({'success':False})
 
-    return "Hello World!"
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
