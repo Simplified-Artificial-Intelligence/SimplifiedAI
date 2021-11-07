@@ -70,6 +70,7 @@ class aws_s3_helper():
             return e
         return f"{file} uploded successfully to {bucket}"
 
+
     def read_file_from_s3(self, bucket, file):
 
         if file.endswith('.csv'):

@@ -275,12 +275,31 @@ class mongo_data_helper():
             client_cloud = self.connect_to_mongo()
             database = client_cloud[self.database]
             collection = database[self.collection_name]
+            self.delete_collection_data(self.collection_name)
             collection.insert_many(data)
             self.close_connection(client_cloud)
             return 'Successful'
 
         except Exception as e:
             return e.__str__()
+
+    def delete_collection_data(self, collection_name):
+        """[summary]
+        Delete Collection Data
+        Args:
+            collection_name ([type]): [description]
+        """
+        try:
+            client_cloud = self.connect_to_mongo()
+            database = client_cloud[self.database]
+            collection = database[self.collection_name]
+            collection.delete_many({})
+            self.close_connection(client_cloud)
+            print(f"All records deleted from {collection_name} collection")
+
+        except Exception as e:
+            print(e)
+
 
     def check_connection(self):
 
