@@ -786,11 +786,11 @@ def model_training(action):
                     data = df.head().to_html()
                     return render_template('model_training/auto_training.html', data=data)
                 elif action == 'custom_training':
-                    typ = "Regression"
+                    typ = "Classification"
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
-                        return render_template('model_training/classification.html')
+                        return render_template('model_training/classification.html', action=action)
                     elif typ == "Clustering":
                         return render_template('model_training/clustering.html')
                     else:
@@ -832,9 +832,8 @@ def model_training_post(action):
                     X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(self=None, cleanedData=X, label=y, test_size=(1-(percent/100)), random_state=Random_State)
                     return render_template('model_training/train_test_split.html', data=data)
                 elif action == 'auto_training':
-                    typ = 'Regression'
+                    typ = 'Classification'
                     if typ == 'Regression':
-
                         scaler = StandardScaler()
                         X_train = scaler.fit_transform(X_train)
                         X_test = scaler.transform(X_test)
@@ -845,8 +844,20 @@ def model_training_post(action):
                     else:
                         pass
                         return render_template('model_training/auto_training.html')
+
                 elif action == 'custom_training':
-                    return render_template('model_training/custom_training.html')
+                    typ = "Classification"
+                    if typ == "Regression":
+                        return render_template('model_training/regression.html')
+                    elif typ == "Classification":
+                        model = request.form['model']
+                        for i in request.form.items():
+                            print(i)
+                        return render_template('model_training/classification.html')
+                    elif typ == "Clustering":
+                        return render_template('model_training/clustering.html')
+                    else:
+                        return render_template('model_training/custom_training.html')
                 else:
                     return 'Non-Implemented Action'
             else:
@@ -860,15 +871,16 @@ def model_training_post(action):
 def machine(action):
     return render_template('Machine/system.html')
 
-# @app.route('/schedular/<action>', methods=['GET'])
-# def schedular(action):
-#     if action == 'help':
-#         return render_template('schedular/help.html')
 
-# @app.route('/schedular/<action>', methods=['POST'])
-# def schedular(action):
-#     if action == 'help':
-#         return render_template('schedular/help.html')
+@app.route('/scheduler/<action>', methods=['GET'])
+def scheduler_get(action):
+    if action == 'help':
+        return render_template('scheduler/help.html')
+
+@app.route('/scheduler/<action>', methods=['POST'])
+def scheduler_post(action):
+    if action == 'help':
+        return render_template('scheduler/help.html')
 
 
 if __name__ == '__main__':

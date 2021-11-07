@@ -1,4 +1,5 @@
 dir_structure:
+  root_dir: C:/Users/ketan/Desktop/Project/Projectathon
   template_dir: src/templates
   static_dir: src/static
   upload_folder: src/temp_data_store

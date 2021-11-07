@@ -4,6 +4,10 @@ import pymongo
 from src.utils.databases.mysql_helper import MySqlHelper
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
+import os
+
+data = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\AMES_Final_DF.csv')
+
 
 def get_data():
     mysql = MySqlHelper.get_connection_obj()
@@ -12,56 +16,75 @@ def get_data():
     return pid
 
 
-def upload_to_mongo(projectId='PIDed6ab563-51a7-408b-9556-9d48f7916836'):
-
-    if projectId is not None:
-        #Specifiy a Database Name
-        DB_NAME = "iNeuron_AI"
-
-        # Connection URL
-        CONNECTION_URL = f"mongodb+srv://vishal:123@auto-neuron.euorq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
-
-        # Establish a connection with mongoDB
-        client = pymongo.MongoClient(CONNECTION_URL)
-
-        # Create a DB
-        dataBase = client[DB_NAME]
-
-        # Create a Collection Name
-        COLLECTION_NAME = "iNeuron_Products"
-        collection = dataBase[COLLECTION_NAME]
-
-        dataBase.drop_collection('PIDed6ab563-51a7-408b-9556-9d48f7916836')
-        print('Dropped')
-        # Create a List of Records
-        data_json = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\src\data\PID36db50ef-8ca6-4715-9cb4-1a9224f68c11.csv')
-        data_old = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\src\data\PID36db50ef-8ca6-4715-9cb4-1a9224f68c11_backup.csv')
-
-
-    else:
-        return 'Pleas'
-
-upload_to_mongo()
-
-def download_from_mongo():
-    DB_NAME = "iNeuron_AI"
-    # Connection URL
+def delete_data_from_mongo(projectId=None):
     CONNECTION_URL = f"mongodb+srv://vishal:123@auto-neuron.euorq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
-
-    # Establish a connection with mongoDB
     client = pymongo.MongoClient(CONNECTION_URL)
-    dataBase = client[DB_NAME]
-    COLLECTION_NAME = "iNeuron_Products"
-    collection = dataBase[COLLECTION_NAME]
+    dataBase = client["Auto-neuron"]
+    collection = dataBase[projectId]
+    if collection.drop() is None:
+        current_data = dataBase.list_collection_names()
+        if projectId in current_data:
+            return 'Still present inside mongodb'
+        else:
+            return 'Deleted', dataBase
 
-#
-# schedule.every(10).seconds.do(upload_to_mongo)
-# schedule.every(10).seconds.do(download_from_mongo)
-# # Loop so that the scheduling task
-# # keeps on running all time.
-# while True:
-#
-# 	# Checks whether a scheduled task
-# 	# is pending to run or not
-# 	schedule.run_pending()
-# 	time.sleep(1)
+
+def upload_checkpoint(projectId=None, data_path=None):
+    data = pd.read_csv(data_path)
+    check, dataBase = delete_data_from_mongo(projectId)
+    if check == 'Deleted':
+        collection = dataBase[projectId]
+        collection.insert_many(data.to_dict('records'))
+        return 'SuccessFully Replaced'
+    elif check == 'Still present inside mongodb':
+        return 'Still present inside mongodb'
+    else:
+        print(check)
+        return 'unidentified Error'
+
+
+def get_user_details(projectId=None):
+    mysql = MySqlHelper.get_connection_obj()
+    query = f"""select Pid,Name,Id,UserId,CreateDate from auto_neuron.tblProjects 
+               where UserId = (select UserId from auto_neuron.tblProjects 
+               where Pid = '{projectId}' and IsActive = 1)
+               """
+    result = mysql.fetch_all(query)
+    return result
+
+
+def get_names_from_files(path=None):
+    backup_files = []
+    normal_files = []
+    result = os.listdir(path)
+    for i in result[1:]:
+        if i.replace('.csv', '').endswith('_backup'):
+            backup_files.append(i.replace('.csv', ''))
+        else:
+            normal_files.append(i.replace('.csv', ''))
+
+    return backup_files, normal_files
+
+
+def file_path(path=None, backup=None, normal=None):
+    backup_data_path = []
+    normal_data_path = []
+
+    for i in backup:
+        backup_data_path.append(os.path.join(path, i+'.csv'))
+    for i in normal:
+        normal_data_path.append(os.path.join(path, i+'.csv'))
+
+    return normal_data_path, backup_data_path
+
+
+def data_updater(path=r"C:\Users\ketan\Desktop\Project\Projectathon\src\data"):
+    backup, normal = get_names_from_files(path)
+    normal_data_path, backup_data_path = file_path(path, backup, normal)
+    print(normal_data_path)
+    print(backup_data_path)
+
+    for pid, data_path in zip(backup, backup_data_path):
+        print(upload_checkpoint(pid, data_path))
+
+data_updater()
