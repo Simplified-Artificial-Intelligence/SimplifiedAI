@@ -1,52 +1,89 @@
+from numpy.core.fromnumeric import var
 import pandas as pd
 import category_encoders as ce
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler , RobustScaler
-from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.preprocessing import MinMaxScaler, StandardScaler , RobustScaler,PowerTransformer,MaxAbsScaler
+from sklearn.feature_selection import SelectKBest, chi2,VarianceThreshold,mutual_info_classif
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.decomposition import PCA
-
-
-class FreatureEngineering():
+import numpy as np
+class FeatureEngineering:
     def __init__(self):
         pass
+    
+    @staticmethod
+    def change_column_name(df,column,new_name):
+        """[summary]
+        Change Column Name
+        Args:
+            df ([type]): [description]
+            column ([type]): [description]
+            new_name ([type]): [description]
 
-    def train_test_Split(self, cleanedData, label, test_size):
+        Returns:
+            [type]: [description]
+        """
+        df=df.rename(columns={column:new_name})
+        return df
+    
+    @staticmethod
+    def change_data_type(df,column,type_):
+        """[summary]
+        Change Column DataType
+        Args:
+            df ([type]): [description]
+            column ([type]): [description]
+            type_ ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        df[column] = df[column].astype(type_)
+        return df
+    
+    def train_test_Split(self, cleanedData, label, test_size, random_state):
 
         X_train, X_test, y_train, y_test = train_test_split(cleanedData,
                                                             label,
                                                             test_size=test_size,
-                                                            random_state=42)
+                                                            random_state=random_state)
         return X_train, X_test, y_train, y_test
 
-    def scaler(self, train, test, typ):
+    @staticmethod
+    def scaler(data, typ):
         if typ == 'MinMax Scaler':
             scaler = MinMaxScaler()
-            scaled_train = scaler.fit_transform(train)
-            scaled_test = scaler.transform(test)
+            scaled_data = scaler.fit_transform(data)
 
-            return scaled_train, scaled_test
+            return scaled_data
 
-        elif typ == 'Standerd Scaler':
+        elif typ == 'Standard Scaler':
             scaler = StandardScaler()
-            scaled_train = scaler.fit_transform(train)
-            scaled_test = scaler.transform(test)
+            scaled_data = scaler.fit_transform(data)
 
-            return scaled_train, scaled_test
+            return scaled_data
 
         elif typ == 'Robust Scaler':
             scaler = RobustScaler()
-            scaled_train = scaler.fit_transform(train)
-            scaled_test = scaler.transform(test)
+            scaled_data = scaler.fit_transform(data)
+            
+        elif typ == 'Power Transformer Scaler':
+            scaler = PowerTransformer(method='yeo-johnson')
+            scaled_data = scaler.fit_transform(data)
+            
+        elif typ == 'Max Abs Scaler':
+            scaler = MaxAbsScaler()
+            scaled_data = scaler.fit_transform(data)
 
-            return scaled_train, scaled_test
+            return scaled_data
 
         else:
             return 'Please Specify type correclty'
 
-    def encodings(self, df, cols, kind: str):
+    @staticmethod
+    def encodings(df, cols, kind: str,**kwarga):
         if kind == 'Label/Ordinal Encoder':
-            label = ce.OrdinalEncoder(cols=cols)
+            label = ce.OrdinalEncoder(cols=cols,**kwarga)
             label_df = label.fit_transform(df)
             return label_df
 
@@ -54,15 +91,25 @@ class FreatureEngineering():
             onehot = ce.OneHotEncoder(cols=cols)
             onehot_df = onehot.fit_transform(df)
             return onehot_df
+        
+        elif kind == 'Binary Encoder':
+            onehot = ce.BinaryEncoder(cols=cols,**kwarga)
+            onehot_df = onehot.fit_transform(df)
+            return onehot_df
+        
+        elif kind == 'Base N Encoder':
+            onehot = ce.BaseNEncoder(cols=cols)
+            onehot_df = onehot.fit_transform(df)
+            return onehot_df
 
         elif kind == 'Hash Encoder':
-            hash_ = ce.HashingEncoder(cols=cols)
+            hash_ = ce.HashingEncoder(cols=cols,**kwarga)
             hash_df = hash_.fit_transform(df)
             return hash_df
 
         elif kind == 'Target Encoder':
             target = ce.TargetEncoder(cols=cols)
-            target_df = target.fit_transform(df)
+            target_df = target.fit_transform(df,**kwarga)
             return target_df
 
         else:
@@ -86,25 +133,32 @@ class FreatureEngineering():
         frame = pd.concat([frame, year, day, month], axis=1)
         return frame
 
-    def feature_selection(self, features, target, typ, k=None):
+    @staticmethod
+    def feature_selection(features, target, typ, **kwarga):
         important_features = pd.DataFrame()
         if typ == 'SelectKBest':
             # chi2 + anova test
-            best_features = SelectKBest(score_func=chi2, k=k)
+            best_features = SelectKBest(score_func=chi2, **kwarga)
             imp = best_features.fit(features, target)
             important_features['score'] = imp.scores_
             important_features['columns'] = features.columns
 
             return important_features.sort_values('scores', ascending=False)
+        
+        elif typ == 'Find Constant Features':
+            # chi2 + anova test
+            vari_thr = VarianceThreshold(**kwarga)
+            imp = vari_thr.fit(features)
+            return features.columns[imp.get_support()]
 
         elif typ == 'Extra Trees Classifier':
 
             best_features = ExtraTreesClassifier()
             best_features.fit(features, target)
-            important_features['score'] = best_features.feature_importances_
-            important_features['columns'] = features.columns
-
-            return important_features.sort_values('scores', ascending=False)
+            df=pd.DataFrame()
+            df['Value']=best_features.feature_importances_
+            df['Feature']=features.columns
+            return df.sort_values(by='Value',ascending=False)
 
         elif typ == 'Extra Trees Regressor':
             best_features = ExtraTreesRegressor()
@@ -113,17 +167,18 @@ class FreatureEngineering():
             important_features['columns'] = features.columns
 
             return important_features.sort_values('scores', ascending=False)
+        
+        elif typ == 'Mutual Info Classification':
+            importances = mutual_info_classif(features, target)
+            df=pd.DataFrame()
+            df['Value']=importances
+            df['Feature']=features.columns
+            return df.sort_values(by='Value',ascending=False)
         else:
             return 'Please Specify type correclty'
-
-    # Needs some addtion function
-    # encode
-    # train -test
-    # scale
-    # combine
-    # dim_reduction
-
-    def dimenstion_reduction(self, features, target, comp):
+        
+    @staticmethod
+    def dimenstion_reduction(data, comp):
         model = PCA(n_components=comp)
-        features = model.fit_transform(features)
-        return pd.concat([features, target], axis=1)
+        pca = model.fit_transform(data)
+        return (pca,np.cumsum(model.explained_variance_ratio_))

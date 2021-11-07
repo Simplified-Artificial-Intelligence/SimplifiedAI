@@ -98,7 +98,7 @@ font-weight: 700;
  }
 
  .add-button{
- margin-left: 84%;
+    margin-left: 84%;
     margin-top: -10px;
     margin-bottom: 20px;
     width: 165px;}
@@ -299,4 +299,24 @@ width:60px
 }
 .margin-23{
   margin-top: 22px !important;
+}
+.kurtosis{
+  color: #ff8100;
+    font-weight: 700;
+}
+
+.skewness{
+  color: #ffc107;
+    font-weight: 700;
+}
+.margion0{
+  padding-top: unset !important;
+  margin-top: unset !important;
+}
+.no-padding{
+  margin:unset !important;
+  padding: 6px 0px !important;
+}
+.margin-top-20{
+  margin-top: 20px;
 }
