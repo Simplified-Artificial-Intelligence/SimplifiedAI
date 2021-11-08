@@ -1,4 +1,3 @@
-
 from os import stat
 
 from sklearn.linear_model  import LogisticRegression
@@ -11,6 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
 import pickle
+
 
 class ClassificationModels:
     def __init__(self, x, y):

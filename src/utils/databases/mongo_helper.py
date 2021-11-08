@@ -4,7 +4,7 @@ import time
 from src.utils.common.common_helper import read_config
 import os
 
-config_args = read_config("./config.yaml")
+config_args = read_config(r"C:\Users\pankaj\Desktop\ml\auto neuron\Projectathon\config.yaml")
 
 
 class MongoHelper:
@@ -50,14 +50,14 @@ class MongoHelper:
         """
         try:
             begin = time.time()
-            collection=self.db[collection_name]
+            collection = self.db[collection_name]
             collection.delete_many({})
             end = time.time()  
             print(f"All records deleted. Total time taken: {end - begin} seconds.")
         except Exception as e:
             print(e)
             
-    def get_collection_data(self,project_name):
+    def get_collection_data(self, project_name):
         """[summary]
             Get Collection Data
         Args:
@@ -67,8 +67,8 @@ class MongoHelper:
             [type]: [description]
         """
         try:
-            path=os.path.join(os.path.join('src','data'),f"{project_name}.csv")
-            backup_path=os.path.join(os.path.join('src','data'),f"{project_name}_backup.csv")
+            path = os.path.join(os.path.join('src', 'data'), f"{project_name}.csv")
+            backup_path = os.path.join(os.path.join('src', 'data'), f"{project_name}_backup.csv")
             if os.path.exists(path):
                 df = pd.read_csv(path)
                 return df

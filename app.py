@@ -1093,7 +1093,7 @@ def systemlogs(action):
     try:
         if action == 'terminal':
             lines = []
-            with open(r"C:\Users\ketan\Desktop\Project\Projectathon\logger\logs\logs.log") as file_in:
+            with open(r"logger\logs\logs.log") as file_in:
                 for line in file_in:
                     lines.append(line)
             print(lines)
@@ -1121,11 +1121,11 @@ def model_training(action):
                     data = df.head().to_html()
                     return render_template('model_training/auto_training.html', data=data)
                 elif action == 'custom_training':
-                    typ = "Regression"
+                    typ = "Classification"
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
-                        return render_template('model_training/classification.html')
+                        return render_template('model_training/classification.html', action=action)
                     elif typ == "Clustering":
                         return render_template('model_training/clustering.html')
                     else:
@@ -1167,9 +1167,8 @@ def model_training_post(action):
                     X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(self=None, cleanedData=X, label=y, test_size=(1-(percent/100)), random_state=Random_State)
                     return render_template('model_training/train_test_split.html', data=data)
                 elif action == 'auto_training':
-                    typ = 'Regression'
+                    typ = 'Classification'
                     if typ == 'Regression':
-
                         scaler = StandardScaler()
                         X_train = scaler.fit_transform(X_train)
                         X_test = scaler.transform(X_test)
@@ -1178,10 +1177,22 @@ def model_training_post(action):
                     elif typ == 'Classification':
                         return render_template('model_training/auto_training.html')
                     else:
-                        pass
                         return render_template('model_training/auto_training.html')
                 elif action == 'custom_training':
-                    return render_template('model_training/custom_training.html')
+                    typ = "Classification"
+                    if typ == "Regression":
+                        return render_template('model_training/regression.html')
+                    elif typ == "Classification":
+                        print(request.form)
+                        for i in request.form.items():
+                            values = i[1]
+                            break
+                        print(values)
+                        return render_template('model_training/classification.html')
+                    elif typ == "Clustering":
+                        return render_template('model_training/clustering.html')
+                    else:
+                        return render_template('model_training/custom_training.html')
                 else:
                     return 'Non-Implemented Action'
             else:
@@ -1196,6 +1207,22 @@ def machine(action):
     return render_template('Machine/system.html')
 
 
+
+@app.route('/scheduler/<action>', methods=['GET'])
+def scheduler_get(action):
+    if action == 'help':
+        return render_template('scheduler/help.html')
+
+    if action == 'Training_scheduler':
+        return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
+
+@app.route('/scheduler/<action>', methods=['POST'])
+def scheduler_post(action):
+    if action == 'help':
+        return render_template('scheduler/help.html')
+
+    if action == 'Training_scheduler':
+        return render_template('scheduler/Training_scheduler.html')
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
