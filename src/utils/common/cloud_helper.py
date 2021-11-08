@@ -70,6 +70,7 @@ class aws_s3_helper():
             return e
         return f"{file} uploded successfully to {bucket}"
 
+
     def read_file_from_s3(self, bucket, file):
 
         if file.endswith('.csv'):
@@ -193,6 +194,6 @@ class gcp_browser_storage():
                 return f'The {bucket_name} bucket does not exist!!'
 
         except Exception as e:
-            return 'Provide valid credentials json file provided by gcp after creating key in gcp service account'
+            return 'Provide valid credentials json file provided by gcp during the creation of gcp service account'
 
 

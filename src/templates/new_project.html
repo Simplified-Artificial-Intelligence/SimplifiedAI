@@ -37,6 +37,8 @@
         <option value="gcpStorage"> GCP Blob Storage </option>
         <option value="mySql"> MySql </option>
         <option value="cassandra"> Cassandra </option>
+        <option value="mongodb"> Mongo DB </option>
+        <option value="azureStorage "> Azure Data Storage </option>
       </select>  
       
       <div id="awsS3bucket" class="upload-other-resource">
@@ -55,7 +57,6 @@
         <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
         <input type="text" class="form-control awsS3bucket" id="file_name" name="file_name" placeholder="" required>
 
-        <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
       </div>
 
       <div id="gcpStorage" class="upload-other-resource">
@@ -68,17 +69,10 @@
         
         <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
         <input type="text" class="form-control gcpStorage" id="file_name" name="file_name" placeholder="" required>
-        
-        <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
+
       </div>
 
       <div id="cassandra" class="upload-other-resource">
-
-        <div class="form-check" style="margin-top: 20px;">
-          <input class="form-check-input cassandra" type="checkbox" id="data_in_tabular"  name="data_in_tabular" >
-          <label class="form-check-label" for="data_in_tabular"> Is Data in tabular format? </label>
-        </div>
-
         <label for="secure_connect_bundle" class="col-form-label"><b> Secure Connect Bundle </b></label>
         <input type="file" accept=".zip,.rar,.7zip" class="form-control cassandra" id="secure_connect_bundle" name="secure_connect_bundle">
         <p>allowed file *.zip</p>
@@ -94,8 +88,12 @@
 
         <label for="table_name" class="col-form-label"><b> Table name </b></b></label>
         <input type="text" class="form-control cassandra" id="table_name" name="table_name" placeholder="" required>
-        
-        <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
+
+        <div class="form-check" style="margin-top: 20px;">
+          <input class="form-check-input cassandra" type="checkbox" id="data_in_tabular"  name="data_in_tabular" >
+          <label class="form-check-label" for="data_in_tabular"> Is Data in structured format? </label>
+        </div>
+
       </div>
 
       <div id="mySql" class="upload-other-resource">
@@ -117,10 +115,33 @@
         <label for="table_name" class="col-form-label"><b> Table name </b></b></label>
         <input type="text" class="form-control mySql" id="table_name" name="table_name" placeholder="" required>
 
-        <button class="btn btn-secondary" type="button" id="testConnection">Test Connection</button>
       </div>
 
-      
+      <div id="mongodb" class="upload-other-resource">
+        <label for="mongo_db_url" class="col-form-label"><b> Mongo DB URL </b></label>
+        <input type="text" class="form-control mongodb" id="mongo_db_url" name="mongo_db_url" placeholder="" required>
+
+        <label for="database" class="col-form-label"><b> Database </b></label>
+        <input type="text" class="form-control mongodb" id="database" name="database" placeholder="" required>
+
+        <label for="collection" class="col-form-label"><b> Collection </b></label>
+        <input type="text" class="form-control mongodb" id="collection" name="collection" placeholder="" required>
+
+      </div>
+
+      <div id="azureStorage" class="upload-other-resource">
+        <label for="azure_connection_string" class="col-form-label"><b> Azure Connection String </b></label>
+        <input type="text" class="form-control azureStorage" id="azure_connection_string" name="azure_connection_string" placeholder="" required>
+
+        <label for="container_name" class="col-form-label"><b> Container Name </b></label>
+        <input type="text" class="form-control azureStorage" id="container_name" name="container_name" placeholder="" required>
+
+        <label for="file_name" class="col-form-label"><b> File Name </b></label>
+        <input type="text" class="form-control azureStorage" id="file_name" name="file_name" placeholder="" required>
+
+      </div>
+
+
       <button class="btn btn-success" type="button" id="addProject">Add Project</button>
       <a href="/">
         <button type="button" class="btn btn-danger back">Back</button>

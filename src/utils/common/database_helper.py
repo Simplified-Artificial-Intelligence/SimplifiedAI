@@ -1,6 +1,11 @@
 import pandas as pd
 import sqlalchemy
+import pymongo
+import json
 import mysql.connector as connector
+from textwrap import wrap
+from cassandra.cluster import Cluster
+from cassandra.auth import PlainTextAuthProvider
 
 
 class mysql_data_helper():
@@ -56,6 +61,9 @@ class mysql_data_helper():
                 dataframe = pd.read_csv(file, sep="\t")
             elif file.endswith(".json"):
                 dataframe = pd.read_json(file)
+            else:
+                return f"{file} is not supported!"
+
             try:
                 dataframe.to_sql(con=self.engine, name=table_name, if_exists='replace', chunksize=1000)
                 return f"{file} was pushed into {table_name} table!"
@@ -95,3 +103,229 @@ class mysql_data_helper():
 
     def __str__(self):
         return "mysql dataset helper"
+
+
+
+class cassandra_connector:
+    """
+    cassandra_connector class performs cassandra database operations,eg: connecting to database,
+    creating table, inserting values into table, retriving dataset for allowed filetypes
+    """
+
+    def __init__(self, bundel_zip, client_id, client_secret, keyspace):
+        try:
+            self.cloud_config = {'secure_connect_bundle': bundel_zip}
+            self.auth_provider = PlainTextAuthProvider(client_id, client_secret)
+            self.cluster = Cluster(cloud=self.cloud_config, auth_provider=self.auth_provider)
+            self.keyspace = keyspace
+        except Exception as e:
+            print(e)
+
+    def connect_to_cluster(self):
+        try:
+            session = self.cluster.connect(self.keyspace)
+            return session
+        except Exception as e:
+            print(e)
+
+    def push_dataframe_to_table(self, dataframe, table_name):
+
+        try:
+            data = dataframe.to_json()
+            data = wrap(data, 65000)
+
+            create_query = f'create table {table_name}('
+            column_names = []
+
+            for i in range(len(data)):  ## creating create table query and collect column names
+                if i == 0:
+                    create_query += f'data{i * "1"} text primary key, '
+                    column_names.append(f'data{i * "1"}')
+
+                else:
+                    create_query += f'data{i * "1"} text ,'
+                    column_names.append(f'data{i * "1"}')
+
+            create_query = create_query.strip(" ,") + ");"
+            print(create_query)
+            session = self.connect_to_cluster()
+            session.execute(create_query, timeout=None)
+
+            insert_query = f'insert into {table_name}({", ".join(column_names)}) values ({"? ," * len(column_names)}'.strip(
+                ", ") + ");"
+            print(insert_query)
+            prepared_query = session.prepare(insert_query)
+            session.execute(prepared_query, data, timeout=None)
+            session.shutdown()
+            print("Cassandra session closed")
+
+        except Exception as e:
+            print(e)
+
+    def custom_query(self, custom_query):
+        try:
+            session = self.cluster.connect(self.keyspace)
+            data = session.execute(custom_query)
+            session.shutdown()
+            print("Cassandra session closed")
+            return data
+
+        except Exception as e:
+            print(e)
+
+    def retrive_table(self, table_name, download_path):
+        try:
+            session = self.cluster.connect(self.keyspace)
+            dataframe = pd.DataFrame(list(session.execute(f"select * from {table_name}")))
+            session.shutdown()
+            print("Cassandra session closed")
+            dataframe.to_csv(download_path, index=False)
+            return 'Successful'
+
+        except Exception as e:
+            print(e)
+
+    def retrive_uploded_dataset(self, table_name, download_path):
+        try:
+            session = self.cluster.connect(self.keyspace)
+            data = session.execute("select * from neuro")
+            dataset_string = ""
+            for row in data:
+                for chunks in row:
+                    dataset_string += chunks
+            dataset = json.loads(dataset_string)
+            dataframe = pd.DataFrame(dataset)
+            dataframe.to_csv(download_path, index=False)
+            session.shutdown()
+            print("Cassandra session closed")
+            return 'Successful'
+
+        except Exception as e:
+            print(e)
+
+    def check_connection(self, table_name):
+        table_list = []
+
+        try:
+            session = self.cluster.connect(self.keyspace)
+            query = f"SELECT * FROM system_schema.tables WHERE keyspace_name = '{self.keyspace}';"
+            data = session.execute(query)
+
+            for table in data:
+                table_list.append(table.table_name)
+            if table_name in table_list:
+                return "Successful"
+            else:
+                return f"{table_name} table in not available in '{self.keyspace}' keyspace"
+
+        except Exception as e:
+
+            if 'AuthenticationFailed' in e.__str__():
+                return "Given client_id or client_secret is invalid"
+            elif 'keyspace' in e.__str__():
+                return f"Given {self.keyspace} keyspace does not exist!!"
+            else:
+                return "Provide valid bundel zip file!!"
+
+
+class mongo_data_helper():
+
+    def __init__(self, mongo_db_uri, database, collection_name):
+        self.mongo_db_uri = mongo_db_uri
+        self.database = database
+        self.collection_name = collection_name
+
+    def connect_to_mongo(self):
+        client_cloud = pymongo.MongoClient(self.mongo_db_uri)
+        return client_cloud
+
+    def close_connection(self, client_cloud):
+        client_cloud.close()
+        print("Mongo db connection closed")
+
+    def retrive_dataset(self, download_path):
+
+        try:
+            client_cloud = self.connect_to_mongo()
+            database = client_cloud[self.database]
+            collection = database[self.collection_name]
+            dataframe = pd.DataFrame(list(collection.find())).drop(columns='_id')
+            dataframe.to_csv(download_path, index=False)
+            self.close_connection(client_cloud)
+            return "Successful"
+
+        except Exception as e:
+            return e.__str__()
+
+
+    def push_dataset(self, file):
+
+        try:
+            if file.endswith('.csv'):
+                dataframe = pd.read_csv(file)
+            elif file.endswith('.tsv'):
+                dataframe = pd.read_csv(file, sep='\t')
+            elif file.endswith('.json'):
+                dataframe = pd.read_json(file)
+            else:
+                return "given file is not supported"
+
+            data = dataframe.to_dict('record')
+
+            client_cloud = self.connect_to_mongo()
+            database = client_cloud[self.database]
+            collection = database[self.collection_name]
+            self.delete_collection_data(self.collection_name)
+            collection.insert_many(data)
+            self.close_connection(client_cloud)
+            return 'Successful'
+
+        except Exception as e:
+            return e.__str__()
+
+    def delete_collection_data(self, collection_name):
+        """[summary]
+        Delete Collection Data
+        Args:
+            collection_name ([type]): [description]
+        """
+        try:
+            client_cloud = self.connect_to_mongo()
+            database = client_cloud[self.database]
+            collection = database[self.collection_name]
+            collection.delete_many({})
+            self.close_connection(client_cloud)
+            print(f"All records deleted from {collection_name} collection")
+
+        except Exception as e:
+            print(e)
+
+
+    def check_connection(self):
+
+        try:
+            client_cloud = self.connect_to_mongo()
+            DBlist = client_cloud.list_database_names()
+
+            if self.database in DBlist:
+                database = client_cloud[self.database]
+                collection_list = database.list_collection_names()
+
+                if self.collection_name in collection_list:
+                    self.close_connection(client_cloud)
+                    return "Successful"
+                else:
+                    self.close_connection(client_cloud)
+                    return f"Given {self.collection_name} collection does not exits in {self.database} database"
+            else:
+                self.close_connection(client_cloud)
+                return f"Given {self.database} database does not exist!!"
+
+        except Exception as e:
+            print(e)
+            if "Authentication failed" in e.__str__():
+                return "Wrong URI"
+            else:
+                return "OOPS something went wrong!!"
+
+

@@ -5,13 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
   <script src="https://cdn.plot.ly/plotly-2.4.2.min.js"></script>
   <link rel="stylesheet" href="{{url_for('static', filename='/css/style.css')}}">
   <link rel="stylesheet" href="{{url_for('static', filename='/css/style2.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='/css/loader.css')}}">
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
   <link href="https://cdn.rawgit.com/harvesthq/chosen/gh-pages/chosen.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -41,7 +41,7 @@
       </div>
 
       <ul class="list-unstyled components">
-          <p>Select Module</p>
+          <li><a href="/module">Main Page</a></li>
           <li class="active">
               <a href="#edaSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">EDA</a>
               <ul class="collapse list-unstyled" id="edaSubmenu">
@@ -62,20 +62,20 @@
                 <li><a href="/dp/delete-columns">Delete Columns</a></li>
                 <li><a href="/dp/outlier">Handler Outliers</a></li>
                 <li><a href="/dp/duplicate-data">Handle Duplicate Data</a></li>
-                <li><a href="/dp/duplicate-data">Handle Missing Data</a></li>
+                <li><a href="/dp/missing-values">Handle Missing Data</a></li>
                 <li><a href="/dp/imbalance-data">Handle Imbalance Data</a></li>
             </ul>
         </li>
         <li class="active">
             <a href="#FeatureEngineeringSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Feature Engineering</a>
             <ul class="collapse list-unstyled" id="FeatureEngineeringSubmenu">
-                  <li><a href="/feature_engineering/help">Help</a></li>
-                  <li><a href="/feature_engineering/handleDatetime">Handle Date Time</a></li>
-                  <li><a href="/feature_engineering/encoding">Encoding</a></li>
-                  <li><a href="/feature_engineering/train_test_split">Train Test split</a></li>
-                  <li><a href="/feature_engineering/scaling">Scaling</a></li>
-                  <li><a href="/feature_engineering/feature_selection">Feature Selection</a></li>
-                  <li><a href="/feature_engineering/dimension_reduction">Dimension Reduction</a></li>
+                  <li><a href="/fe/help">Help</a></li>
+                  <li><a href="/fe/handle-datatype">Handle Data Type</a></li>
+                  <li><a href="/fe/encoding">Encoding</a></li>
+                  <li><a href="/fe/change-column-name">Change Column Name</a></li>
+                  <li><a href="/fe/scaling">Scaling</a></li>
+                  <li><a href="/fe/feature_selection">Feature Selection</a></li>
+                  <li><a href="/fe/dimension_reduction">Dimension Reduction</a></li>
             </ul>
         </li>
 
@@ -83,6 +83,7 @@
             <a href="#ModelTrainingSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Model Training</a>
             <ul class="collapse list-unstyled" id="ModelTrainingSubmenu">
                   <li><a href="/model_training/help">Help</a></li>
+                  <li><a href="/model_training/train_test_split">Train Test split</a></li>
                   <li><a href="/model_training/auto_training">Automatic Model Training</a></li>
                   <li><a href="/model_training/custom_training">Custom Model Training</a></li>
             </ul>
@@ -102,6 +103,13 @@
             </ul>
         </li>
 
+          <li class="active">
+            <a href="#MachineSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Machine</a>
+            <ul class="collapse list-unstyled" id="MachineSubmenu">
+                  <li><a href="/Machine/system">System</a></li>
+            </ul>
+        </li>
+
       </ul>
 
       <ul class="list-unstyled CTAs">
@@ -116,44 +124,26 @@
 
   <!-- Page Content  -->
   <div id="content">
-<!-- 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-
-            <button type="button" id="sidebarCollapse" class="navbar-btn">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <i class="fas fa-align-justify"></i>
-            </button>
-        </div>
-    </nav> -->
     {% block content %}{% endblock %}
-
 </div>
+<!-- <div class="container">
+    <div class="row mt">
+       <div class="col-md-3">
+          <div class="panel panel-default">
+             <div class="adjust">
+                <div class="loader3"></div>
+             </div>
+          </div>
+       </div>
+    </div>
+ </div> -->
 
-<!-- jQuery CDN - Slim version (=without AJAX) -->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<!-- Popper.JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
-<!-- Bootstrap JS -->
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
-<!-- jQuery Custom Scroller CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.concat.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script type="text/javascript">
   $(document).ready(function () {
       $("#sidebar").mCustomScrollbar({
           theme: "minimal"
-      });
-
-      $('#sidebarCollapse').on('click', function () {
-          $('#sidebar, #content').toggleClass('active');
-          $('.collapse.in').toggleClass('in');
-          $('a[aria-expanded=true]').attr('aria-expanded', 'false');
       });
   });
 </script>
