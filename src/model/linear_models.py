@@ -41,6 +41,13 @@ class LinearModels:
         print("Mean squared error: %.4f" % mean_squared_error(self.y_test, y_pred))
         print("Coefficient of determination: %.4f" % r2_score(self.y_test, y_pred))
 
+        # Plot outputs
+        # plt.scatter(self.X_test['pclass'], self.y_test, color="black")
+        # plt.plot(self.X_test['pclass'], y_pred, color="blue", linewidth=3)
+        # plt.xticks(())
+        # plt.yticks(())
+        # plt.show()
+
         # Saving model file
         LinearModels.save_model(model, "Linear_Regression")
 

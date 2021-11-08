@@ -286,6 +286,15 @@ width:60px
     padding-left: 30px;
 }
 
+.disabled-label {
+  color: darkgrey;
+}
+
+.disabled-input {
+  color: darkgrey;
+  background-color: grey;
+}
+
 .imbalance-form{
   color: #fff;
     align-items: center;
@@ -297,6 +306,7 @@ width:60px
     padding-left: 30px;
     width: 100%;
 }
+
 .margin-23{
   margin-top: 22px !important;
 }
