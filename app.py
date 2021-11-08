@@ -933,17 +933,17 @@ def model_training_post(action):
                     elif typ == 'Classification':
                         return render_template('model_training/auto_training.html')
                     else:
-                        pass
                         return render_template('model_training/auto_training.html')
-
                 elif action == 'custom_training':
                     typ = "Classification"
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
-                        model = request.form['model']
+                        print(request.form)
                         for i in request.form.items():
-                            print(i)
+                            values = i[1]
+                            break
+                        print(values)
                         return render_template('model_training/classification.html')
                     elif typ == "Clustering":
                         return render_template('model_training/clustering.html')
