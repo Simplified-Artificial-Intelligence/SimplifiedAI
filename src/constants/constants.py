@@ -1,7 +1,7 @@
 TWO_D_GRAPH_TYPES=["Bar Graph", "Histogram" ,"Scatter Plot", "Pie Chart",   "Line Chart"]
 encoding_list = ["Label/Ordinal Encoder", "One Hot Encoder", "Hash Encoder", "Target Encoder"]
 scaling_list = ["Standard Scaler", "Min Max Scaler", "Max Abs Scaler", "Robust Scaler"]
-FEATURE_SELECTION_METHODS_CLASSIFICATION = ["Find Constant Features","Mutual Info Classification", "Extra Trees Classifier", "Correlation"]
+FEATURE_SELECTION_METHODS_CLASSIFICATION = ["Find Constant Features","Mutual Info Classification", "Extra Trees Classifier", "Correlation","Forward Selection","Backword Elimination"]
 dimenstion_reduction_list = ["PCA"]
 
 NUMERIC_MISSING_HANDLER=['Mean','Median','Arbitrary Value','Interpolate']

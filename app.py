@@ -1,6 +1,6 @@
 from enum import unique
 from dns.rcode import NOERROR
-from flask import Flask, redirect, url_for, render_template, request, session, send_file
+from flask import Flask, redirect, url_for, render_template, request, session, send_file,jsonify
 from werkzeug.wrappers import Response
 
 from io import BytesIO
@@ -974,7 +974,7 @@ def feature_engineering(action):
                 elif action == 'scaling':
                     return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,columns=list(df.columns[df.dtypes!='object']))
                 elif action == 'feature_selection':
-                    return render_template('fe/feature_selection.html',methods=FEATURE_SELECTION_METHODS_CLASSIFICATION)
+                    return render_template('fe/feature_selection.html',methods=FEATURE_SELECTION_METHODS_CLASSIFICATION,columns_len=df.shape[1]-1)
                 elif action == 'dimension_reduction':
                     ### Check this remove target column
                     data=df.head(200).to_html()
@@ -1345,6 +1345,16 @@ def fe_feature_selection():
         elif method=="Correlation":
             graph=PlotlyHelper.heatmap(df)
             d['graph']=graph
+            
+        elif method=="Forward Selection" or method=="Backword Elimination":
+            n_features_to_select=request.json['n_features_to_select']
+            columns=FeatureEngineering.feature_selection(df_,df.loc[:,'Label'],method,n_features_to_select=int(n_features_to_select))
+            selected_columns=columns
+            not_selected_columns=[col for col in df_.columns
+                                  if col  not in selected_columns]
+            d['selected_columns']=selected_columns
+            d['not_selected_columns']=list(not_selected_columns)
+            
         
         return jsonify(d)
 
