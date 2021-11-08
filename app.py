@@ -968,10 +968,16 @@ def scheduler_get(action):
     if action == 'help':
         return render_template('scheduler/help.html')
 
+    if action == 'Training_scheduler':
+        return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
+
 @app.route('/scheduler/<action>', methods=['POST'])
 def scheduler_post(action):
     if action == 'help':
         return render_template('scheduler/help.html')
+
+    if action == 'Training_scheduler':
+        return render_template('scheduler/Training_scheduler.html')
 
 
     """APIS"""
