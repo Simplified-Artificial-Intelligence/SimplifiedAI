@@ -11,7 +11,7 @@ import certifi
 
 from imblearn import under_sampling
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES, TWO_D_GRAPH_TYPES
+from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES, TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -39,6 +39,8 @@ from sklearn.model_selection import train_test_split
 from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
+from src.routes.routes_api import app_api
+
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
 
@@ -72,6 +74,7 @@ template_dir = config_args['dir_structure']['template_dir']
 static_dir = config_args['dir_structure']['static_dir']
 
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
+app.register_blueprint(app_api)
 log.info(log_type='INFO', log_message='App Started')
 
 app.secret_key = config_args['secrets']['key']
@@ -120,7 +123,7 @@ def project():
     try:
         if 'loggedin' in session:
             if request.method == "GET":
-                return render_template('new_project.html', loggedin=True)
+                return render_template('new_project.html', loggedin=True,project_types=PROJECT_TYPES)
             else:
                 source_type = request.form['source_type']
                 if source_type == 'uploadFile':
@@ -140,8 +143,9 @@ def project():
                         msg = 'Please select a file to upload'
                     elif f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
                         msg = 'This file format is not allowed, please select mentioned one'
+                        
                     if msg:
-                        return render_template('new_project.html', msg=msg)
+                        return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
 
                     filename = secure_filename(f.filename)
                     file_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -158,7 +162,7 @@ def project():
                         df = pd.read_json(file_path)
                     else:
                         msg = 'This file format is currently not supported'
-                        return render_template('new_project.html', msg=msg)
+                        return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
 
                     project_id=unique_id_generator()
                     inserted_rows=mongodb.create_new_project(project_id,df)
@@ -175,11 +179,11 @@ def project():
                             return redirect(url_for('index'))
                         else:
                             msg = "Error while creating new Project"
-                            return render_template('new_project.html', msg=msg)
+                            return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
 
                     else:
                         msg = "Error while creating new Project"
-                        return render_template('new_project.html', msg=msg)
+                        return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
 
                 elif source_type == 'uploadResource':
                     name = request.form['project_name']
@@ -188,10 +192,10 @@ def project():
 
                     if not name.strip():
                         msg = 'Please enter project name'
-                        return render_template('new_project.html', msg=msg)
+                        return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
                     elif not description.strip():
                         msg = 'Please enter project description'
-                        return render_template('new_project.html', msg=msg)
+                        return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
 
 
                     if resource_type == "awsS3bucket":
@@ -205,7 +209,7 @@ def project():
                         conn_msg = aws_s3.check_connection(bucket_name, file_name)
                         if conn_msg != 'Successful':
                             print(conn_msg)
-                            return render_template('new_project.html', msg=conn_msg)
+                            return render_template('new_project.html', msg=conn_msg,project_types=PROJECT_TYPES)
 
                         download_status = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
                         print(name, description, resource_type, download_status, file_path)
@@ -225,7 +229,7 @@ def project():
                         print(conn_msg)
                         if conn_msg != 'Successful':
                             print(conn_msg)
-                            return render_template('new_project.html', msg=conn_msg)
+                            return render_template('new_project.html', msg=conn_msg,project_types=PROJECT_TYPES)
 
                         download_status = gcp.download_file_from_bucket(file_name, file_path, bucket_name)
                         print(download_status)
@@ -245,7 +249,7 @@ def project():
                         print(conn_msg)
                         if conn_msg != 'Successful':
                             print(conn_msg)
-                            return render_template('new_project.html', msg=conn_msg)
+                            return render_template('new_project.html', msg=conn_msg,project_types=PROJECT_TYPES)
 
                         download_status = mysql_data.retrive_dataset_from_table(table_name, file_path)
                         print(download_status)
@@ -268,7 +272,7 @@ def project():
                         print(conn_msg)
                         if conn_msg != 'Successful':
                             print(conn_msg)
-                            return render_template('new_project.html', msg=conn_msg)
+                            return render_template('new_project.html', msg=conn_msg,project_types=PROJECT_TYPES)
 
                         if data_in_tabular == 'true':
                             download_status = cassandra_db.retrive_table(table_name, file_path)
@@ -291,7 +295,7 @@ def project():
                             df = pd.read_json(file_path)
                         else:
                             msg = 'This file format is currently not supported'
-                            return render_template('new_project.html', msg=msg)
+                            return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
 
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
@@ -309,14 +313,14 @@ def project():
                                 return redirect(url_for('index'))
                             else:
                                 msg = "Error while creating new Project"
-                                return render_template('new_project.html', msg=msg)
+                                return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
 
                         else:
                             msg = "Error while creating new Project"
-                            return render_template('new_project.html', msg=msg)
+                            return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
                     else:
                         msg = "Error while creating new Project"
-                        return render_template('new_project.html', msg=msg)
+                        return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
 
         else:
             return redirect(url_for('login'))
@@ -1192,176 +1196,7 @@ def machine(action):
     return render_template('Machine/system.html')
 
 
-    """APIS"""
-@app.route('/api/missing-data', methods=['GET', 'POST'])
-def missing_data():
-    try:
-        df = load_data()
-        selected_column=request.json['selected_column']
-        method=request.json['method']
-        if method=='Mean' or  method=='Median' or  method=='Arbitrary Value' or  method=='Interpolate':
-            before={}
-            after={}
-            list_=list(df[~df.loc[:,selected_column].isnull()][selected_column])
-            before['graph'] =  PlotlyHelper.distplot(list_,selected_column)  
-            before['skewness'] =  Preprocessing.find_skewness(list_)  
-            before['kurtosis'] =  Preprocessing.find_kurtosis(list_)  
-            
-            if method=='Mean':
-                new_df=Preprocessing.fill_numerical(df,'Mean',[selected_column])
-            elif method=='Median':
-                new_df=Preprocessing.fill_numerical(df,'Median',[selected_column])
-            elif method=='Arbitrary Value':
-                new_df=Preprocessing.fill_numerical(df,'Median',[selected_column],request.json['Arbitrary_Value'])
-            elif method=='Interpolate':
-                new_df=Preprocessing.fill_numerical(df,'Interpolate',[selected_column],request.json['Interpolate'])
-            
-                
-            new_list=list(new_df.loc[:,selected_column])
-            
-            after['graph'] =  PlotlyHelper.distplot(new_list,selected_column)  
-            after['skewness'] =  Preprocessing.find_skewness(new_list)  
-            after['kurtosis'] =  Preprocessing.find_kurtosis(new_list)    
-                      
-            d={
-                'success':True,
-                'before':before,
-                'after':after
-            }
-            return jsonify(d)
 
-        if method=='Mode' or  method=='New Category' or  method=='Select Exist':
-            before={}
-            after={}
-            df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-            y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
-            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')
-            before['graph']=pie_graphJSON  
-            
-            if method=='Mode':
-                df[selected_column]=Preprocessing.fill_categorical(df,'Mode',selected_column)
-                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')  
-                
-                after['graph'] =  pie_graphJSON
-            elif method=='New Category':
-                df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.json['newcategory'])
-                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='') 
-                after['graph'] =  pie_graphJSON
-                
-            elif method=='Select Exist':
-                df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.json['selectcategory'])
-                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')  
-                
-                after['graph'] =  pie_graphJSON
-                                      
-            d={
-                'success':True,
-                'before':before,
-                'after':after
-            }
-            return jsonify(d)
-
-    except Exception as e:
-       return jsonify({'success':False})
-
-    return "Hello World!"
-
-@app.route('/api/encoding', methods=['GET', 'POST'])
-def fe_encoding():
-    try:
-        df = load_data()
-        encoding_type=request.json['encoding_type']
-        columns=request.json['columns']
-        d={'success':True}
-        df=df.loc[:,columns]
-        if encoding_type=="Base N Encoder":
-            df=FeatureEngineering.encodings(df,columns,encoding_type,base=request.json['base'])
-        elif encoding_type=="Target Encoder":
-            df=FeatureEngineering.encodings(df,columns,encoding_type,n_components=request.json['target'])
-        elif encoding_type=="Hash Encoder":
-            """This is remaining to handle"""
-            df=FeatureEngineering.encodings(df,columns,encoding_type,n_components=request.json['hash'])
-        else:
-            df=FeatureEngineering.encodings(df,columns,encoding_type)
-        data=df.head(200).to_html() 
-        d['data']=data
-        return jsonify(d)
-
-    except Exception as e:
-       return jsonify({'success':False})
-   
-   
-@app.route('/api/pca', methods=['POST'])
-def fe_pca():
-    try:
-        df = load_data()
-        df_=df.loc[:, df.columns != 'Label']
-        df_,evr_=FeatureEngineering.dimenstion_reduction(df_,len(df_.columns))
-        d={'success':True}
-        
-        df_evr=pd.DataFrame()
-        df_evr['No of Components']=np.arange(0,len(evr_))+1
-        df_evr['Variance %']=evr_.round(2)
-        
-        data=pd.DataFrame(df_,columns=[f"Col_{col+1}" for col in np.arange(0,df_.shape[1])]).head(200).to_html()
-        graph=PlotlyHelper.line(df_evr,'No of Components','Variance %')
-        
-        d['data']=data
-        d['graph']=graph
-        d['no_pca']=len(evr_)
-        return jsonify(d)
-
-    except Exception as e:
-       return jsonify({'success':False})
-   
-@app.route('/api/feature_selection', methods=['POST'])
-def fe_feature_selection():
-    try:
-        df = load_data()
-        df_=df.loc[:, df.columns != 'Label']
-        method=request.json['method']
-        d={'success':True}
-        
-        if method=="Find Constant Features":
-            threshold=request.json['threshold']
-            high_variance_columns=FeatureEngineering.feature_selection(df_,'Label',method,threshold=float(threshold))
-            high_variance_columns=list(high_variance_columns)
-            low_variance_columns=[col for col in df_.columns
-                                  if col  not in high_variance_columns]
-            d['high_variance_columns']=high_variance_columns
-            d['low_variance_columns']=list(low_variance_columns)
-            
-        elif method=="Mutual Info Classification" or method=="Extra Trees Classifier":
-            df_=FeatureEngineering.feature_selection(df_,df.loc[:,'Label'],method)
-            graph=PlotlyHelper.barplot(df_,'Feature','Value')
-            d['graph']=graph
-            
-        elif method=="Correlation":
-            graph=PlotlyHelper.heatmap(df)
-            d['graph']=graph
-            
-        elif method=="Forward Selection" or method=="Backword Elimination":
-            n_features_to_select=request.json['n_features_to_select']
-            columns=FeatureEngineering.feature_selection(df_,df.loc[:,'Label'],method,n_features_to_select=int(n_features_to_select))
-            selected_columns=columns
-            not_selected_columns=[col for col in df_.columns
-                                  if col  not in selected_columns]
-            d['selected_columns']=selected_columns
-            d['not_selected_columns']=list(not_selected_columns)
-            
-        
-        return jsonify(d)
-
-    except Exception as e:
-       return jsonify({'success':False})
-
-    return "Hello World!"
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("OOPS!!!!Somethong went wrong")
