@@ -29,19 +29,24 @@ e.preventDefault();
                 intermediateValues.push($(this).val())
             }
         });
+
+        data={
+            'method':$("#exampleFormControlSelect1").val()
+        }
         let filtered = intermediateValues.filter(e => e !== "" )
       for(let i =0; i< intermediateParams.length; i++) {
           let temp = {};
-          temp[intermediateParams[i]] = filtered[i]
-           finalArray.push(temp)
+          data[intermediateParams[i]] = filtered[i]
       }
+      finalArray['method']=$("#exampleFormControlSelect1").val()
+
 ////      console.log("ffff",finalArray)
        $(this).append(finalArray);
-        $("#para").val(JSON.stringify(finalArray));
+        $("#para").val(JSON.stringify(data));
 
         delete $("#values")
 
-    form = document.getElementById("form"); //$("#frm")
+          form = document.getElementById("form"); //$("#frm")
           form.submit();
 
     return true;

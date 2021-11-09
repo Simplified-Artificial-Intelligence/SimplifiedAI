@@ -15,8 +15,6 @@
   <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
   <link href="https://cdn.rawgit.com/harvesthq/chosen/gh-pages/chosen.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js" rel="stylesheet"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.2/angular.min.js" rel="stylesheet"/>
     <style>
          :-webkit-scrollbar-track
         {
@@ -44,6 +42,7 @@
     </style>
 </head>
 <body>
+  <!-- <div style="color: black;"> Loading</div> -->
 <nav class="navbar navbar-expand-sm bg-info navbar-dark nav-bar-custom">
   <ul class="navbar-nav">
     <li class="nav-item active">
@@ -64,7 +63,7 @@
   <!-- Sidebar  -->
   <nav id="sidebar">
       <div class="sidebar-header">
-          <h3>Dashboard</h3>
+        <a href="/" class="article"><h3>Dashboard</h3></a>
       </div>
 
       <ul class="list-unstyled components">
@@ -153,6 +152,11 @@
   <div id="content">
     {% block content %}{% endblock %}
 </div>
+    <!-- <div class="overlay show"></div>
+    <div class="spanner show">
+      <div class="loader"></div>
+      <p>Processing Your Data. please be patient.</p>
+    </div> -->
 
 
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>

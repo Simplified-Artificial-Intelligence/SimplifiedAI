@@ -6,6 +6,9 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler , RobustScaler,Po
 from sklearn.feature_selection import SelectKBest, chi2,VarianceThreshold,mutual_info_classif
 from sklearn.ensemble import ExtraTreesClassifier,ExtraTreesRegressor
 from sklearn.decomposition import PCA
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+
 import numpy as np
 class FeatureEngineering:
     def __init__(self):
@@ -174,6 +177,18 @@ class FeatureEngineering:
             df['Value']=importances
             df['Feature']=features.columns
             return df.sort_values(by='Value',ascending=False)
+        
+        elif typ == 'Forward Selection':
+            dclas = DecisionTreeClassifier()
+            sfs=SequentialFeatureSelector(dclas,scoring='balanced_accuracy',**kwarga)
+            sfs.fit(features, target)
+            return list(features.columns[sfs.get_support()])
+        
+        elif typ == 'Backword Elimination':
+            dclas = DecisionTreeClassifier()
+            sfs=SequentialFeatureSelector(dclas,direction='backward',scoring='balanced_accuracy',**kwarga)
+            sfs.fit(features, target)
+            return list(features.columns[sfs.get_support()])
         else:
             return 'Please Specify type correclty'
         
