@@ -2,12 +2,12 @@ import schedule
 import time
 import pymongo
 from src.utils.databases.mysql_helper import MySqlHelper
-from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 import os
 
 data = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\AMES_Final_DF.csv')
 
+# please check errors {Handle errors}
 
 def get_data():
     mysql = MySqlHelper.get_connection_obj()

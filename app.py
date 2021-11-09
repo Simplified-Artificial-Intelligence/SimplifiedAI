@@ -1,6 +1,6 @@
 from enum import unique
 from dns.rcode import NOERROR
-from flask import Flask, redirect, url_for, render_template, request, session, send_file
+from flask import Flask, redirect, url_for, render_template, request, session, send_file, jsonify
 from werkzeug.wrappers import Response
 
 from io import BytesIO
@@ -11,7 +11,8 @@ import certifi
 
 from imblearn import under_sampling
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES, TWO_D_GRAPH_TYPES
+from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER,\
+    OBJECT_MISSING_HANDLER, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES, TWO_D_GRAPH_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -30,15 +31,18 @@ from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
+
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
 from src.utils.common.database_helper import mysql_data_helper
 from src.utils.common.database_helper import cassandra_connector
 from src.utils.common.database_helper import mongo_data_helper
 from sklearn.model_selection import train_test_split
+
 from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
+
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
 
@@ -88,7 +92,7 @@ def context_processor():
     return dict(loggedin=loggedin)
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'],)
 def index():
     try:
         if 'loggedin' in session:
@@ -111,9 +115,11 @@ def index():
         else:
             return redirect(url_for('login'))
     except Exception as e:
-        pass
+        print(e)
 
 
+
+status = None
 @app.route('/project', methods=['GET', 'POST'])
 def project():
     global status, download_status
@@ -323,7 +329,6 @@ def project():
 
     except Exception as e:
         print(e)
-        #print().__str__()
         return render_template('new_project.html', msg=e.__str__())
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -1112,7 +1117,8 @@ def model_training(action):
                     return render_template('model_training/help.html')
                 elif action == 'train_test_split':
                     columns_for_list = df.columns
-                    return render_template('model_training/train_test_split.html', data=data, columns = columns_for_list, action='train_test_split')
+                    return render_template('model_training/train_test_split.html', data=data, columns=columns_for_list,
+                                           action='train_test_split')
                 elif action == 'auto_training':
                     data = df.head().to_html()
                     return render_template('model_training/auto_training.html', data=data)
@@ -1179,7 +1185,7 @@ def model_training_post(action):
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
-                        print(request.form)
+                        print(request.form['model'])
                         for i in request.form.items():
                             values = i[1]
                             break
@@ -1198,6 +1204,7 @@ def model_training_post(action):
     except Exception as e:
         print(e)
 
+
 @app.route('/Machine/<action>', methods=['GET'])
 def machine(action):
     return render_template('Machine/system.html')
@@ -1211,6 +1218,7 @@ def scheduler_get(action):
     if action == 'Training_scheduler':
         return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
 
+
 @app.route('/scheduler/<action>', methods=['POST'])
 def scheduler_post(action):
     if action == 'help':
@@ -1220,170 +1228,180 @@ def scheduler_post(action):
         return render_template('scheduler/Training_scheduler.html')
 
 
-    """APIS"""
+
+# Missing data Api
 @app.route('/api/missing-data', methods=['GET', 'POST'])
 def missing_data():
     try:
         df = load_data()
-        selected_column=request.json['selected_column']
-        method=request.json['method']
-        if method=='Mean' or  method=='Median' or  method=='Arbitrary Value' or  method=='Interpolate':
-            before={}
-            after={}
-            list_=list(df[~df.loc[:,selected_column].isnull()][selected_column])
-            before['graph'] =  PlotlyHelper.distplot(list_,selected_column)  
-            before['skewness'] =  Preprocessing.find_skewness(list_)  
-            before['kurtosis'] =  Preprocessing.find_kurtosis(list_)  
+        selected_column = request.json['selected_column']
+        method = request.json['method']
+        if method == 'Mean' or method == 'Median' or method == 'Arbitrary Value' or method == 'Interpolate':
+            before = {}
+            after = {}
+            list_ = list(df[~df.loc[:, selected_column].isnull()][selected_column])
+            before['graph'] = PlotlyHelper.distplot(list_, selected_column)
+            before['skewness'] = Preprocessing.find_skewness(list_)
+            before['kurtosis'] = Preprocessing.find_kurtosis(list_)
             
-            if method=='Mean':
-                new_df=Preprocessing.fill_numerical(df,'Mean',[selected_column])
-            elif method=='Median':
-                new_df=Preprocessing.fill_numerical(df,'Median',[selected_column])
-            elif method=='Arbitrary Value':
-                new_df=Preprocessing.fill_numerical(df,'Median',[selected_column],request.json['Arbitrary_Value'])
-            elif method=='Interpolate':
-                new_df=Preprocessing.fill_numerical(df,'Interpolate',[selected_column],request.json['Interpolate'])
+            if method == 'Mean':
+                new_df = Preprocessing.fill_numerical(df, 'Mean', [selected_column])
+            elif method == 'Median':
+                new_df = Preprocessing.fill_numerical(df, 'Median', [selected_column])
+            elif method == 'Arbitrary Value':
+                new_df = Preprocessing.fill_numerical(df, 'Median', [selected_column], request.json['Arbitrary_Value'])
+            elif method == 'Interpolate':
+                new_df = Preprocessing.fill_numerical(df, 'Interpolate', [selected_column], request.json['Interpolate'])
+            else:
+                pass
+
+            new_list = list(new_df.loc[:, selected_column])
             
-                
-            new_list=list(new_df.loc[:,selected_column])
-            
-            after['graph'] =  PlotlyHelper.distplot(new_list,selected_column)  
-            after['skewness'] =  Preprocessing.find_skewness(new_list)  
-            after['kurtosis'] =  Preprocessing.find_kurtosis(new_list)    
+            after['graph'] = PlotlyHelper.distplot(new_list, selected_column)
+            after['skewness'] = Preprocessing.find_skewness(new_list)
+            after['kurtosis'] = Preprocessing.find_kurtosis(new_list)
                       
-            d={
-                'success':True,
-                'before':before,
-                'after':after
+            d = {
+                'success': True,
+                'before': before,
+                'after': after
             }
             return jsonify(d)
 
-        if method=='Mode' or  method=='New Category' or  method=='Select Exist':
-            before={}
-            after={}
-            df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-            y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
-            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')
-            before['graph']=pie_graphJSON  
+        if method == 'Mode' or method == 'New Category' or method == 'Select Exist':
+            before = {}
+            after = {}
+            df_counts = pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+            y = list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:, 1].values)
+            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column, values=y, title='')
+            before['graph'] = pie_graphJSON
             
-            if method=='Mode':
-                df[selected_column]=Preprocessing.fill_categorical(df,'Mode',selected_column)
-                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')  
+            if method == 'Mode':
+                df[selected_column] = Preprocessing.fill_categorical(df, 'Mode', selected_column)
+                df_counts = pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y = list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:, 1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column, values=y, title='')
                 
-                after['graph'] =  pie_graphJSON
-            elif method=='New Category':
-                df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.json['newcategory'])
-                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='') 
-                after['graph'] =  pie_graphJSON
+                after['graph'] = pie_graphJSON
+            elif method == 'New Category':
+                df[selected_column] = Preprocessing.fill_categorical(df, 'New Category', selected_column,
+                                                                     request.json['newcategory'])
+                df_counts = pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y = list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:, 1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column, values=y, title='')
+                after['graph'] = pie_graphJSON
                 
-            elif method=='Select Exist':
-                df[selected_column]=Preprocessing.fill_categorical(df,'New Category',selected_column,request.json['selectcategory'])
-                df_counts=pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y=list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:,1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column,values=y,title='')  
+            elif method == 'Select Exist':
+                df[selected_column] = Preprocessing.fill_categorical(df, 'Select Exist', selected_column,
+                                                                     request.json['selectcategory'])
+                df_counts = pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
+                y = list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:, 1].values)
+                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column, values=y, title='')
                 
-                after['graph'] =  pie_graphJSON
+                after['graph'] = pie_graphJSON
                                       
-            d={
-                'success':True,
-                'before':before,
-                'after':after
+            d = {
+                'success': True,
+                'before': before,
+                'after': after
             }
             return jsonify(d)
 
     except Exception as e:
-       return jsonify({'success':False})
+        print(e)
+        return jsonify({'success': False})
 
-    return "Hello World!"
 
+# Feature Encoding Api
 @app.route('/api/encoding', methods=['GET', 'POST'])
 def fe_encoding():
     try:
         df = load_data()
-        encoding_type=request.json['encoding_type']
-        columns=request.json['columns']
-        d={'success':True}
-        df=df.loc[:,columns]
-        if encoding_type=="Base N Encoder":
-            df=FeatureEngineering.encodings(df,columns,encoding_type,base=request.json['base'])
-        elif encoding_type=="Target Encoder":
-            df=FeatureEngineering.encodings(df,columns,encoding_type,n_components=request.json['target'])
-        elif encoding_type=="Hash Encoder":
+        encoding_type = request.json['encoding_type']
+        columns = request.json['columns']
+        d = {'success': True}
+        df = df.loc[:, columns]
+        if encoding_type == "Base N Encoder":
+            df = FeatureEngineering.encodings(df, columns, encoding_type, base=request.json['base'])
+        elif encoding_type == "Target Encoder":
+            df = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['target'])
+        elif encoding_type == "Hash Encoder":
             """This is remaining to handle"""
-            df=FeatureEngineering.encodings(df,columns,encoding_type,n_components=request.json['hash'])
+            df = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['hash'])
         else:
-            df=FeatureEngineering.encodings(df,columns,encoding_type)
-        data=df.head(200).to_html() 
-        d['data']=data
+            df = FeatureEngineering.encodings(df, columns, encoding_type)
+        data = df.head(200).to_html()
+        d['data'] = data
         return jsonify(d)
 
     except Exception as e:
-       return jsonify({'success':False})
+        print(e)
+        return jsonify({'success': False})
    
-   
+
+# Dimension Reduction Api
 @app.route('/api/pca', methods=['POST'])
 def fe_pca():
     try:
         df = load_data()
-        df_=df.loc[:, df.columns != 'Label']
-        df_,evr_=FeatureEngineering.dimenstion_reduction(df_,len(df_.columns))
-        d={'success':True}
+        df_ = df.loc[:, df.columns != 'Label']
+        df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
+        d = {'success': True}
         
-        df_evr=pd.DataFrame()
-        df_evr['No of Components']=np.arange(0,len(evr_))+1
-        df_evr['Variance %']=evr_.round(2)
+        df_evr = pd.DataFrame()
+        df_evr['No of Components'] = np.arange(0, len(evr_))+1
+        df_evr['Variance %'] = evr_.round(2)
         
-        data=pd.DataFrame(df_,columns=[f"Col_{col+1}" for col in np.arange(0,df_.shape[1])]).head(200).to_html()
-        graph=PlotlyHelper.line(df_evr,'No of Components','Variance %')
+        data = pd.DataFrame(df_, columns=[f"Col_{col+1}" for col in np.arange(0, df_.shape[1])]).head(200).to_html()
+        graph = PlotlyHelper.line(df_evr, 'No of Components', 'Variance %')
         
-        d['data']=data
-        d['graph']=graph
-        d['no_pca']=len(evr_)
+        d['data'] = data
+        d['graph'] = graph
+        d['no_pca'] = len(evr_)
         return jsonify(d)
 
     except Exception as e:
-       return jsonify({'success':False})
-   
+        print(e)
+        return jsonify({'success': False})
+
+
+# Feature Selection Api
 @app.route('/api/feature_selection', methods=['POST'])
 def fe_feature_selection():
     try:
         df = load_data()
-        df_=df.loc[:, df.columns != 'Label']
-        method=request.json['method']
-        d={'success':True}
+        df_ = df.loc[:, df.columns != 'Label']
+        method = request.json['method']
+        d = {'success': True}
         
-        if method=="Find Constant Features":
-            threshold=request.json['threshold']
-            high_variance_columns=FeatureEngineering.feature_selection(df_,'Label',method,threshold=float(threshold))
-            high_variance_columns=list(high_variance_columns)
-            low_variance_columns=[col for col in df_.columns
-                                  if col  not in high_variance_columns]
-            d['high_variance_columns']=high_variance_columns
-            d['low_variance_columns']=list(low_variance_columns)
+        if method == "Find Constant Features":
+            threshold = request.json['threshold']
+            high_variance_columns = FeatureEngineering.feature_selection(df_, 'Label', method,
+                                                                         threshold=float(threshold))
+            high_variance_columns = list(high_variance_columns)
+            low_variance_columns = [col for col in df_.columns if col not in high_variance_columns]
+            d['high_variance_columns'] = high_variance_columns
+            d['low_variance_columns'] = list(low_variance_columns)
             
-        elif method=="Mutual Info Classification" or method=="Extra Trees Classifier":
-            df_=FeatureEngineering.feature_selection(df_,df.loc[:,'Label'],method)
-            graph=PlotlyHelper.barplot(df_,'Feature','Value')
-            d['graph']=graph
+        elif method == "Mutual Info Classification" or method == "Extra Trees Classifier":
+            df_ = FeatureEngineering.feature_selection(df_, df.loc[:, 'Label'], method)
+            graph = PlotlyHelper.barplot(df_, 'Feature', 'Value')
+            d['graph'] = graph
             
-        elif method=="Correlation":
-            graph=PlotlyHelper.heatmap(df)
-            d['graph']=graph
+        elif method == "Correlation":
+            graph = PlotlyHelper.heatmap(df)
+            d['graph'] = graph
         
         return jsonify(d)
 
     except Exception as e:
-       return jsonify({'success':False})
+        print(e)
+        return jsonify({'success': False})
 
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
-        print("OOPS!!!!Somethong went wrong")
+        print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
-        app.run(host="127.0.0.1", port=5000, debug=False)
-
+        app.run(host="127.0.0.1", port=5000, debug=True)
 
