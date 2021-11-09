@@ -83,5 +83,3 @@ class MongoHelper:
 
         except Exception as e:
             print(e)
-        
-        

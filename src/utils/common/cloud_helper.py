@@ -1,6 +1,9 @@
 import boto3
 import pandas as pd
 from google.cloud import storage
+from azure.storage.blob import BlobClient
+from azure.storage.blob import ContainerClient
+from azure.storage.blob import BlobServiceClient
 
 
 
@@ -195,5 +198,126 @@ class gcp_browser_storage():
 
         except Exception as e:
             return 'Provide valid credentials json file provided by gcp during the creation of gcp service account'
+
+
+class azure_data_helper():
+    def __init__(self, connection_string):
+        try:
+            self.connection_string = connection_string
+            self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
+        except Exception as e:
+            print(e)
+
+    def create_container(self, container_name):
+        try:
+            self.blob_service_client.create_container(container_name)
+            print(f"{container_name} container created!!")
+            return 'Successful'
+
+        except Exception as e:
+            print(e.__str__())
+            if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
+                return 'Provide valid azure connection string'
+            else:
+                return 'OOPS something went wrong!!'
+
+    def delete_container(self, container_name):
+        try:
+            self.blob_service_client.delete_container(container_name)
+            print(f"{container_name} container deleted!!")
+            return 'Successful'
+
+        except Exception as e:
+            print(e.__str__())
+            if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
+                return 'Provide valid azure connection string'
+            else:
+                return 'OOPS something went wrong!!'
+
+    def upload_file(self, file_path, container_name):
+        try:
+            blob = BlobClient.from_connection_string(conn_str=self.connection_string, container_name=container_name,
+                                                     blob_name=file)
+            with open(file, "rb") as data:
+                blob.upload_blob(data)
+            print(f"{file} is uploded to {container_name} container")
+            return 'Successful'
+
+        except Exception as e:
+            print(e.__str__())
+            if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
+                return 'Provide valid azure connection string'
+            else:
+                return 'OOPS something went wrong!!'
+
+    def download_file(self, container_name, file_name, download_file_path):
+        try:
+            blob = BlobClient.from_connection_string(conn_str=self.connection_string, container_name=container_name,
+                                                     blob_name=file_name)
+            with open(download_file_path, "wb") as my_blob:
+                blob_data = blob.download_blob()
+                blob_data.readinto(my_blob)
+            print(f"{file_name} downloded from {container_name} container to {download_file_path}")
+            return 'Successful'
+
+        except Exception as e:
+            print(e.__str__())
+            if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
+                return 'Provide valid azure connection string'
+            else:
+                return 'OOPS something went wrong!!'
+
+    def list_containers(self):
+        container_list = []
+        try:
+            for container in self.blob_service_client.list_containers():
+                container_list.append(container.name)
+            return container_list
+
+        except Exception as e:
+            # print(e.__str__())
+            if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
+                return 'Provide valid azure connection string'
+            else:
+                return 'OOPS something went wrong!!'
+
+    def list_blobs(self, container_name):
+        my_blob_list = []
+        try:
+            container = ContainerClient.from_connection_string(conn_str=self.connection_string,
+                                                               container_name=container_name)
+            blob_list = container.list_blobs()
+            for blob in blob_list:
+                my_blob_list.append(blob.name)
+            return my_blob_list
+
+        except Exception as e:
+            print(e.__str__())
+            if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
+                return 'Provide valid azure connection string'
+            else:
+                return 'OOPS something went wrong!!'
+
+    def check_connection(self, container_name, file_name):
+        try:
+            containers = self.list_containers()
+
+            if type(containers) != list:
+                return containers
+            elif container_name in containers:
+                blobs = self.list_blobs(container_name)
+                if file_name in blobs:
+                    return 'Successful'
+                else:
+                    return f"{file_name} does not exist in {container_name} container!!"
+            else:
+                return f"{container_name} container does not exist!!"
+
+        except Exception as e:
+            print(e.__str__())
+            if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
+                return 'Provide valid azure connection string'
+            else:
+                return 'OOPS something went wrong!!'
 
 
