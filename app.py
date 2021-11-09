@@ -1174,11 +1174,8 @@ def model_training_post(action):
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
-                        print(request.form['model'])
-                        for i in request.form.items():
-                            values = i[1]
-                            break
-                        print(values)
+                        data = next(request.form.items())[1]
+                        print(data)
                         return render_template('model_training/classification.html')
                     elif typ == "Clustering":
                         return render_template('model_training/clustering.html')
