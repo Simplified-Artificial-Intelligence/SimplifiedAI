@@ -2,19 +2,19 @@ import pandas as pd
 import sqlalchemy
 import pymongo
 import json
-import mysql.connector as connector
 from textwrap import wrap
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 
 
-class mysql_data_helper():
+class mysql_data_helper:
     def __init__(self, host, port, user, password, database):
         # def __init__(self, host, user, password, database):
         self.host = host
         self.port = port
         self.user = user
         self.password = password
+        self.connection = None
         self.database = database  # dialect+driver://username:password@host:port/database.
         self.engine = sqlalchemy.create_engine(f"""mysql+mysqlconnector://{self.user}:{self.password}@
                                                    {self.host}:{self.port}/{self.database}""")
@@ -69,6 +69,7 @@ class mysql_data_helper():
                 return f"{file} was pushed into {table_name} table!"
 
             except Exception as e:
+                print(e)
                 return f"could'nt push {file} into {table_name} table!"
 
         except Exception as e:
@@ -105,7 +106,6 @@ class mysql_data_helper():
         return "mysql dataset helper"
 
 
-
 class cassandra_connector:
     """
     cassandra_connector class performs cassandra database operations,eg: connecting to database,
@@ -137,7 +137,7 @@ class cassandra_connector:
             create_query = f'create table {table_name}('
             column_names = []
 
-            for i in range(len(data)):  ## creating create table query and collect column names
+            for i in range(len(data)):  # creating create table query and collect column names
                 if i == 0:
                     create_query += f'data{i * "1"} text primary key, '
                     column_names.append(f'data{i * "1"}')
@@ -151,8 +151,7 @@ class cassandra_connector:
             session = self.connect_to_cluster()
             session.execute(create_query, timeout=None)
 
-            insert_query = f'insert into {table_name}({", ".join(column_names)}) values ({"? ," * len(column_names)}'.strip(
-                ", ") + ");"
+            insert_query = f'insert into {table_name}({", ".join(column_names)}) values ({"? ," * len(column_names)}'.strip(", ") + ");"
             print(insert_query)
             prepared_query = session.prepare(insert_query)
             session.execute(prepared_query, data, timeout=None)
@@ -228,7 +227,7 @@ class cassandra_connector:
                 return "Provide valid bundel zip file!!"
 
 
-class mongo_data_helper():
+class mongo_data_helper:
 
     def __init__(self, mongo_db_uri, database, collection_name):
         self.mongo_db_uri = mongo_db_uri
@@ -244,7 +243,6 @@ class mongo_data_helper():
         print("Mongo db connection closed")
 
     def retrive_dataset(self, download_path):
-
         try:
             client_cloud = self.connect_to_mongo()
             database = client_cloud[self.database]
@@ -256,7 +254,6 @@ class mongo_data_helper():
 
         except Exception as e:
             return e.__str__()
-
 
     def push_dataset(self, file):
 
@@ -300,7 +297,6 @@ class mongo_data_helper():
         except Exception as e:
             print(e)
 
-
     def check_connection(self):
 
         try:
@@ -327,5 +323,3 @@ class mongo_data_helper():
                 return "Wrong URI"
             else:
                 return "OOPS something went wrong!!"
-
-

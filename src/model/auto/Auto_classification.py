@@ -4,7 +4,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
-from sklearn.metrics import accuracy_score,precision_score,recall_score,f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
 class ModelTrain_Classification:

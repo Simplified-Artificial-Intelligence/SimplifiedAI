@@ -1,9 +1,9 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
+# app pass will go here
 sender = "ketangangal98@gmail.com"
-my_password = 'test'# app pass will go here
+my_password = 'test'
 receiver = "pankajmalhan30@gmail.com"
 
 msg = MIMEMultipart('alternative')

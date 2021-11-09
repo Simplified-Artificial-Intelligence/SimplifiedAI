@@ -23,7 +23,6 @@ class ClassificationModels:
     def logistic_regression_classifier(self, penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True,
                                        intercept_scaling=1, class_weight=None, random_state=None, solver='lbfgs',
                                        max_iter=100, multi_class='auto', verbose=0,
-
                                        warm_start=False, n_jobs=None, l1_ratio=None):
         model = LogisticRegression(penalty=penalty, dual=dual, tol=tol, C=C, fit_intercept=fit_intercept,
                                    intercept_scaling=intercept_scaling, class_weight=class_weight,
