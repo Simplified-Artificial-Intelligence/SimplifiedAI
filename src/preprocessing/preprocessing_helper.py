@@ -1,14 +1,14 @@
 import pandas as pd
 import numpy as np
 import category_encoders as ce
-import seaborn as sns
 from sklearn.preprocessing import normalize
 from sklearn.utils import resample
-from imblearn.over_sampling import SMOTE, BorderlineSMOTE, ADASYN, RandomOverSampler, SMOTENC, SVMSMOTE
-from imblearn.under_sampling import TomekLinks, NearMiss, RandomUnderSampler
-from scipy.stats import skew,kurtosis
+from imblearn.over_sampling import SMOTE, RandomOverSampler
+from imblearn.under_sampling import NearMiss
+from scipy.stats import skew, kurtosis
 
-class Preprocessing():
+
+class Preprocessing:
 
     @staticmethod
     def get_data(filepath):
@@ -18,7 +18,7 @@ class Preprocessing():
             return df
         except Exception as e:
             return e
-        
+
     @staticmethod
     def col_seperator(df, typ: str):
         try:
@@ -33,9 +33,9 @@ class Preprocessing():
                 return 'Type Not Found'
         except Exception as e:
             return e
-        
+
     @staticmethod
-    def delete_col(df, cols:list):
+    def delete_col(df, cols: list):
 
         temp_list = []
         for i in cols:
@@ -49,7 +49,7 @@ class Preprocessing():
             return df
         except Exception as e:
             return e
-        
+
     @staticmethod
     def missing_values(df):
         try:
@@ -65,17 +65,17 @@ class Preprocessing():
 
         except Exception as e:
             return e
-        
+
     @staticmethod
     def find_skewness(x):
         return skew(x)
-    
+
     @staticmethod
     def find_kurtosis(x):
         return kurtosis(x)
-    
+
     @staticmethod
-    def fill_numerical(df, typ, cols,value=None):
+    def fill_numerical(df, typ, cols, value=None):
         for i in cols:
             if i in df.columns:
                 continue
@@ -96,7 +96,7 @@ class Preprocessing():
                 return df[cols].fillna(value)
             except Exception as e:
                 return e
-            
+
         elif typ == 'Interpolate':
             try:
                 return df[cols].interpolate(value)
@@ -104,7 +104,7 @@ class Preprocessing():
                 return e
         else:
             return 'Type Not present'
-        
+
     @staticmethod
     def fill_categorical(df, typ=None, col=None, value=None):
         # Replace na with some meaning of na
@@ -120,13 +120,13 @@ class Preprocessing():
                 return df[col].fillna(value)
             else:
                 return 'Please give provide values and columns'
-            
+
         elif typ == 'Mode':
             if col is not None:
                 return df[col].fillna(df.mode()[col][0])
             else:
                 return 'Please give provide values and columns'
-            
+
         elif typ == 'New Category':
             if col is not None:
                 return df[col].fillna(value)
@@ -134,9 +134,10 @@ class Preprocessing():
                 return 'Please give provide values and columns'
         else:
             return 'Type not found'
+
     @staticmethod
     def Unique(df, percent):
-        percent = percent/25
+        percent = percent / 25
         holder = []
         for column in df.columns:
             if df[column].nunique() > int(len(df) * percent / 4):
@@ -144,13 +145,11 @@ class Preprocessing():
                 holder.append(column)
         return holder
 
-            
-
-    #https://www.analyticsvidhya.com/blog/2020/08/types-of-categorical-data-encoding/
+    # https://www.analyticsvidhya.com/blog/2020/08/types-of-categorical-data-encoding/
     @staticmethod
     def encodings(df, cols, kind: str):
         if kind == 'One Hot Encoder':
-            onehot=ce.OneHotEncoder(cols=cols)
+            onehot = ce.OneHotEncoder(cols=cols)
             onehot_df = onehot.fit_transform(df)
             return onehot_df
         elif kind == 'Dummy Encoder':
@@ -161,7 +160,7 @@ class Preprocessing():
             target_df = target.fit_transform(df)
             return target_df
         elif kind == 'Binary Encoder':
-            binary = ce.BinaryEncoder(cols=cols,return_df=True)
+            binary = ce.BinaryEncoder(cols=cols, return_df=True)
             binary_df = binary.fit_transform(df)
             return binary_df
         elif kind == 'Base N Encoder':
@@ -182,17 +181,17 @@ class Preprocessing():
 
         if kind == 'UnderSampling':
             df_majority_undersampled = resample(df_majority,
-                                                    replace=True,
-                                                    n_samples=len(df_minority),
-                                                    random_state=42)
+                                                replace=True,
+                                                n_samples=len(df_minority),
+                                                random_state=42)
 
             return pd.concat([df_majority_undersampled, df_minority])
 
         elif kind == 'UpSampling':
             df_minority_upsampled = resample(df_minority,
-                                                 replace=True,
-                                                 n_samples=len(df_majority),
-                                                 random_state=42)
+                                             replace=True,
+                                             n_samples=len(df_majority),
+                                             random_state=42)
             return pd.concat([df_minority_upsampled, df_majority])
 
         elif kind == 'Smote':
@@ -202,6 +201,7 @@ class Preprocessing():
             return oversampled
         else:
             return 'Please specify correct mtd'
+
     @staticmethod
     def drop_duplicate(df, cols: list):
         df = df.drop_duplicates(subset=cols, inplace=True)
@@ -221,7 +221,7 @@ class Preprocessing():
                 variable.append(cols[i])
         new_df = df[variable]
         return new_df
-    
+
     @staticmethod
     def handle_high_variance(df, var_range):
         Categorical_columns = df.select_dtypes(include='object')
@@ -236,53 +236,53 @@ class Preprocessing():
                 variable.append(cols[i])
         new_df = df[variable]
         return new_df
-    
+
     @staticmethod
     def under_sample(dataframe, target_col, ratio=None):
         X = dataframe.drop(columns=[target_col])
         y = dataframe[target_col]
-        
+
         if ratio:
-             ns=NearMiss(sampling_strategy=ratio)
-             X_resampled, y_resampled = ns.fit_resample(X, y)
-        else:  
-            ns=NearMiss()
+            ns = NearMiss(sampling_strategy=ratio)
             X_resampled, y_resampled = ns.fit_resample(X, y)
-        
+        else:
+            ns = NearMiss()
+            X_resampled, y_resampled = ns.fit_resample(X, y)
+
         resampled_dataset = X_resampled.join(y_resampled)
-            
-        return resampled_dataset 
-    
+
+        return resampled_dataset
+
     @staticmethod
     def over_sample(dataframe, target_col, ratio=None):
-    
+
         X = dataframe.drop(columns=[target_col])
         y = dataframe[target_col]
-        
+
         if ratio:
-                ros = RandomOverSampler(sampling_strategy=ratio)
-                X_resampled, y_resampled = ros.fit_resample(X, y)
-        else:  
+            ros = RandomOverSampler(sampling_strategy=ratio)
+            X_resampled, y_resampled = ros.fit_resample(X, y)
+        else:
             ros = RandomOverSampler()
             X_resampled, y_resampled = ros.fit_resample(X, y)
-        
+
         resampled_dataset = X_resampled.join(y_resampled)
-            
-        return resampled_dataset 
-    
+
+        return resampled_dataset
+
     @staticmethod
     def smote_technique(dataframe, target_col, ratio=None):
-    
+
         X = dataframe.drop(columns=[target_col])
         y = dataframe[target_col]
-        
+
         if ratio:
             sm = SMOTE(sampling_strategy=ratio)
             X_resampled, y_resampled = sm.fit_resample(X, y)
-        else:  
+        else:
             sm = SMOTE()
             X_resampled, y_resampled = sm.fit_resample(X, y)
-        
+
         resampled_dataset = X_resampled.join(y_resampled)
-            
-        return resampled_dataset 
+
+        return resampled_dataset

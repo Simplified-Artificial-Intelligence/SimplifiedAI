@@ -4,7 +4,8 @@ import time
 from src.utils.common.common_helper import read_config
 import os
 
-config_args = read_config(r".\config.yaml")
+
+config_args = read_config("config.yaml")
 
 
 class MongoHelper:

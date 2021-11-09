@@ -5,9 +5,6 @@ from src.utils.databases.mysql_helper import MySqlHelper
 import pandas as pd
 import os
 
-data = pd.read_csv(r'C:\Users\ketan\Desktop\Project\Projectathon\AMES_Final_DF.csv')
-
-# please check errors {Handle errors}
 
 def get_data():
     mysql = MySqlHelper.get_connection_obj()
@@ -93,5 +90,3 @@ schedule.every(6).minutes.do(data_updater)
 while True:
     schedule.run_pending()
     time.sleep(1)
-
-
