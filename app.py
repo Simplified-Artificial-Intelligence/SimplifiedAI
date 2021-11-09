@@ -1,6 +1,4 @@
 from flask import Flask, redirect, url_for, render_template, request, session, send_file, jsonify
-from src.utils.common.cloud_helper import aws_s3_helper, gcp_browser_storage
-from src.utils.common.database_helper import mysql_data_helper, cassandra_connector
 from werkzeug.wrappers import Response
 from io import BytesIO
 import re
@@ -24,6 +22,12 @@ from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 from src.utils.common.common_helper import immutable_multi_dict_to_str
+
+from src.utils.common.cloud_helper import aws_s3_helper
+from src.utils.common.cloud_helper import gcp_browser_storage
+from src.utils.common.database_helper import mysql_data_helper
+from src.utils.common.database_helper import cassandra_connector
+
 from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
@@ -302,14 +306,12 @@ def project():
                             else:
                                 msg = "Error while creating new Project"
                                 return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
-
                         else:
                             msg = "Error while creating new Project"
-                            return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
+                            return render_template('new_project.html', msg=msg)
                     else:
                         msg = "Error while creating new Project"
                         return render_template('new_project.html', msg=msg,project_types=PROJECT_TYPES)
-
         else:
             return redirect(url_for('login'))
 
