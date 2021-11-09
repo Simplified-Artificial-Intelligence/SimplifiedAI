@@ -28,6 +28,7 @@ from src.utils.common.common_helper import immutable_multi_dict_to_str
 
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
+from src.utils.common.cloud_helper import azure_data_helper
 from src.utils.common.database_helper import mysql_data_helper
 from src.utils.common.database_helper import cassandra_connector
 
@@ -278,6 +279,35 @@ def project():
                         elif data_in_tabular == 'false':
                             download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
                             print(download_status)
+                          
+                    elif resource_type == "mongodb":
+                        mongo_db_url = request.form['mongo_db_url']
+                        mongo_database = request.form['mongo_database']
+                        collection = request.form['collection']
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], (collection+".csv"))
+                        mongo_helper = mongo_data_helper(mongo_db_url)
+                        conn_msg = mongo_helper.check_connection(mongo_database, collection)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
+
+                        download_status = mongo_helper.retrive_dataset(mongo_database, collection, file_path)
+                        print(name, description, resource_type, download_status, file_path)
+
+                    elif resource_type == "azureStorage":
+                        azure_connection_string = request.form['azure_connection_string']
+                        container_name = request.form['container_name']
+                        file_name = request.form['file_name']
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+                        azure_helper = azure_data_helper(azure_connection_string)
+                        conn_msg = azure_helper.check_connection(container_name, file_name)
+
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
+
+                        download_status = azure_helper.download_file(container_name, file_name, file_path)
+                        print(download_status)
 
                     if download_status == 'Successful':
                         timestamp = round(time.time() * 1000)
