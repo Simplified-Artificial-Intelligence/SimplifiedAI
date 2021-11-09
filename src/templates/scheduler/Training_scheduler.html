@@ -31,7 +31,12 @@
 
 $(document).ready(function() {
 	$('#datetimepicker').datetimepicker({
-		inline: false
+		format:'d/m/Y H:i',
+		inline: false, 
+		theme:'dark',
+		onSelectDate:function(ct,$i){
+			alert(ct.dateFormat('d/m/Y H:i'))
+		}
 	});
 });
 </script>
