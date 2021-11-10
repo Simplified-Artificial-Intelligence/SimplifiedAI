@@ -27,7 +27,8 @@ from src.utils.common.common_helper import immutable_multi_dict_to_str
 
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
-from src.utils.common.database_helper import mysql_data_helper
+from src.utils.common.cloud_helper import azure_data_helper
+from src.utils.common.database_helper import mysql_data_helper, mongo_data_helper
 from src.utils.common.database_helper import cassandra_connector
 
 from src.model.auto.Auto_regression import ModelTrain_Regression
@@ -108,7 +109,7 @@ download_status = None
 
 
 @app.route('/project', methods=['GET', 'POST'])
-def project():
+def project(df=None, table_name=None):
     global status, download_status
     try:
         if 'loggedin' in session:
@@ -275,22 +276,36 @@ def project():
                         elif data_in_tabular == 'false':
                             download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
                             logger.info(download_status)
+                          
+                    elif resource_type == "mongodb":
+                        mongo_db_url = request.form['mongo_db_url']
+                        mongo_database = request.form['mongo_database']
+                        collection = request.form['collection']
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], (collection+".csv"))
+                        mongo_helper = mongo_data_helper(mongo_db_url)
+                        conn_msg = mongo_helper.check_connection(mongo_database, collection)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
 
-                    if download_status == 'Successful':
-                        timestamp = round(time.time() * 1000)
-                        name = name.replace(" ", "_")
-                        table_name = f"{name}_{timestamp}"
+                        download_status = mongo_helper.retrive_dataset(mongo_database, collection, file_path)
+                        print(name, description, resource_type, download_status, file_path)
 
-                        if file_path.endswith('.csv'):
-                            df = pd.read_csv(file_path)
-                        elif file_path.endswith('.tsv'):
-                            df = pd.read_csv(file_path, sep='\t')
-                        elif file_path.endswith('.json'):
-                            df = pd.read_json(file_path)
-                        else:
-                            msg = 'This file format is currently not supported'
-                            logger.info(msg)
-                            return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                    elif resource_type == "azureStorage":
+                        azure_connection_string = request.form['azure_connection_string']
+                        container_name = request.form['container_name']
+                        file_name = request.form['file_name']
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+                        azure_helper = azure_data_helper(azure_connection_string)
+                        conn_msg = azure_helper.check_connection(container_name, file_name)
+
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
+
+                        download_status = azure_helper.download_file(container_name, file_name, file_path)
+                        print(download_status)
+
 
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
@@ -1176,7 +1191,7 @@ def model_training(action):
                     data = df.head().to_html()
                     return render_template('model_training/auto_training.html', data=data)
                 elif action == 'custom_training':
-                    typ = "Classification"
+                    typ = "Clustering"
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
@@ -1217,27 +1232,20 @@ def model_training_post(action):
                     percent = int(request.form['range'])
                     target = request.form['columns']
                     Random_State = int(request.form['Random_State'])
+                    df = pd.read_csv(r'AMES_Final_DF.csv')
+                    X = df.drop(target, axis=1)
+                    y = df[target]
+                    X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(self=None, cleanedData=X,
+                                                                                           label=y, test_size=(
+                                    1 - (percent / 100)), random_state=Random_State)
 
                     X = df.drop(target, axis=1)
                     y = df[target]
                     X_train, X_test, y_train, y_test = fe.train_test_Split(cleanedData=X, label=y,
                                                                            test_size=(1 - (percent / 100)),
                                                                            random_state=Random_State)
-                    return render_template('model_training/train_test_split.html', data=data)
-                elif action == 'auto_training':
-                    typ = 'Classification'
-                    if typ == 'Regression':
-                        scaler = StandardScaler()
-                        X_train = scaler.fit_transform(X_train)
-                        X_test = scaler.transform(X_test)
+                    # typ = "Clustering"
 
-                        data = ModelTrain_Regression(X_train, X_test, y_train, y_test, True)
-                        return render_template('model_training/auto_training.html', data=data.results().to_html())
-                    elif typ == 'Classification':
-                        return render_template('model_training/auto_training.html')
-                    else:
-                        return render_template('model_training/auto_training.html')
-                elif action == 'custom_training':
 
                     # Data from front end
                     data = next(request.form.items())[1]
@@ -1276,23 +1284,8 @@ def model_training_post(action):
                                                                       l1_ratio=l1_ratio)
                         print(result)
 
-                    typ = "Classification"
-                    if typ == "Regression":
-                        return render_template('model_training/regression.html')
-                    elif typ == "Classification":
-                        return render_template('model_training/classification.html')
-                    elif typ == "Clustering":
-                        return render_template('model_training/clustering.html')
-                    else:
-                        return render_template('model_training/custom_training.html')
-                else:
-                    return 'Non-Implemented Action'
-            else:
-                return 'No Data'
-        else:
-            return redirect(url_for('/'))
-    except Exception as e:
-        print(e)
+    except:
+        pass
 
 
 @app.route('/Machine/<action>', methods=['GET'])

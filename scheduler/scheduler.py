@@ -5,6 +5,8 @@ from src.utils.databases.mysql_helper import MySqlHelper
 import pandas as pd
 import os
 
+data = pd.read_csv(r'AMES_Final_DF.csv')
+
 
 def get_data():
     mysql = MySqlHelper.get_connection_obj()
@@ -68,14 +70,14 @@ def file_path(path=None, backup=None, normal=None):
     normal_data_path = []
 
     for i in backup:
-        backup_data_path.append(os.path.join(path, i+'.csv'))
+        backup_data_path.append(os.path.join(path, i + '.csv'))
     for i in normal:
-        normal_data_path.append(os.path.join(path, i+'.csv'))
+        normal_data_path.append(os.path.join(path, i + '.csv'))
 
     return normal_data_path, backup_data_path
 
 
-def data_updater(path=r"C:\Users\ketan\Desktop\Project\Projectathon\src\data"):
+def data_updater(path=r".\src\data"):
     backup, normal = get_names_from_files(path)
     normal_data_path, backup_data_path = file_path(path, backup, normal)
     print(normal_data_path)

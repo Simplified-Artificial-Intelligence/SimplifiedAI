@@ -43,7 +43,7 @@ class FeatureEngineering:
         """
         df[column] = df[column].astype(type_)
         return df
-    
+
     def train_test_Split(self, cleanedData, label, test_size, random_state):
 
         X_train, X_test, y_train, y_test = train_test_split(cleanedData,
@@ -137,7 +137,7 @@ class FeatureEngineering:
         return frame
 
     @staticmethod
-    def feature_selection(features, target, typ, **kwargs):
+    def feature_selection(features, target, typ, dclas=None, **kwargs):
         important_features = pd.DataFrame()
         if typ == 'SelectKBest':
             # chi2 + anova test
@@ -172,28 +172,29 @@ class FeatureEngineering:
             return important_features.sort_values('scores', ascending=False)
 
         elif typ == 'Mutual Info Classification':
+            importances = mutual_info_classif(features, target)
+            df = pd.DataFrame()
+            df['Value'] = importances
             importance = mutual_info_classif(features, target)
             df = pd.DataFrame()
             df['Value'] = importance
-            df['Feature'] = features.columns
-            return df.sort_values(by='Value', ascending=False)
 
-        elif typ == 'Forward Selection':
-            dclas = DecisionTreeClassifier()
             sfs = SequentialFeatureSelector(dclas, scoring='balanced_accuracy', **kwargs)
             sfs.fit(features, target)
             return list(features.columns[sfs.get_support()])
 
-        elif typ == 'Backward Elimination':
+        elif typ == 'Backword Elimination':
             dclas = DecisionTreeClassifier()
             sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwargs)
             sfs.fit(features, target)
             return list(features.columns[sfs.get_support()])
         else:
-            return 'Please Specify type correctly'
+            return 'Please Specify type correclty'
+
 
     @staticmethod
     def dimenstion_reduction(data, comp):
         model = PCA(n_components=comp)
         pca = model.fit_transform(data)
-        return pca, np.cumsum(model.explained_variance_ratio_)
+        return (pca, np.cumsum(model.explained_variance_ratio_))
+

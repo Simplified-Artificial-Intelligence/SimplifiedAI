@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from math import floor
 
+
 """[summary]
 Class for EDA Operations
 Returns:
@@ -23,7 +24,8 @@ class EDA:
         Returns:
             [type]: DataFrame/ Exception
         """
-        my_dict = {'Features': [], 'Min': [], 'Q1': [], 'Median': [], 'Q3': [], 'Max': []}
+        my_dict = {'Features': [], 'Min': [], 'Q1': [], 'Median': [], 'Q3': [],
+                   'Max': []}
         for column in dataframe.select_dtypes(include=np.number).columns:
             try:
                 column_data = dataframe[pd.to_numeric(dataframe[column], errors='coerce').notnull()][column]
@@ -185,7 +187,6 @@ class EDA:
                     if abs(val) > threshold:
                         outliers.append(da)
                 return outliers
-
             elif kind == 'iqr':
                 outliers = []
                 q1, q3 = np.percentile(data, [25, 75])
