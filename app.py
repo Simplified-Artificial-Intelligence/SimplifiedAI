@@ -1,5 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, session, send_file, jsonify
 from src.model.custom.classification_models import ClassificationModels
+from src.model.custom.regression_models import RegressionModels
+from src.model.custom.clustering_models import ClusteringModels
 from werkzeug.wrappers import Response
 from io import BytesIO
 import re
@@ -41,7 +43,6 @@ from loguru import logger
 config_args = read_config("./config.yaml")
 
 log_path = os.path.join(os.getcwd(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
-print(log_path)
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 logger.info('Fetching Data from configuration file')
@@ -51,7 +52,6 @@ port = config_args['secrets']['port']
 user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
-
 
 logger.info('Initializing Databases')
 mysql = MySqlHelper.get_connection_obj()
@@ -276,12 +276,12 @@ def project(df=None, table_name=None):
                         elif data_in_tabular == 'false':
                             download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
                             logger.info(download_status)
-                          
+
                     elif resource_type == "mongodb":
                         mongo_db_url = request.form['mongo_db_url']
                         mongo_database = request.form['mongo_database']
                         collection = request.form['collection']
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], (collection+".csv"))
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], (collection + ".csv"))
                         mongo_helper = mongo_data_helper(mongo_db_url)
                         conn_msg = mongo_helper.check_connection(mongo_database, collection)
                         if conn_msg != 'Successful':
@@ -305,7 +305,6 @@ def project(df=None, table_name=None):
 
                         download_status = azure_helper.download_file(container_name, file_name, file_path)
                         print(download_status)
-
 
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
@@ -791,7 +790,7 @@ def data_preprocessing(action):
                 else:
                     return render_template('eda/help.html')
             else:
-               logger.critical('Data Frame is None')
+                logger.critical('Data Frame is None')
 
         else:
             return redirect(url_for('/'))
@@ -1004,7 +1003,6 @@ def data_preprocessing_post(action):
             return redirect(url_for('/'))
     except Exception as e:
         logger.error(e)
-
 
 
 @app.route('/fe/<action>', methods=['GET'])
@@ -1228,64 +1226,464 @@ def model_training_post(action):
                 if action == 'help':
                     return render_template('model_training/help.html')
                 elif action == 'train_test_split':
-                    fe = FeatureEngineering()
-                    percent = int(request.form['range'])
-                    target = request.form['columns']
-                    Random_State = int(request.form['Random_State'])
-                    df = pd.read_csv(r'AMES_Final_DF.csv')
-                    X = df.drop(target, axis=1)
-                    y = df[target]
-                    X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(self=None, cleanedData=X,
-                                                                                           label=y, test_size=(
-                                    1 - (percent / 100)), random_state=Random_State)
+                    typ = "Regression"
+                    if typ == "Regression":
+                        fe = FeatureEngineering()
+                        percent = int(request.form['range'])
+                        target = request.form['columns']
+                        Random_State = int(request.form['Random_State'])
+                        df = pd.read_csv(r'AMES_Final_DF.csv')
+                        X = df.drop(target, axis=1)
+                        y = df[target]
+                        X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(cleanedData=X,
+                                                                                               label=y,
+                                                                                               test_size=(1 - (percent / 100)),
+                                                                                               random_state=Random_State)
 
-                    X = df.drop(target, axis=1)
-                    y = df[target]
-                    X_train, X_test, y_train, y_test = fe.train_test_Split(cleanedData=X, label=y,
-                                                                           test_size=(1 - (percent / 100)),
-                                                                           random_state=Random_State)
-                    # typ = "Clustering"
+                        X = df.drop(target, axis=1)
+                        y = df[target]
+                        X_train, X_test, y_train, y_test = fe.train_test_Split(cleanedData=X, label=y,
+                                                                               test_size=(1 - (percent / 100)),
+                                                                               random_state=Random_State)
+                        return render_template('model_training/train_test_split.html', data=data)
 
+                    elif typ == 'Classification':
+                        return render_template('model_training/auto_training.html')
+                    else:
+                        return render_template('model_training/auto_training.html')
 
-                    # Data from front end
+                elif action == 'custom_training':
+
+                    typ = None
                     data = next(request.form.items())[1]
                     data = dict(json.loads(data))
                     path = os.path.join(os.getcwd(), 'artifacts', 'models', 'yourModel.pkl')
                     modelName = data["method"]
 
-                    # Model creation
-                    model = ClassificationModels(X_train, X_test, y_train, y_test, path=path)
+                    if typ == "Classification":
+                        model = ClassificationModels(X_train, X_test, y_train, y_test, path=path)
 
-                    if modelName == 'LogisticRegression':
-                        penalty = data.get('penalty', 'l1')
-                        dual = data.get('dual', False)
-                        tol = int(data.get('dual', 0.0001))
-                        C = data.get('dual', 1.0)
-                        fit_intercept = data.get('dual', True)
-                        intercept_scaling = data.get('dual', 1)
-                        class_weight = data.get('dual', None)
-                        random_state = data.get('dual', None)
-                        solver = data.get('dual', 'lbfgs')
-                        max_iter = data.get('dual', 100)
-                        multi_class = data.get('dual', 'auto')
-                        verbose = data.get('dual', 0)
-                        warm_start = data.get('warm_start', False)
-                        n_jobs = data.get('n_jobs', None)
-                        l1_ratio = data.get('l1_ratio', None)
+                        if modelName == 'LogisticRegression':
+                            penalty = data.get('penalty', 'l1')
+                            dual = data.get('dual', False)
+                            tol = int(data.get('dual', 0.0001))
+                            C = data.get('dual', 1.0)
+                            fit_intercept = data.get('dual', True)
+                            intercept_scaling = data.get('dual', 1)
+                            class_weight = data.get('dual', None)
+                            random_state = data.get('dual', None)
+                            solver = data.get('dual', 'lbfgs')
+                            max_iter = data.get('dual', 100)
+                            multi_class = data.get('dual', 'auto')
+                            verbose = data.get('dual', 0)
+                            warm_start = data.get('warm_start', False)
+                            n_jobs = data.get('n_jobs', None)
+                            l1_ratio = data.get('l1_ratio', None)
 
-                        result = model.logistic_regression_classifier(penalty=penalty, dual=dual, tol=tol, C=C,
-                                                                      fit_intercept=fit_intercept,
-                                                                      intercept_scaling=intercept_scaling,
-                                                                      class_weight=class_weight,
-                                                                      random_state=random_state, solver=solver,
-                                                                      max_iter=max_iter,
-                                                                      multi_class=multi_class, verbose=verbose,
-                                                                      warm_start=warm_start, n_jobs=n_jobs,
-                                                                      l1_ratio=l1_ratio)
-                        print(result)
+                            result = model.logistic_regression_classifier(penalty=penalty, dual=dual, tol=tol, C=C,
+                                                                          fit_intercept=fit_intercept,
+                                                                          intercept_scaling=intercept_scaling,
+                                                                          class_weight=class_weight,
+                                                                          random_state=random_state, solver=solver,
+                                                                          max_iter=max_iter,
+                                                                          multi_class=multi_class, verbose=verbose,
+                                                                          warm_start=warm_start, n_jobs=n_jobs,
+                                                                          l1_ratio=l1_ratio)
+                        elif modelName == 'SVC':
+                            C = int(data.get('C', 1.0))
+                            kernel = data.get('kernel', 'rbf')
+                            degree = int(data.get('degree', 3))
+                            gamma = data.get('gamma', 'scale')
+                            coef0 = float(data.get('coef0', 0.0))
+                            shrinking = data.get('shrinking', True)
+                            probability = data.get('probability', False)
+                            tol = float(data.get('tol', 0.001))
+                            cache_size = int(data.get('cache_size', 200))
+                            class_weight = data.get('class_weight', None)
+                            verbose = bool(data.get('verbose', False))
+                            max_iter = int(data.get('max_iter', -1))
+                            decision_function_shape = data.get('decision_function_shape', 'ovr')
+                            break_ties = bool(data.get('break_ties', False))
+                            random_state = int(data.get('random_state', 101))
 
-    except:
-        pass
+                            result = model.support_vector_classifier(C=C, kernel=kernel, degree=degree,
+                                                                     gamma=gamma, coef0=coef0, shrinking=shrinking,
+                                                                     probability=probability, tol=tol,
+                                                                     cache_size=cache_size,
+                                                                     class_weight=class_weight,
+                                                                     verbose=verbose, max_iter=max_iter,
+                                                                     decision_function_shape=decision_function_shape,
+                                                                     break_ties=break_ties, random_state=random_state)
+
+                        elif modelName == "KNeighborsClassifier":
+                            n_neighbors = int(data.get('n_neighbors', 5))
+                            weights = data.get('weights', 'uniform')
+                            algorithm = data.get('algorithm', 'auto')
+                            leaf_size = int(data.get('leaf_size', 30))
+                            p = int(data.get('p', 2))
+                            metric = data.get('metric', 'minkowski')
+                            metric_params = data.get('metric_params', None)
+                            n_jobs = int(data.get('n_jobs', None))
+
+                            result = model.k_neighbors_classifier(n_neighbors=n_neighbors, weights=weights,
+                                                                  algorithm=algorithm,
+                                                                  leaf_size=leaf_size, p=p, metric=metric,
+                                                                  metric_params=metric_params, n_jobs=n_jobs)
+
+                        elif modelName == "DecisionTreeClassifier":
+                            criterion = 'gini'
+                            splitter = 'best'
+                            max_depth = None
+                            min_samples_split = 2
+                            min_samples_leaf = 1
+                            min_weight_fraction_leaf = 0.0
+                            max_features = None
+                            random_state = None
+                            max_leaf_nodes = None
+                            min_impurity_decrease = 0.0
+                            class_weight = None
+                            ccp_alpha = 0.0
+
+                            result = model.decision_tree_classifier(criterion=criterion, splitter=splitter,
+                                                                    max_depth=max_depth,
+                                                                    min_samples_split=min_samples_split,
+                                                                    min_samples_leaf=min_samples_leaf,
+                                                                    min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                                                    max_features=max_features,
+                                                                    random_state=random_state,
+                                                                    max_leaf_nodes=max_leaf_nodes,
+                                                                    min_impurity_decrease=min_impurity_decrease,
+                                                                    class_weight=class_weight, ccp_alpha=ccp_alpha)
+
+                        elif modelName == "RandomForestClassifier":
+                            n_estimators = 100
+                            criterion = 'gini'
+                            max_depth = None
+                            min_samples_split = 2
+                            min_samples_leaf = 1
+                            min_weight_fraction_leaf = 0.0
+                            max_features = 'auto'
+                            max_leaf_nodes = None
+                            min_impurity_decrease = 0.0
+                            bootstrap = True
+                            oob_score = False,
+                            n_jobs = None
+                            random_state = None
+                            verbose = 0
+                            warm_start = False
+                            class_weight = None
+                            ccp_alpha = 0.0
+                            max_samples = None
+
+                            result = model.random_forest_classifier(n_estimators=n_estimators, criterion=criterion,
+                                                                    max_depth=max_depth,
+                                                                    min_samples_split=min_samples_split,
+                                                                    min_samples_leaf=min_samples_leaf,
+                                                                    min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                                                    max_features=max_features,
+                                                                    max_leaf_nodes=max_leaf_nodes,
+                                                                    min_impurity_decrease=min_impurity_decrease,
+                                                                    bootstrap=bootstrap, oob_score=oob_score,
+                                                                    n_jobs=n_jobs, random_state=random_state,
+                                                                    verbose=verbose,
+                                                                    warm_start=warm_start, class_weight=class_weight,
+                                                                    ccp_alpha=ccp_alpha, max_samples=max_samples)
+
+                        elif modelName == 'GradientBoostClassifier':
+                            loss = 'deviance'
+                            learning_rate = 0.1
+                            n_estimators = 100
+                            subsample = 1.0
+                            criterion = 'friedman_mse'
+                            min_samples_split = 2
+                            min_samples_leaf = 1
+                            min_weight_fraction_leaf = 0.0
+                            max_depth = 3
+                            min_impurity_decrease = 0.0
+                            init = None
+                            random_state = None
+                            max_features = None
+                            verbose = 0
+                            max_leaf_nodes = None
+                            warm_start = False
+                            validation_fraction = 0.1
+                            n_iter_no_change = None
+                            tol = 0.0001
+                            ccp_alpha = 0.0
+
+                            model.gradient_boosting_classifier(loss=loss, learning_rate=learning_rate,
+                                                               n_estimators=n_estimators,
+                                                               subsample=subsample, criterion=criterion,
+                                                               min_samples_split=min_samples_split,
+                                                               min_samples_leaf=min_samples_leaf,
+                                                               min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                                               max_depth=max_depth,
+                                                               min_impurity_decrease=min_impurity_decrease, init=init,
+                                                               random_state=random_state, max_features=max_features,
+                                                               verbose=verbose,
+                                                               max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+                                                               validation_fraction=validation_fraction,
+                                                               n_iter_no_change=n_iter_no_change, tol=tol,
+                                                               ccp_alpha=ccp_alpha)
+
+                        elif modelName == "AdaBoostClassifier":
+                            base_estimator = None
+                            n_estimators = 50
+                            learning_rate = 1.0
+                            algorithm = 'SAMME.R'
+                            random_state = None
+
+                            result = model.ada_boost_classifier(base_estimator=base_estimator,
+                                                                n_estimators=n_estimators,
+                                                                learning_rate=learning_rate,
+                                                                algorithm=algorithm, random_state=random_state)
+                        else:
+                            pass
+
+                    elif typ == "Regression":
+                        model = RegressionModels(X_train, X_test, y_train, y_test, path=path)
+                        if modelName == "linear":
+                            fit_intercept = True
+                            copy_X = True
+                            n_jobs = None
+                            positive = False
+
+                            result = model.linear_regression_regressor(fit_intercept=fit_intercept, copy_X=copy_X,
+                                                                       n_jobs=n_jobs,
+                                                                       positive=positive)
+                        elif modelName == "ridge":
+                            alpha = 1.0
+                            fit_intercept = True
+                            copy_X = True
+                            max_iter = None
+                            tol = 0.001
+                            solver = 'auto'
+                            positive = False
+                            random_state = None
+
+                            result = model.ridge_regressor(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
+                                                           max_iter=max_iter, tol=tol, solver=solver, positive=positive,
+                                                           random_state=random_state)
+
+                        elif modelName == "lasso":
+                            alpha = 1.0
+                            fit_intercept = True
+                            precompute = False
+                            copy_X = True
+                            max_iter = 1000
+                            tol = 0.0001
+                            warm_start = False
+                            positive = False
+                            random_state = None
+                            selection = 'cyclic'
+
+                            result = model.lasso_regressor(alpha=alpha, fit_intercept=fit_intercept, precompute=precompute,
+                                                           copy_X=copy_X,
+                                                           max_iter=max_iter, tol=tol, warm_start=warm_start,
+                                                           positive=positive,
+                                                           random_state=random_state, selection=selection)
+
+                        elif modelName == "elastic":
+                            alpha = 1.0
+                            l1_ratio = 0.5
+                            fit_intercept = True
+                            precompute = False
+                            max_iter = 1000
+                            copy_X = True
+                            tol = 0.0001
+                            warm_start = False
+                            positive = False
+                            random_state = None
+                            selection = 'cyclic'
+
+                            result = model.elastic_net_regressor(alpha=alpha, l1_ratio=l1_ratio,
+                                                                 fit_intercept=fit_intercept,
+                                                                 precompute=precompute,
+                                                                 copy_X=copy_X, max_iter=max_iter, tol=tol,
+                                                                 warm_start=warm_start,
+                                                                 positive=positive,
+                                                                 random_state=random_state, selection=selection)
+                        elif modelName == "decision_tree":
+                            criterion = 'squared_error'
+                            splitter = 'best'
+                            max_depth = None
+                            min_samples_split = 2
+                            min_samples_leaf = 1
+                            min_weight_fraction_leaf = 0.0
+                            max_features = None
+                            random_state = None
+                            max_leaf_nodes = None
+                            min_impurity_decrease = 0.0
+                            ccp_alpha = 0.0
+
+                            result = model.decision_tree_regressor(criterion=criterion, splitter=splitter,
+                                                                   max_depth=max_depth,
+                                                                   min_samples_split=min_samples_split,
+                                                                   min_samples_leaf=min_samples_leaf,
+                                                                   min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                                                   max_features=max_features, random_state=random_state,
+                                                                   max_leaf_nodes=max_leaf_nodes,
+                                                                   min_impurity_decrease=min_impurity_decrease,
+                                                                   ccp_alpha=ccp_alpha)
+                        elif modelName == "random_forest":
+                            n_estimators = 100
+                            criterion = 'squared_error'
+                            max_depth = None
+                            min_samples_split = 2
+                            min_samples_leaf = 1
+                            min_weight_fraction_leaf = 0.0
+                            max_features = 'auto'
+                            max_leaf_nodes = None
+                            min_impurity_decrease = 0.0
+                            bootstrap = True
+                            oob_score = False
+                            n_jobs = None
+                            random_state = None
+                            verbose = 0
+                            warm_start = False
+                            ccp_alpha = 0.0
+                            max_samples = None
+
+                            result = model.random_forest_regressor(n_estimators=n_estimators, criterion=criterion,
+                                                                   max_depth=max_depth,
+                                                                   min_samples_split=min_samples_split,
+                                                                   min_samples_leaf=min_samples_leaf,
+                                                                   min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                                                   max_features=max_features, max_leaf_nodes=max_leaf_nodes,
+                                                                   min_impurity_decrease=min_impurity_decrease,
+                                                                   bootstrap=bootstrap,
+                                                                   oob_score=oob_score, n_jobs=n_jobs,
+                                                                   random_state=random_state,
+                                                                   verbose=verbose, warm_start=warm_start,
+                                                                   ccp_alpha=ccp_alpha,
+                                                                   max_samples=max_samples)
+                        elif modelName == "svr":
+                            kernel = 'rbf'
+                            degree = 3
+                            gamma = 'scale'
+                            coef0 = 0.0
+                            tol = 0.001
+                            C = 1.0
+                            epsilon = 0.1
+                            shrinking = True
+                            cache_size = 200
+                            verbose = False
+                            max_iter = - 1
+
+                            result = model.support_vector_regressor(kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+                                                                    tol=tol, C=C,
+                                                                    epsilon=epsilon,
+                                                                    shrinking=shrinking, cache_size=cache_size,
+                                                                    verbose=verbose, max_iter=max_iter)
+                        elif modelName == "adr":
+                            base_estimator = None
+                            n_estimators = 50
+                            learning_rate = 1.0
+                            loss = 'linear'
+                            random_state = None
+
+                            result = model.ada_boost_regressor(base_estimator=base_estimator, n_estimators=n_estimators,
+                                                               learning_rate=learning_rate, loss=loss,
+                                                               random_state=random_state)
+
+                        elif modelName == "gbr":
+                            loss = 'squared_error'
+                            learning_rate = 0.1
+                            n_estimators = 100
+                            subsample = 1.0
+                            criterion = 'friedman_mse'
+                            min_samples_split = 2
+                            min_samples_leaf = 1
+                            min_weight_fraction_leaf = 0.0
+                            max_depth = 3
+                            min_impurity_decrease = 0.0
+                            init = None
+                            random_state = None
+                            max_features = None
+                            alpha = 0.9
+                            verbose = 0
+                            max_leaf_nodes = None
+                            warm_start = False
+                            validation_fraction = 0.1
+                            n_iter_no_change = None
+                            tol = 0.0001
+                            ccp_alpha = 0.0
+
+                            result = model.gradient_boosting_regressor(loss=loss, learning_rate=learning_rate,
+                                                                       n_estimators=n_estimators,
+                                                                       subsample=subsample, criterion=criterion,
+                                                                       min_samples_split=min_samples_split,
+                                                                       min_samples_leaf=min_samples_leaf,
+                                                                       min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                                                       max_depth=max_depth,
+                                                                       min_impurity_decrease=min_impurity_decrease,
+                                                                       init=init,
+                                                                       random_state=random_state, max_features=max_features,
+                                                                       alpha=alpha,
+                                                                       verbose=verbose,
+                                                                       max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+                                                                       validation_fraction=validation_fraction,
+                                                                       n_iter_no_change=n_iter_no_change, tol=tol,
+                                                                       ccp_alpha=ccp_alpha)
+                        else:
+                            pass
+
+                    elif typ == 'Clustering':
+                        model = ClusteringModels(X_train, X_test, path=path)
+
+                        if modelName == "KMeans":
+                            n_clusters = 8
+                            init = 'k-means++'
+                            n_init = 10
+                            max_iter = 300
+                            tol = 0.0001
+                            verbose = 0
+                            random_state = None
+                            copy_x = True
+                            algorithm = 'auto'
+
+                            result = model.kmeans_clustering(n_clusters=n_clusters, init=init, n_init=n_init,
+                                                             max_iter=max_iter, tol=tol,
+                                                             verbose=verbose, random_state=random_state, copy_x=copy_x,
+                                                             algorithm=algorithm)
+                        elif modelName == "DBSCAN":
+                            eps = 0.5
+                            min_samples = 5
+                            metric = 'euclidean'
+                            metric_params = None
+                            algorithm = 'auto'
+                            leaf_size = 30
+                            p = None
+                            n_jobs = None
+
+                            result = model.dbscan_clustering(eps=eps, min_samples=min_samples, metric=metric,
+                                                             metric_params=metric_params,
+                                                             algorithm=algorithm, leaf_size=leaf_size, p=p, n_jobs=n_jobs)
+                        elif modelName == "AgglomerativeClustering":
+                            n_clusters = 2
+                            affinity = 'euclidean'
+                            memory = None
+                            connectivity = None
+                            compute_full_tree = 'auto'
+                            linkage = 'ward'
+                            distance_threshold = None
+                            compute_distances = False
+
+                            result = model.agglomerative_clustering(n_clusters=n_clusters, affinity=affinity, memory=memory,
+                                                                    connectivity=connectivity,
+                                                                    compute_full_tree=compute_full_tree, linkage=linkage,
+                                                                    distance_threshold=distance_threshold,
+                                                                    compute_distances=compute_distances)
+                        else:
+                            pass
+                else:
+                    return "Non Implemented Method"
+
+        else:
+            logger.critical('DataFrame has no data')
+
+    except Exception as e:
+        logger.error(e)
 
 
 @app.route('/Machine/<action>', methods=['GET'])
