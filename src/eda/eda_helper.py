@@ -47,7 +47,7 @@ class EDA():
         try:
             return dataframe.corr(method=method)
         except Exception as e:
-                print(e)
+            print(e)
     
     @staticmethod
     def get_no_records(dataframe,count=100,order='top'):
@@ -57,7 +57,7 @@ class EDA():
             else:
                 return dataframe.tail(count)
         except Exception as e:
-                print(e)
+            print(e)
                 
     @staticmethod       
     def find_dtypes(df3):

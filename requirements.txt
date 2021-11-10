@@ -46,7 +46,7 @@ h11==0.12.0
 htmlmin==0.1.12
 idna==3.2
 ImageHash==4.2.1
-imbalanced-learn==0.8.1
+imbalanced-learn
 imblearn==0.0
 importlib-metadata==4.8.1
 ipykernel==6.4.1
@@ -57,7 +57,7 @@ itsdangerous==2.0.1
 jedi==0.18.0
 Jinja2==3.0.1
 jmespath==0.10.0
-joblib==1.0.0
+joblib
 jsonschema==3.2.0
 jupyter-client==7.0.1
 jupyter-core==4.8.1
@@ -91,7 +91,7 @@ numpy==1.21.2
 openpyxl==3.0.9
 packaging==21.0
 pandas==1.1.5
-pandas-profiling==3.1.0
+pandas-profiling
 pandocfilters==1.4.3
 parso==0.8.2
 patsy==0.5.2
@@ -136,7 +136,7 @@ seaborn==0.11.2
 Send2Trash==1.8.0
 setuptools==58.3.0
 six==1.16.0
-sklearn==0.0
+scikit-learn == 0.24
 SQLAlchemy==1.4.26
 statsmodels==0.13.0
 tangled-up-in-unicode==0.1.0
