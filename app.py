@@ -1178,7 +1178,7 @@ def model_training(action):
                     data = df.head().to_html()
                     return render_template('model_training/auto_training.html', data=data)
                 elif action == 'custom_training':
-                    typ = "Clustering"
+                    typ = "Classification"
                     if typ == "Regression":
                         return render_template('model_training/regression.html')
                     elif typ == "Classification":
@@ -1223,56 +1223,91 @@ def model_training_post(action):
                     X = df.drop(target, axis=1)
                     y = df[target]
                     X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(self=None, cleanedData=X,
-                                                                                           label=y, test_size=(
-                                    1 - (percent / 100)), random_state=Random_State)
+                                                                                           label=y, test_size=(1 - (percent / 100)), random_state=Random_State)
 
                     X = df.drop(target, axis=1)
                     y = df[target]
                     X_train, X_test, y_train, y_test = fe.train_test_Split(cleanedData=X, label=y,
                                                                            test_size=(1 - (percent / 100)),
                                                                            random_state=Random_State)
-                    # typ = "Clustering"
+                    return render_template('model_training/train_test_split.html', data=data)
+                elif action == 'auto_training':
+                    typ = 'Classification'
+                    if typ == 'Regression':
+                        scaler = StandardScaler()
+                        X_train = scaler.fit_transform(X_train)
+                        X_test = scaler.transform(X_test)
+                        data = ModelTrain_Regression(X_train, X_test, y_train, y_test, True)
+                        return render_template('model_training/auto_training.html', data=data.results().to_html())
+                    elif typ == 'Classification':
+                        return render_template('model_training/auto_training.html')
+                    else:
+                        return render_template('model_training/auto_training.html')
+                elif action == 'custom_training':
+                    typ = "Classification"
+                    if typ == "Regression":
+                        return render_template('model_training/regression.html')
+                    elif typ == "Classification":
+                        print(request.form)
+                        for i in request.form.items():
+                            values = i[1]
+                            break
+                        print(values)
+                        return render_template('model_training/classification.html')
+                    elif typ == "Clustering":
+                        return render_template('model_training/clustering.html')
+                    else:
+                        return render_template('model_training/custom_training.html')
+                else:
+                    return 'Non-Implemented Action'
+            else:
+                return 'No Data'
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        print(e)
 
 
-                    # Data from front end
-                    data = next(request.form.items())[1]
-                    data = dict(json.loads(data))
-                    path = os.path.join(os.getcwd(), 'artifacts', 'models', 'yourModel.pkl')
-                    modelName = data["method"]
 
-                    # Model creation
-                    model = ClassificationModels(X_train, X_test, y_train, y_test, path=path)
-
-                    if modelName == 'LogisticRegression':
-                        penalty = data.get('penalty', 'l1')
-                        dual = data.get('dual', False)
-                        tol = int(data.get('dual', 0.0001))
-                        C = data.get('dual', 1.0)
-                        fit_intercept = data.get('dual', True)
-                        intercept_scaling = data.get('dual', 1)
-                        class_weight = data.get('dual', None)
-                        random_state = data.get('dual', None)
-                        solver = data.get('dual', 'lbfgs')
-                        max_iter = data.get('dual', 100)
-                        multi_class = data.get('dual', 'auto')
-                        verbose = data.get('dual', 0)
-                        warm_start = data.get('warm_start', False)
-                        n_jobs = data.get('n_jobs', None)
-                        l1_ratio = data.get('l1_ratio', None)
-
-                        result = model.logistic_regression_classifier(penalty=penalty, dual=dual, tol=tol, C=C,
-                                                                      fit_intercept=fit_intercept,
-                                                                      intercept_scaling=intercept_scaling,
-                                                                      class_weight=class_weight,
-                                                                      random_state=random_state, solver=solver,
-                                                                      max_iter=max_iter,
-                                                                      multi_class=multi_class, verbose=verbose,
-                                                                      warm_start=warm_start, n_jobs=n_jobs,
-                                                                      l1_ratio=l1_ratio)
-                        print(result)
-
-    except:
-        pass
+    #     # Data from front end
+    #                 data = next(request.form.items())[1]
+    #                 data = dict(json.loads(data))
+    #                 path = os.path.join(os.getcwd(), 'artifacts', 'models', 'yourModel.pkl')
+    #                 modelName = data["method"]
+    #
+    #                 # Model creation
+    #                 model = ClassificationModels(X_train, X_test, y_train, y_test, path=path)
+    #
+    #                 if modelName == 'LogisticRegression':
+    #                     penalty = data.get('penalty', 'l1')
+    #                     dual = data.get('dual', False)
+    #                     tol = int(data.get('dual', 0.0001))
+    #                     C = data.get('dual', 1.0)
+    #                     fit_intercept = data.get('dual', True)
+    #                     intercept_scaling = data.get('dual', 1)
+    #                     class_weight = data.get('dual', None)
+    #                     random_state = data.get('dual', None)
+    #                     solver = data.get('dual', 'lbfgs')
+    #                     max_iter = data.get('dual', 100)
+    #                     multi_class = data.get('dual', 'auto')
+    #                     verbose = data.get('dual', 0)
+    #                     warm_start = data.get('warm_start', False)
+    #                     n_jobs = data.get('n_jobs', None)
+    #                     l1_ratio = data.get('l1_ratio', None)
+    #
+    #                     result = model.logistic_regression_classifier(penalty=penalty, dual=dual, tol=tol, C=C,
+    #                                                                   fit_intercept=fit_intercept,
+    #                                                                   intercept_scaling=intercept_scaling,
+    #                                                                   class_weight=class_weight,
+    #                                                                   random_state=random_state, solver=solver,
+    #                                                                   max_iter=max_iter,
+    #                                                                   multi_class=multi_class, verbose=verbose,
+    #                                                                   warm_start=warm_start, n_jobs=n_jobs,
+    #                                                                   l1_ratio=l1_ratio)
+    #                     print(result)
+    #
+    # except:
+    #     pass
 
 
 @app.route('/Machine/<action>', methods=['GET'])
