@@ -13,7 +13,6 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
-from logger.logger import Logger
 from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, to_excel, to_json, \
     csv_to_excel
 from src.eda.eda_helper import EDA
@@ -35,25 +34,16 @@ from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.routes.routes_api import app_api
-
-log = Logger()
-log.info(log_type='INFO', log_message='Check Configuration Files')
+from loguru import logger
 
 # Yaml Config File
 config_args = read_config("./config.yaml")
 
-# common Root Path
-common_path = config_args['logs']['logger']
+log_path = os.path.join(os.getcwd(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+print(log_path)
+logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
-# Admin Path Setting
-admin_log_file_path = config_args["logs"]['adminlogs_dir']
-admin_file_name = config_args["logs"]['adminlogs_file']
-admin_path = os.path.join(common_path, admin_log_file_path, admin_file_name)
-# user Path Setting
-user_log_file_path = config_args["logs"]['adminlogs_dir']
-user_file_name = config_args["logs"]['adminlogs_file']
-user_path = os.path.join(common_path, admin_log_file_path, admin_file_name)
-
+logger.info('Fetching Data from configuration file')
 # SQL Connection code
 host = config_args['secrets']['host']
 port = config_args['secrets']['port']
@@ -61,7 +51,8 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
-# mysql = MySqlHelper(host, port, user, password, database)
+
+logger.info('Initializing Databases')
 mysql = MySqlHelper.get_connection_obj()
 mongodb = MongoHelper()
 
@@ -70,7 +61,7 @@ static_dir = config_args['dir_structure']['static_dir']
 
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
 app.register_blueprint(app_api)
-log.info(log_type='INFO', log_message='App Started')
+logger.info('App Started')
 
 app.secret_key = config_args['secrets']['key']
 app.config["UPLOAD_FOLDER"] = config_args['dir_structure']['upload_folder']
@@ -109,10 +100,11 @@ def index():
         else:
             return redirect(url_for('login'))
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 status = None
+download_status = None
 
 
 @app.route('/project', methods=['GET', 'POST'])
@@ -143,6 +135,7 @@ def project():
                         msg = 'This file format is not allowed, please select mentioned one'
 
                     if msg:
+                        logger.info(msg)
                         return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
 
                     filename = secure_filename(f.filename)
@@ -160,6 +153,7 @@ def project():
                         df = pd.read_json(file_path)
                     else:
                         msg = 'This file format is currently not supported'
+                        logger.info(msg)
                         return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
 
                     project_id = unique_id_generator()
@@ -177,9 +171,11 @@ def project():
                             return redirect(url_for('index'))
                         else:
                             msg = "Error while creating new Project"
+                            logger.info(msg)
                             return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
                     else:
                         msg = "Error while creating new Project"
+                        logger.info(msg)
                         return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
 
                 elif source_type == 'uploadResource':
@@ -189,9 +185,11 @@ def project():
 
                     if not name.strip():
                         msg = 'Please enter project name'
+                        logger.info(msg)
                         return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
                     elif not description.strip():
                         msg = 'Please enter project description'
+                        logger.info(msg)
                         return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
 
                     if resource_type == "awsS3bucket":
@@ -204,11 +202,11 @@ def project():
                         aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
                         conn_msg = aws_s3.check_connection(bucket_name, file_name)
                         if conn_msg != 'Successful':
-                            print(conn_msg)
+                            logger.info(conn_msg)
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
 
                         download_status = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
-                        print(name, description, resource_type, download_status, file_path)
+                        logger.info(name, description, resource_type, download_status, file_path)
 
                     elif resource_type == "gcpStorage":
                         credentials_file = request.files['GCP_credentials_file']
@@ -218,17 +216,16 @@ def project():
                         credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
                         credentials_file.save(credentials_file_path)
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
-                        print(credentials_file_path, file_path, file_name, bucket_name)
-
+                        logger.info(credentials_file_path, file_path, file_name, bucket_name)
                         gcp = gcp_browser_storage(credentials_file_path)
                         conn_msg = gcp.check_connection(bucket_name, file_name)
-                        print(conn_msg)
+                        logger.info(conn_msg)
                         if conn_msg != 'Successful':
-                            print(conn_msg)
+                            logger.info(conn_msg)
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
 
                         download_status = gcp.download_file_from_bucket(file_name, file_path, bucket_name)
-                        print(download_status)
+                        logger.info(download_status)
 
                     elif resource_type == "mySql":
                         host = request.form['host']
@@ -238,17 +235,17 @@ def project():
                         database = request.form['database']
                         table_name = request.form['table_name']
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], (table_name + ".csv"))
-                        print(file_path)
+                        logger.info(file_path)
 
                         mysql_data = mysql_data_helper(host, port, user, password, database)
                         conn_msg = mysql_data.check_connection(table_name)
-                        print(conn_msg)
+                        logger.info(conn_msg)
                         if conn_msg != 'Successful':
-                            print(conn_msg)
+                            logger.info(conn_msg)
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
 
                         download_status = mysql_data.retrive_dataset_from_table(table_name, file_path)
-                        print(download_status)
+                        logger.info(conn_msg)
 
                     elif resource_type == "cassandra":
                         secure_connect_bundle = request.files['secure_connect_bundle']
@@ -262,22 +259,22 @@ def project():
                                                                        secure_connect_bundle_filename)
                         secure_connect_bundle.save(secure_connect_bundle_file_path)
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], (table_name + ".csv"))
-                        print(secure_connect_bundle_file_path, file_path)
+                        logger.info(secure_connect_bundle_file_path, file_path)
 
                         cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret,
                                                            keyspace)
                         conn_msg = cassandra_db.check_connection(table_name)
-                        print(conn_msg)
+                        logger.info(conn_msg)
                         if conn_msg != 'Successful':
-                            print(conn_msg)
+                            logger.info(conn_msg)
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
 
                         if data_in_tabular == 'true':
                             download_status = cassandra_db.retrive_table(table_name, file_path)
-                            print(download_status)
+                            logger.info(download_status)
                         elif data_in_tabular == 'false':
                             download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
-                            print(download_status)
+                            logger.info(download_status)
 
                     if download_status == 'Successful':
                         timestamp = round(time.time() * 1000)
@@ -292,13 +289,14 @@ def project():
                             df = pd.read_json(file_path)
                         else:
                             msg = 'This file format is currently not supported'
+                            logger.info(msg)
                             return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
 
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
 
                         if inserted_rows > 0:
-                            print('project created !!')
+                            logger.info('Project Created')
                             userId = session.get('id')
                             status = 1
                             query = f"""INSERT INTO tblProjects (UserId, Name, Description, Status, 
@@ -310,18 +308,21 @@ def project():
                                 return redirect(url_for('index'))
                             else:
                                 msg = "Error while creating new Project"
+                                logger.info(msg)
                                 return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
                         else:
                             msg = "Error while creating new Project"
+                            logger.info(msg)
                             return render_template('new_project.html', msg=msg)
                     else:
                         msg = "Error while creating new Project"
+                        logger.info(msg)
                         return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
         else:
             return redirect(url_for('login'))
 
     except Exception as e:
-        print(e)
+        logger.error(e)
         return render_template('new_project.html', msg=e.__str__())
 
 
@@ -329,11 +330,11 @@ def project():
 def login():
     global msg
     if 'loggedin' in session:
-        log.info(log_type='ACTION', log_message='Redirect To Main Page')
+        logger.info('Redirect To Main Page')
         return redirect('/')
     else:
         if request.method == "GET":
-            log.info(log_type='ACTION', log_message='Login Template Rendering')
+            logger.info('Login Template Rendering')
             return render_template('login.html')
         else:
             if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
@@ -345,11 +346,11 @@ def login():
                     session['loggedin'] = True
                     session['id'] = account[0]
                     session['username'] = account[1]
-                    log.info(log_type='INFO', log_message='Login Successful')
+                    logger.info('Login Successful')
                     return redirect('/')
                 else:
                     msg = 'Incorrect username / password !'
-                    log.info(log_type='ERROR', log_message=msg)
+                    logger.error(msg)
             return render_template('login.html', msg=msg)
 
 
@@ -359,7 +360,7 @@ def signup():
         return redirect(url_for('index'))
     else:
         if request.method == "GET":
-            log.info(log_type='ACTION', log_message='Signup Template Rendering')
+            logger.info('Signup Template Rendering')
             return render_template('signup.html')
         else:
             msg = None
@@ -369,40 +370,34 @@ def signup():
                 confirm_password = request.form['confirm-password']
                 email = request.form['email']
                 account = mysql.fetch_one(f'SELECT * FROM tblUsers WHERE Email = "{email}"')
-                log.info(log_type='ACTION', log_message='Checking Database')
+                logger.info('Checking Database')
                 if account:
                     msg = 'EmailId already exists !'
-                    log.info(log_type='ERROR', log_message=msg)
                 elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
                     msg = 'Invalid email address !'
-                    log.info(log_type='ERROR', log_message=msg)
                 elif not re.match(r'[A-Za-z0-9]+', username):
                     msg = 'Username must contain only characters and numbers !'
-                    log.info(log_type='ERROR', log_message=msg)
                 elif not username or not password or not email:
                     msg = 'Please fill out the form !'
-                    log.info(log_type='ERROR', log_message=msg)
                 elif confirm_password != password:
                     msg = 'Password and Confirm password are not same!'
-                    log.info(log_type='ERROR', log_message=msg)
                 else:
                     hashed_password = Hashing.hash_value(password)
-                    # PANKAJ AUTH TOKEN PENDING
                     rowcount = mysql.insert_record(
                         f'INSERT INTO tblUsers (Name, Email, Password, AuthToken) VALUES ("{username}", "{email}", "{hashed_password}", "pankajtest")')
-                    log.info(log_type='INFO', log_message='Data added successful')
                     if rowcount > 0:
                         return redirect(url_for('login'))
             elif request.method == 'POST':
                 msg = 'Please fill out the form !'
-                log.info(log_type='ERROR', log_message=msg)
+                logger.error(msg)
+            logger.info(msg)
             return render_template('signup.html', msg=msg)
 
 
 @app.route('/exportFile/<id>', methods=['GET'])
 def exportForm(id):
     if 'loggedin' in session:
-        log.info(log_type='ACTION', log_message='Redirect To Export File Page')
+        logger.info('Redirect To Export File Page')
         return render_template('exportFile.html', data={"id": id})
     else:
         return redirect(url_for('login'))
@@ -412,8 +407,7 @@ def exportForm(id):
 def exportFile():
     try:
         if 'loggedin' in session:
-            log.info(log_type='ACTION', log_message='Export File')
-
+            logger.info('Export File')
             fileType = request.form['fileType']
             filename = get_filename()
 
@@ -465,14 +459,14 @@ def exportFile():
         else:
             return redirect(url_for('login'))
     except Exception as e:
-        print(e)
+        logger.info(e)
         return render_template('exportFile.html', msg=e.__str__())
 
 
 @app.route('/deletePage/<id>', methods=['GET'])
 def renderDeleteProject(id):
     if 'loggedin' in session:
-        log.info(log_type='ACTION', log_message='Redirect To Delete Project Page')
+        logger.info('Redirect To Delete Project Page')
         return render_template('deleteProject.html', data={"id": id})
     else:
         return redirect(url_for('login'))
@@ -483,11 +477,13 @@ def deleteProject(id):
     if 'loggedin' in session:
         if id:
             mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Id={id}')
-            log.info(log_type='INFO', log_message='Data Successfully Deleted From Database')
+            logger.info('Data Successfully Deleted From Database')
             return redirect(url_for('index'))
         else:
+            logger.info('Redirect to index invalid id')
             return redirect(url_for('index'))
     else:
+        logger.info('Login Needed')
         return redirect(url_for('login'))
 
 
@@ -498,7 +494,7 @@ def logout():
     session.pop('username', None)
     session.pop('pid', None)
     session.pop('project_name', None)
-    log.info(log_type='INFO', log_message='Thanks For Using System!')
+    logger.info('Thanks For Using System!')
     return redirect(url_for('login'))
 
 
@@ -510,25 +506,28 @@ def stream(pid):
             values = data.split("&")
             session['pid'] = values[1]
             session['project_name'] = values[0]
-            print(values[0], values[1])
+            logger.info(values[0])
+            logger.info(values[1])
             mongodb.get_collection_data(values[0])
-            print('inside data')
+            logger.info('inside data')
             return redirect(url_for('module'))
         else:
             return redirect(url_for('/'))
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 @app.route('/module')
 def module():
     try:
         if 'pid' in session:
+            logger.info('Redirected to help page')
             return render_template('help.html')
         else:
+            logger.info('Redirected to login')
             return redirect(url_for('/'))
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 @app.route('/eda/<action>')
@@ -539,20 +538,20 @@ def eda(action):
             if df is not None:
                 if action == "5point":
                     ProjectReports.insert_record_eda('5 Points Summary')
-                    log.info(log_type='% Point Summary', log_message='Redirect To Eda 5 Point!')
+                    logger.info('Redirect To Eda Data summary')
                     summary = EDA.five_point_summary(df)
                     data = summary.to_html()
                     return render_template('eda/5point.html', data=data)
                 elif action == "profiler":
                     ProjectReports.insert_record_eda('Profiler')
-                    log.info(log_type='Show Profiler Report', log_message='Redirect To Eda Show Dataset!')
+                    logger.info('Redirect To Eda Show Dataset!')
                     pr = ProfileReport(df, explorative=True, minimal=True,
                                        correlations={"cramers": {"calculate": False}})
                     pr.to_widgets()
                     pr.to_file("your_report.html")
                 elif action == "show":
                     ProjectReports.insert_record_eda('Show Dataset')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
+                    logger.info('Redirect To Eda Show Dataset!')
                     data = EDA.get_no_records(df, 100)
                     data = data.to_html()
                     topselected = True
@@ -563,9 +562,8 @@ def eda(action):
                                            selectedCount=selectedCount, columns=df.columns)
                 elif action == "missing":
                     ProjectReports.insert_record_eda('Missing Value')
-                    log.info(log_type='Missing Value Report', log_message='Redirect To Eda Show Dataset!')
+                    logger.info('Redirect To Eda Show Dataset!')
                     df = EDA.missing_cells_table(df)
-
                     graphJSON = PlotlyHelper.barplot(df, x='Column', y='Missing values')
                     pie_graphJSON = PlotlyHelper.pieplot(df, names='Column', values='Missing values',
                                                          title='Missing Values')
@@ -577,16 +575,16 @@ def eda(action):
 
                 elif action == "outlier":
                     ProjectReports.insert_record_eda('Outlier')
-                    log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                    logger.info('Redirect To outlier')
                     df = EDA.z_score_outlier_detection(df)
                     graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
                     pie_graphJSON = PlotlyHelper.pieplot(
                         df.sort_values(by='Total outliers', ascending=False).loc[:10, :], names='Features',
                         values='Total outliers', title='Top 10 Outliers')
                     data = df.to_html()
+                    logger.info('Showing data on outlier page')
                     return render_template('eda/outliers.html', data=data, method='zscore', action=action,
                                            barplot=graphJSON, pieplot=pie_graphJSON)
-
 
                 elif action == "correlation":
                     ProjectReports.insert_record_eda('Correlation')
@@ -595,23 +593,27 @@ def eda(action):
                     fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
                                                       y=list(pearson_corr.columns), colorscale='Viridis')
                     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+                    logger.info('Showing data on correlation page')
                     return render_template('eda/correlation.html', data=graphJSON, columns=list(pearson_corr.columns),
                                            action=action, method='pearson')
 
                 elif action == "plots":
                     ProjectReports.insert_record_eda('Plots')
+                    logger.info('Redirected to Plots')
                     return render_template('eda/plots.html', columns=list(df.columns),
                                            graphs_2d=TWO_D_GRAPH_TYPES, action=action, x_column="", y_column="")
                 else:
+                    logger.info('Showing EDA help')
                     return render_template('eda/help.html')
             else:
-                return 'Hello'
+                logger.info('Data frame is None')
+                return None
 
         else:
             return redirect(url_for('/'))
     except Exception as e:
         ProjectReports.insert_record_eda(e)
-        print(e)
+        logger.error(e)
 
 
 @app.route('/eda/<action>', methods=['POST'])
@@ -621,11 +623,11 @@ def eda_post(action):
             df = load_data()
             if df is not None:
                 if action == "show":
+                    logger.info('Redirect To Eda Show Dataset!')
                     range = request.form['range']
                     optradio = request.form['optradio']
                     columns_for_list = df.columns
                     columns = request.form.getlist('columns')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Show', input=input_str)
 
@@ -636,10 +638,12 @@ def eda_post(action):
                     data = data.to_html()
                     topselected = True if optradio == 'top' else False
                     bottomSelected = True if optradio == 'bottom' else False
+                    logger.info('Sending Data on front end')
                     return render_template('eda/showdataset.html', data=data, length=len(df),
                                            bottomSelected=bottomSelected, topselected=topselected, action=action,
                                            selectedCount=range, columns=columns_for_list)
                 elif action == "correlation":
+                    logger.info('Redirect To correlation')
                     method = request.form['method']
                     columns = request.form.getlist('columns')
 
@@ -658,12 +662,14 @@ def eda_post(action):
                                                           y=list(_corr.index), colorscale='Viridis')
                         # fig = ff.create_annotated_heatmap(_data, colorscale='Viridis')
                         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+                        logger.info('Sending Data on front end')
                         return render_template('eda/correlation.html', data=graphJSON,
                                                columns=list(df.columns), action=action, method=method)
                     else:
                         return render_template('eda/help.html')
 
                 elif action == "outlier":
+                    logger.info('Redirected to outlier page')
                     method = request.form['method']
                     lower = 25
                     upper = 75
@@ -681,14 +687,13 @@ def eda_post(action):
                     pie_graphJSON = PlotlyHelper.pieplot(
                         df.sort_values(by='Total outliers', ascending=False).loc[:9, :], names='Features',
                         values='Total outliers', title='Top 10 Outliers')
-
-                    log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
                     data = df.to_html()
+                    logger.info('Sending Data on the front end')
                     return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
                                            upper=upper, barplot=graphJSON, pieplot=pie_graphJSON)
 
                 elif action == "plots":
-                    """All Polots for all kind of features????"""
+                    logger.info('Redirected to Plots')
                     selected_graph_type = request.form['graph']
                     x_column = request.form['xcolumn']
                     y_column = request.form['ycolumn']
@@ -697,116 +702,115 @@ def eda_post(action):
 
                     if selected_graph_type == "Scatter Plot":
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        logger.info('Displaying scatter plot')
 
                     elif selected_graph_type == "Pie Chart":
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        logger.info('Displaying pie Chart')
 
                     elif selected_graph_type == "Bar Graph":
                         graphJSON = PlotlyHelper.barplot(df, x=x_column, y=y_column)
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        logger.info('Displaying Bar Graph')
 
                     elif selected_graph_type == "Histogram":
                         graphJSON = PlotlyHelper.histogram(df, x=x_column, y=y_column)
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        logger.info('Displaying Histogram')
 
                     elif selected_graph_type == "Line Chart":
                         graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
+                        logger.info('Displaying Line Chart')
 
+                    logger.info('Loading plot on front end')
                     return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
                                            columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
                                            action=action, graphJSON=graphJSON, x_column=x_column, y_column=y_column)
 
                 else:
+                    logger.info('Redirected to help page')
                     return render_template('eda/help.html')
             else:
-                """Manage This"""
-                pass
+                logger.info('Data frame is None')
 
         else:
             return redirect(url_for('/'))
     except Exception as e:
         ProjectReports.insert_record_eda(e)
+        logger.error(e)
 
 
 @app.route('/dp/<action>')
 def data_preprocessing(action):
     try:
         if 'pid' in session:
-            df = None
             df = load_data()
             if df is not None:
                 if action == "delete-columns":
-                    log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
+                    logger.info('Redirect To Delete Columns!')
                     return render_template('dp/delete_columns.html', columns=list(df.columns), action=action)
                 elif action == "duplicate-data":
                     duplicate_data = df[df.duplicated()].head(500)
                     data = duplicate_data.to_html()
-                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
+                    logger.info('Redirect To Handle Duplicate Data!')
                     return render_template('dp/duplicate.html', columns=list(df.columns), action=action, data=data,
                                            duplicate_count=len(duplicate_data))
 
                 elif action == "outlier":
+                    logger.info('Redirect To Handler Outlier!')
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
-                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
                     return render_template('dp/outliers.html', columns=columns, action=action)
 
                 elif action == "missing-values":
+                    logger.info('Redirect To Missing-Values!')
                     columns = list(df.columns)
-                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
                     return render_template('dp/missing_values.html', columns=columns, action=action)
 
                 elif action == "delete-outlier" or action == "remove-duplicate-data":
+                    logger.info('Redirect To Handler Outlier!')
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
-                    log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
-                    return redirect(('/dp/outlier'))
+                    return redirect('/dp/outlier')
 
                 elif action == "imbalance-data":
+                    logger.info('Redirect To Handle Imbalance Data!')
                     columns = list(df.columns)
-                    log.info(log_type='Handle Outlier', log_message='Redirect To Handle Imbalance Data!')
                     return render_template('dp/handle_imbalance.html', action=action, columns=columns)
                 else:
                     return render_template('eda/help.html')
             else:
-                """Manage This"""
-                pass
+               logger.critical('Data Frame is None')
 
         else:
             return redirect(url_for('/'))
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 @app.route('/dp/<action>', methods=['POST'])
 def data_preprocessing_post(action):
     try:
         if 'pid' in session:
-            df = None
             df = load_data()
-            template = 'dp/help.html'
             if df is not None:
                 if action == "delete-columns":
+                    logger.info('Redirect To Delete Columns!')
                     columns = request.form.getlist('columns')
                     df = Preprocessing.delete_col(df, columns)
                     df = update_data(df)
-                    log.info(log_type='Delete Columns', log_message='Redirect To Delete Columns!')
                     return render_template('dp/delete_columns.html', columns=list(df.columns), action=action,
                                            status='success')
 
                 elif action == "duplicate-data":
+                    logger.info('Redirect To Handle Duplicate Data!')
                     columns = request.form.getlist('columns')
                     if len(columns) > 0:
                         df = df[df.duplicated(columns)]
                     else:
                         df = df[df.duplicated()]
                     data = df.head(500).to_html()
-                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
                     return render_template('dp/duplicate.html', columns=list(df.columns), action=action,
                                            data=data, duplicate_count=len(df), selected_column=','.join(columns))
 
                 elif action == "remove-duplicate-data":
+                    logger.info('Redirect To Handle Duplicate Data POST API')
                     columns = request.form['selected_column']
 
                     if len(columns) > 0:
@@ -818,12 +822,12 @@ def data_preprocessing_post(action):
 
                     duplicate_data = df[df.duplicated()]
                     data = duplicate_data.head(500).to_html()
-                    log.info(log_type='Duplicate Data', log_message='Redirect To Handle Duplicate Data!')
                     return render_template('dp/duplicate.html', columns=list(df.columns), action="duplicate-data",
                                            data=data,
                                            duplicate_count=len(duplicate_data), success=True)
 
                 elif action == "outlier":
+                    logger.info('Redirected to outlier POST API')
                     method = request.form['method']
                     column = request.form['columns']
                     lower = 25
@@ -832,6 +836,8 @@ def data_preprocessing_post(action):
                     pie_graphJSON = ""
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
                     outliers_list = []
+                    logger.info(f'Method {method}')
+                    logger.info(f'Columns {column}')
                     if method == "iqr":
                         # lower = request.form['lower']
                         # upper = request.form['upper']
@@ -858,7 +864,7 @@ def data_preprocessing_post(action):
                         pie_graphJSON = PlotlyHelper.pieplot(df_outliers, names='index', values='value',
                                                              title='Missing Values Count')
 
-                    log.info(log_type='Outlier Report', log_message='Post: Redirect To Delete Columns!')
+                    logger.info('Sending Data on the front end')
                     return render_template('dp/outliers.html', columns=columns, method=method, selected_column=column,
                                            outliers_list=outliers_list, unique_outliers=unique_outliers,
                                            pie_graphJSON=pie_graphJSON,
@@ -867,12 +873,14 @@ def data_preprocessing_post(action):
                                                result['Total outliers']) > 0 else 0,
                                            graphJSON=graphJSON)
 
-
                 elif action == "missing-values":
+                    logger.info('Redirect To Missing Values POST API!')
                     if 'method' in request.form:
                         method = request.form['method']
                         selected_column = request.form['selected_column']
                         success = False
+                        logger.info(f'Method {method}')
+                        logger.info(f'Columns {selected_column}')
                         if method == 'Mean':
                             df[selected_column] = Preprocessing.fill_numerical(df, 'Mean', [selected_column])
                         elif method == 'Median':
@@ -895,9 +903,11 @@ def data_preprocessing_post(action):
                         df = update_data(df)
                         success = True
                         columns = list(df.columns)
+                        logger.info('Sending Data on Front End')
                         return render_template('dp/missing_values.html', columns=columns, action=action,
                                                success=success)
                     else:
+                        logger.info('Method is not present in request.form')
                         columns = list(df.columns)
                         selected_column = request.form['columns']
                         data = EDA.missing_cells_table(df.loc[:, [selected_column]])
@@ -914,27 +924,30 @@ def data_preprocessing_post(action):
                                 outlier_handler_methods = NUMERIC_MISSING_HANDLER
 
                         data = data.to_html()
-                        log.info(log_type='Handle Outlier', log_message='Redirect To Handler Outlier!')
+                        logger.info('Sending Data on Front End')
                         return render_template('dp/missing_values.html', unique_category=unique_category,
                                                columns=columns, selected_column=selected_column, action=action,
                                                data=data, null_value_count=null_value_count,
                                                handler_methods=outlier_handler_methods)
 
                 elif action == "delete-outlier":
+                    logger.info('Delete outlier')
                     values = request.form.getlist('columns')
                     selected_column = request.form['selected_column']
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
                     df = df[~df[selected_column].isin(list(values))]
                     df = update_data(df)
-                    log.info(log_type='Delete Outlier', log_message='Redirect To Handler Outlier!')
+                    logger.info('Sending Data on Front End')
                     return render_template('dp/outliers.html', columns=columns, action="outlier", status="success")
 
                 elif action == "imbalance-data":
+                    logger.info('Redirected to Imbalanced Data')
                     try:
                         if 'perform_action' in request.form:
                             target_column = request.form['target_column']
                             method = request.form['method']
                             range = request.form['range']
+                            logger.info(f'{target_column} {method} {range}')
 
                             if method == 'OS':
                                 new_df = Preprocessing.over_sample(df, target_column, float(range))
@@ -944,22 +957,25 @@ def data_preprocessing_post(action):
                                 new_df = Preprocessing.smote_technique(df, target_column, float(range))
 
                             df = update_data(new_df)
+                            logger.info('Sending New Data on the front end')
                             return render_template('dp/handle_imbalance.html', columns=list(df.columns),
                                                    target_column=target_column, success=True)
                         else:
+                            logger.info('perform_action was not found on request form')
                             target_column = request.form['target_column']
                             df_counts = pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
                             y = list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
                             graphJSON = PlotlyHelper.barplot(df_counts, x=target_column, y=y)
                             pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=target_column, values=y, title='')
 
-                            log.info(log_type='Delete Outlier', log_message='Redirect To Handler Outlier!')
+                            logger.info('Sending Data on Handle Imbalance page')
                             return render_template('dp/handle_imbalance.html', columns=list(df.columns),
                                                    target_column=target_column, action="imbalance-data",
                                                    pie_graphJSON=pie_graphJSON, graphJSON=graphJSON,
                                                    perform_action=True)
 
                     except Exception as e:
+                        logger.error(e)
                         return render_template('dp/handle_imbalance.html', action=action, columns=list(df.columns),
                                                error=str(e))
 
@@ -967,16 +983,13 @@ def data_preprocessing_post(action):
                 else:
                     return redirect('dp/help.html')
             else:
-                """Manage This"""
-                pass
+                logger.critical('DataFrame has no Data')
 
         else:
             return redirect(url_for('/'))
     except Exception as e:
-        print(e)
+        logger.error(e)
 
-    except Exception as e:
-        print(e)
 
 
 @app.route('/fe/<action>', methods=['GET'])
@@ -1102,7 +1115,7 @@ def feature_engineering_post(action):
                 elif action == 'feature_selection':
                     return render_template('fe/feature_selection.html', data=data)
                 elif action == 'dimension_reduction':
-                    ### Check this remove target column
+                    # Check this remove target column
                     try:
                         df_ = df.loc[:, df.columns != 'Label']
                         no_pca_selected = request.form['range']
@@ -1116,6 +1129,7 @@ def feature_engineering_post(action):
                         return render_template('fe/dimension_reduction.html', status="success", action=action,
                                                data=data)
                     except Exception as e:
+                        print(e)
                         return render_template('fe/dimension_reduction.html', status="error", action=action, data=data)
                 else:
                     return 'Non-Implemented Action'
