@@ -7,7 +7,16 @@ from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.tree import DecisionTreeClassifier
+from src.utils.common.common_helper import read_config
+from loguru import logger
+import sys
+import os
 import numpy as np
+
+config_args = read_config(os.path.join(sys.path[1], "config.yaml"))
+
+log_path = os.path.join(sys.path[1], config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
 class FeatureEngineering:
@@ -26,8 +35,12 @@ class FeatureEngineering:
         Returns:
             [type]: [description]
         """
-        df = df.rename(columns={column: new_name})
-        return df
+        try:
+            df = df.rename(columns={column: new_name})
+            logger.info("Renaming Column implemented successfully!")
+            return df
+        except Exception as e:
+            logger.error(f"{e} occurred in Remaining Columns!")
 
     @staticmethod
     def change_data_type(df, column, type_):
@@ -41,160 +54,223 @@ class FeatureEngineering:
         Returns:
             [type]: [description]
         """
-        df[column] = df[column].astype(type_)
-        return df
+        try:
+            df[column] = df[column].astype(type_)
+            logger.info("Change Datatype implemented successfully!")
+            return df
+        except Exception as e:
+            logger.error(f"{e} occurred in Change Datatype!")
 
     def train_test_Split(self, cleanedData, label, test_size, random_state):
-
-        X_train, X_test, y_train, y_test = train_test_split(cleanedData,
-                                                            label,
-                                                            test_size=test_size,
-                                                            random_state=random_state)
-        return X_train, X_test, y_train, y_test
+        try:
+            X_train, X_test, y_train, y_test = train_test_split(cleanedData, label, test_size=test_size,
+                                                                random_state=random_state)
+            logger.info("Train Test Split implemented successfully!")
+            return X_train, X_test, y_train, y_test
+        except Exception as e:
+            logger.error(f"{e} occurred in Train Test Split!")
 
     @staticmethod
     def scaler(data, typ):
-        if typ == 'MinMax Scaler':
-            scaler = MinMaxScaler()
-            scaled_data = scaler.fit_transform(data)
+        try:
+            if typ == 'MinMax Scaler':
+                scaler = MinMaxScaler()
+                scaled_data = scaler.fit_transform(data)
+                logger.info("MinMax Scaler implemented successfully!")
+                return scaled_data
+        except Exception as e:
+            logger.error(f"{e} occurred in Min Max Scaler!")
+        try:
+            if typ == 'Standard Scaler':
+                scaler = StandardScaler()
+                scaled_data = scaler.fit_transform(data)
+                logger.info("Standard Scaler implemented successfully!")
+                return scaled_data
+        except Exception as e:
+            logger.error(f"{e} occurred in Standard Scaler!")
+        try:
+            if typ == 'Robust Scaler':
+                scaler = RobustScaler()
+                scaled_data = scaler.fit_transform(data)
+                logger.info("Robust Scaler implemented successfully!")
+                return scaled_data
+        except Exception as e:
+            logger.error(f"{e} occurred in Robust Scaler")
+        try:
+            if typ == 'Power Transformer Scaler':
+                scaler = PowerTransformer(method='yeo-johnson')
+                scaled_data = scaler.fit_transform(data)
+                logger.info("Power Transformer Scaler implemented successfully!")
+                return scaled_data
+        except Exception as e:
+            logger.error(f"{e} occurred in Power Transformer Scaler!")
+        try:
+            if typ == 'Max Abs Scaler':
+                scaler = MaxAbsScaler()
+                scaled_data = scaler.fit_transform(data)
+                logger.info("Max Abs Scaler implemented successfully!")
+                return scaled_data
+        except Exception as e:
+            logger.error(f"{e} occurred in Max Abs Scaler!")
 
-            return scaled_data
-
-        elif typ == 'Standard Scaler':
-            scaler = StandardScaler()
-            scaled_data = scaler.fit_transform(data)
-
-            return scaled_data
-
-        elif typ == 'Robust Scaler':
-            scaler = RobustScaler()
-            scaled_data = scaler.fit_transform(data)
-
-        elif typ == 'Power Transformer Scaler':
-            scaler = PowerTransformer(method='yeo-johnson')
-            scaled_data = scaler.fit_transform(data)
-
-        elif typ == 'Max Abs Scaler':
-            scaler = MaxAbsScaler()
-            scaled_data = scaler.fit_transform(data)
-
-            return scaled_data
-
-        else:
-            return 'Please Specify type correctly'
 
     @staticmethod
-    def encodings(df, cols, kind: str, **kwarga):
-        if kind == 'Label/Ordinal Encoder':
-            label = ce.OrdinalEncoder(cols=cols, **kwarga)
-            label_df = label.fit_transform(df)
-            return label_df
+    def encodings(df, cols, kind: str, **kwargs):
+        try:
+            if kind == 'Label/Ordinal Encoder':
+                label = ce.OrdinalEncoder(cols=cols, **kwargs)
+                label_df = label.fit_transform(df)
+                logger.info("Label/Ordinal Encoder implemented successfully!")
+                return label_df
+        except Exception as e:
+            logger.error(f"{e} occurred in Label/Ordinal Encoder!")
+        try:
+            if kind == 'One Hot Encoder':
+                onehot = ce.OneHotEncoder(cols=cols)
+                onehot_df = onehot.fit_transform(df)
+                logger.info("One Hot Encoder implemented successfully!")
+                return onehot_df
+        except Exception as e:
+            logger.error(f"{e} occurred in One Hot Encoder!")
+        try:
+            if kind == 'Binary Encoder':
+                onehot = ce.BinaryEncoder(cols=cols, **kwargs)
+                onehot_df = onehot.fit_transform(df)
+                logger.info("Binary Encoder implemented successfully!")
+                return onehot_df
+        except Exception as e:
+            logger.error(f"{e} occurred in Binary Encoder!")
 
-        elif kind == 'One Hot Encoder':
-            onehot = ce.OneHotEncoder(cols=cols)
-            onehot_df = onehot.fit_transform(df)
-            return onehot_df
+        try:
+            if kind == 'Base N Encoder':
+                onehot = ce.BaseNEncoder(cols=cols)
+                onehot_df = onehot.fit_transform(df)
+                logger.info("Base N Encoder implemented successfully!")
+                return onehot_df
+        except Exception as e:
+            logger.error(f"{e} occurred in Base N Encoder!")
+        try:
+            if kind == 'Hash Encoder':
+                hash_ = ce.HashingEncoder(cols=cols, **kwargs)
+                hash_df = hash_.fit_transform(df)
+                logger.info("Hash Encoder implemented successfully!")
+                return hash_df
+        except Exception as e:
+            logger.error(f"{e} occurred in Hash Encoder!")
+        try:
+            if kind == 'Target Encoder':
+                target = ce.TargetEncoder(cols=cols)
+                target_df = target.fit_transform(df, **kwargs)
+                logger.info("Target Encoder implemented successfully!")
+                return target_df
+        except Exception as e:
+            logger.error(f"{e} occurred in Target Encoder!")
 
-        elif kind == 'Binary Encoder':
-            onehot = ce.BinaryEncoder(cols=cols, **kwarga)
-            onehot_df = onehot.fit_transform(df)
-            return onehot_df
-
-        elif kind == 'Base N Encoder':
-            onehot = ce.BaseNEncoder(cols=cols)
-            onehot_df = onehot.fit_transform(df)
-            return onehot_df
-
-        elif kind == 'Hash Encoder':
-            hash_ = ce.HashingEncoder(cols=cols, **kwarga)
-            hash_df = hash_.fit_transform(df)
-            return hash_df
-
-        elif kind == 'Target Encoder':
-            target = ce.TargetEncoder(cols=cols)
-            target_df = target.fit_transform(df, **kwarga)
-            return target_df
-
-        else:
-            return 'Please Specify type correclty'
 
     def handleDatetime(self, frame, cols):
-        year = pd.DataFrame()
-        day = pd.DataFrame()
-        month = pd.DataFrame()
-        count = 0
-        for col in cols:
-            frame[col] = pd.to_datetime(frame[col])
+        try:
+            year = pd.DataFrame()
+            day = pd.DataFrame()
+            month = pd.DataFrame()
+            count = 0
+            for col in cols:
+                frame[col] = pd.to_datetime(frame[col])
 
-            year[f'{col}_{count}'] = pd.to_datetime(frame[col]).dt.year
-            count += 1
-            day[f'{col}_{count}'] = pd.to_datetime(frame[col]).dt.day
-            count += 1
-            month[f'{col}_{count}'] = pd.to_datetime(frame[col]).dt.month
-            count += 1
+                year[f'{col}_{count}'] = pd.to_datetime(frame[col]).dt.year
+                count += 1
+                day[f'{col}_{count}'] = pd.to_datetime(frame[col]).dt.day
+                count += 1
+                month[f'{col}_{count}'] = pd.to_datetime(frame[col]).dt.month
+                count += 1
 
-        frame = pd.concat([frame, year, day, month], axis=1)
-        return frame
+            frame = pd.concat([frame, year, day, month], axis=1)
+            logger.info("Handle Date-Time implemented successfully!")
+            return frame
+        except Exception as e:
+            logger.error(f"{e} occurred in Handle Date-Time Encoder!")
 
     @staticmethod
     def feature_selection(features, target, typ, dclas=None, **kwargs):
         important_features = pd.DataFrame()
-        if typ == 'SelectKBest':
-            # chi2 + anova test
-            best_features = SelectKBest(score_func=chi2, **kwargs)
-            imp = best_features.fit(features, target)
-            important_features['score'] = imp.scores_
-            important_features['columns'] = features.columns
+        try:
+            if typ == 'SelectKBest':
+                # chi2 + anova test
+                best_features = SelectKBest(score_func=chi2, **kwargs)
+                imp = best_features.fit(features, target)
+                important_features['score'] = imp.scores_
+                important_features['columns'] = features.columns
+                logger.info("SelectKBest implemented successfully!")
+                return important_features.sort_values('scores', ascending=False)
+        except Exception as e:
+            logger.error(f"{e} occurred in SelectKBest!")
 
-            return important_features.sort_values('scores', ascending=False)
+        try:
+            if typ == 'Find Constant Features':
+                # chi2 + anova test
+                vari_thr = VarianceThreshold(**kwargs)
+                imp = vari_thr.fit(features)
+                logger.info("Find Constant Features implemented successfully!")
+                return features.columns[imp.get_support()]
+        except Exception as e:
+            logger.error(f"{e} occurred in Find Constant Features!")
 
-        elif typ == 'Find Constant Features':
-            # chi2 + anova test
-            vari_thr = VarianceThreshold(**kwargs)
-            imp = vari_thr.fit(features)
-            return features.columns[imp.get_support()]
+        try:
+            if typ == 'Extra Trees Classifier':
 
-        elif typ == 'Extra Trees Classifier':
+                best_features = ExtraTreesClassifier()
+                best_features.fit(features, target)
+                df = pd.DataFrame()
+                df['Value'] = best_features.feature_importances_
+                df['Feature'] = features.columns
+                logger.info("Extra Trees Classifier implemented successfully!")
+                return df.sort_values(by='Value', ascending=False)
+        except Exception as e:
+            logger.error(f"{e} occurred in Extra Trees Classifier!")
 
-            best_features = ExtraTreesClassifier()
-            best_features.fit(features, target)
-            df = pd.DataFrame()
-            df['Value'] = best_features.feature_importances_
-            df['Feature'] = features.columns
-            return df.sort_values(by='Value', ascending=False)
+        try:
+            if typ == 'Extra Trees Regressor':
+                best_features = ExtraTreesRegressor()
+                best_features.fit(features, target)
+                important_features['score'] = best_features.feature_importances_
+                important_features['columns'] = features.columns
+                logger.info("Extra Trees Regressor implemented successfully!")
+                return important_features.sort_values('scores', ascending=False)
+        except Exception as e:
+            logger.error(f"{e} occurred in Extra Trees Regressor")
 
-        elif typ == 'Extra Trees Regressor':
-            best_features = ExtraTreesRegressor()
-            best_features.fit(features, target)
-            important_features['score'] = best_features.feature_importances_
-            important_features['columns'] = features.columns
+        try:
+            if typ == 'Mutual Info Classification':
+                importances = mutual_info_classif(features, target)
+                df = pd.DataFrame()
+                df['Value'] = importances
+                importance = mutual_info_classif(features, target)
+                df = pd.DataFrame()
+                df['Value'] = importance
 
-            return important_features.sort_values('scores', ascending=False)
+                sfs = SequentialFeatureSelector(dclas, scoring='balanced_accuracy', **kwargs)
+                sfs.fit(features, target)
+                logger.info("Mutual Info Classification implemented successfully!")
+                return list(features.columns[sfs.get_support()])
+        except Exception as e:
+            logger.error(f"{e} occurred in Mutual Info Classification!")
 
-        elif typ == 'Mutual Info Classification':
-            importances = mutual_info_classif(features, target)
-            df = pd.DataFrame()
-            df['Value'] = importances
-            importance = mutual_info_classif(features, target)
-            df = pd.DataFrame()
-            df['Value'] = importance
-
-            sfs = SequentialFeatureSelector(dclas, scoring='balanced_accuracy', **kwargs)
-            sfs.fit(features, target)
-            return list(features.columns[sfs.get_support()])
-
-        elif typ == 'Backword Elimination':
-            dclas = DecisionTreeClassifier()
-            sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwargs)
-            sfs.fit(features, target)
-            return list(features.columns[sfs.get_support()])
-        else:
-            return 'Please Specify type correclty'
+        try:
+            if typ == 'Backward Elimination':
+                dclas = DecisionTreeClassifier()
+                sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwargs)
+                sfs.fit(features, target)
+                logger.info("Backward Elimination implemented successfully!")
+                return list(features.columns[sfs.get_support()])
+        except Exception as e:
+            logger.error(f"{e} occurred in Backward Elimination!")
 
 
     @staticmethod
     def dimenstion_reduction(data, comp):
-        model = PCA(n_components=comp)
-        pca = model.fit_transform(data)
-        return (pca, np.cumsum(model.explained_variance_ratio_))
-
+        try:
+            model = PCA(n_components=comp)
+            pca = model.fit_transform(data)
+            logger.info("PCA implemented successfully!")
+            return (pca, np.cumsum(model.explained_variance_ratio_))
+        except Exception as e:
+            logger.error(f"{e} occurred in PCA!")

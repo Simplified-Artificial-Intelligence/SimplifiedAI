@@ -30,7 +30,6 @@ from src.utils.common.cloud_helper import gcp_browser_storage
 from src.utils.common.cloud_helper import azure_data_helper
 from src.utils.common.database_helper import mysql_data_helper, mongo_data_helper
 from src.utils.common.database_helper import cassandra_connector
-
 from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
