@@ -1,4 +1,3 @@
-from numpy.core.fromnumeric import var
 import pandas as pd
 import category_encoders as ce
 from sklearn.model_selection import train_test_split
@@ -8,7 +7,6 @@ from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.tree import DecisionTreeClassifier
-
 import numpy as np
 
 
@@ -83,7 +81,7 @@ class FeatureEngineering:
             return scaled_data
 
         else:
-            return 'Please Specify type correclty'
+            return 'Please Specify type correctly'
 
     @staticmethod
     def encodings(df, cols, kind: str, **kwarga):
@@ -139,11 +137,11 @@ class FeatureEngineering:
         return frame
 
     @staticmethod
-    def feature_selection(features, target, typ, **kwarga):
+    def feature_selection(features, target, typ, dclas=None, **kwargs):
         important_features = pd.DataFrame()
         if typ == 'SelectKBest':
             # chi2 + anova test
-            best_features = SelectKBest(score_func=chi2, **kwarga)
+            best_features = SelectKBest(score_func=chi2, **kwargs)
             imp = best_features.fit(features, target)
             important_features['score'] = imp.scores_
             important_features['columns'] = features.columns
@@ -152,7 +150,7 @@ class FeatureEngineering:
 
         elif typ == 'Find Constant Features':
             # chi2 + anova test
-            vari_thr = VarianceThreshold(**kwarga)
+            vari_thr = VarianceThreshold(**kwargs)
             imp = vari_thr.fit(features)
             return features.columns[imp.get_support()]
 
@@ -177,25 +175,26 @@ class FeatureEngineering:
             importances = mutual_info_classif(features, target)
             df = pd.DataFrame()
             df['Value'] = importances
-            df['Feature'] = features.columns
-            return df.sort_values(by='Value', ascending=False)
+            importance = mutual_info_classif(features, target)
+            df = pd.DataFrame()
+            df['Value'] = importance
 
-        elif typ == 'Forward Selection':
-            dclas = DecisionTreeClassifier()
-            sfs = SequentialFeatureSelector(dclas, scoring='balanced_accuracy', **kwarga)
+            sfs = SequentialFeatureSelector(dclas, scoring='balanced_accuracy', **kwargs)
             sfs.fit(features, target)
             return list(features.columns[sfs.get_support()])
 
         elif typ == 'Backword Elimination':
             dclas = DecisionTreeClassifier()
-            sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwarga)
+            sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwargs)
             sfs.fit(features, target)
             return list(features.columns[sfs.get_support()])
         else:
             return 'Please Specify type correclty'
+
 
     @staticmethod
     def dimenstion_reduction(data, comp):
         model = PCA(n_components=comp)
         pca = model.fit_transform(data)
         return (pca, np.cumsum(model.explained_variance_ratio_))
+

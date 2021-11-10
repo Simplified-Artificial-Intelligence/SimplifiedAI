@@ -63,7 +63,6 @@ class EDA:
 
     @staticmethod
     def find_dtypes(df3):
-        # l = []
         for i in df3.columns:
             yield str(df3[i].dtypes)
 
@@ -77,7 +76,6 @@ class EDA:
 
     @staticmethod
     def find_mode(df3):
-        # l = []
         for i in df3.columns:
             yield str(df3[i].mode()[0])
 

@@ -8,8 +8,6 @@ import os
 data = pd.read_csv(r'AMES_Final_DF.csv')
 
 
-# please check errors {Handle errors}
-
 def get_data():
     mysql = MySqlHelper.get_connection_obj()
     query = "SELECT Pid from tblProjects where pid like 'PID%';"

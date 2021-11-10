@@ -14,7 +14,6 @@ config_args = read_config("config.yaml")
 
 
 class MySqlHelper:
-
     connection_obj = None
 
     def __init__(self, host, port, user, password, database):
@@ -32,31 +31,32 @@ class MySqlHelper:
         self.user = user
         self.password = password
         self.database = database
-        self.isconnected=False
-        
+        self.isconnected = False
+        self.connection = None
+
         dbconfig = {
-            "host":host,
-            "port":port,
-            "user":user,
-            "password":password,
-            "database":database,
+            "host": host,
+            "port": port,
+            "user": user,
+            "password": password,
+            "database": database,
         }
-        self.pool = self.create_pool(dbconfig,"auto_neuron_pool", 3)
+        self.pool = self.create_pool(dbconfig, "auto_neuron_pool", 3)
         # self.connect_todb()
 
     @staticmethod
     def get_connection_obj():
         try:
             if MySqlHelper.connection_obj is None:
-                
+
                 host = config_args['secrets']['host']
                 port = config_args['secrets']['port']
                 user = config_args['secrets']['user']
                 password = config_args['secrets']['password']
                 database = config_args['secrets']['database']
-                
-                obj=MySqlHelper(host, port, user, password, database)
-                MySqlHelper.connection_obj=obj
+
+                obj = MySqlHelper(host, port, user, password, database)
+                MySqlHelper.connection_obj = obj
                 return obj
             else:
                 return MySqlHelper.connection_obj
@@ -64,11 +64,11 @@ class MySqlHelper:
             print(e)
 
     def connect_todb(self):
-            self.connection = connector.connect(host=self.host, port=self.port, user=self.user,
-                                    password=self.password, database=self.database, use_pure=True)
-            self.isconnected=True
+        self.connection = connector.connect(host=self.host, port=self.port, user=self.user,
+                                            password=self.password, database=self.database, use_pure=True)
+        self.isconnected = True
 
-    def create_pool(self,dbconfig, pool_name="mypool", pool_size=3):
+    def create_pool(self, dbconfig, pool_name="mypool", pool_size=3):
         """[summary]
                 Create a connection pool, after created, the request of connecting 
                 MySQL could get a connection from this pool instead of request to 
@@ -86,8 +86,7 @@ class MySqlHelper:
             pool_reset_session=True,
             **dbconfig)
         return pool
-    
-    
+
     def close(self, conn, cursor):
         """
         A method used to close connection of mysql.
@@ -97,7 +96,7 @@ class MySqlHelper:
         """
         cursor.close()
         conn.close()
-        
+
     def fetch_all(self, query):
         """
         [summary]: This function will return all record from table
@@ -107,10 +106,12 @@ class MySqlHelper:
         Returns:
             [type]: [description]
         """
+        conn = None
+        cursor = None
         try:
             conn = self.pool.get_connection()
             cursor = conn.cursor()
-            
+
             cursor.execute(query)
             data = cursor.fetchall()
             return data
@@ -119,8 +120,8 @@ class MySqlHelper:
             print("Error: {}".format(error))
 
         finally:
-                self.close(conn, cursor)
-                print("MySQL connection is closed")
+            self.close(conn, cursor)
+            print("MySQL connection is closed")
 
     def fetch_one(self, query):
         """
@@ -131,6 +132,8 @@ class MySqlHelper:
         Returns:
             [type]: [Data]
         """
+        conn = None
+        cursor = None
         try:
             conn = self.pool.get_connection()
             cursor = conn.cursor()
@@ -155,6 +158,8 @@ class MySqlHelper:
         Returns:
             [type]: [No of row effected]
         """
+        conn = None
+        cursor = None
         try:
             conn = self.pool.get_connection()
             cursor = conn.cursor()
@@ -170,7 +175,6 @@ class MySqlHelper:
             self.close(conn, cursor)
             print("MySQL connection is closed")
 
-
     def insert_record(self, query):
         """
         [summary]:Insert record into table
@@ -180,6 +184,8 @@ class MySqlHelper:
         Returns:
             [type]: [1 if row inserted or 0 if not]
         """
+        conn = None
+        cursor = None
         try:
             conn = self.pool.get_connection()
             cursor = conn.cursor()

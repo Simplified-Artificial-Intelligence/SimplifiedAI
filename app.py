@@ -1,4 +1,5 @@
 from flask import Flask, redirect, url_for, render_template, request, session, send_file, jsonify
+from src.model.custom.classification_models import ClassificationModels
 from werkzeug.wrappers import Response
 from io import BytesIO
 import re
@@ -27,7 +28,8 @@ from src.utils.common.common_helper import immutable_multi_dict_to_str
 
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
-from src.utils.common.database_helper import mysql_data_helper
+from src.utils.common.cloud_helper import azure_data_helper
+from src.utils.common.database_helper import mysql_data_helper, mongo_data_helper
 from src.utils.common.database_helper import cassandra_connector
 
 from src.model.auto.Auto_regression import ModelTrain_Regression
@@ -115,7 +117,7 @@ status = None
 
 
 @app.route('/project', methods=['GET', 'POST'])
-def project():
+def project(df=None, table_name=None):
     global status, download_status
     try:
         if 'loggedin' in session:
@@ -277,21 +279,38 @@ def project():
                         elif data_in_tabular == 'false':
                             download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
                             print(download_status)
+                          
+                    elif resource_type == "mongodb":
+                        mongo_db_url = request.form['mongo_db_url']
+                        mongo_database = request.form['mongo_database']
+                        collection = request.form['collection']
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], (collection+".csv"))
+                        mongo_helper = mongo_data_helper(mongo_db_url)
+                        conn_msg = mongo_helper.check_connection(mongo_database, collection)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
 
-                    if download_status == 'Successful':
-                        timestamp = round(time.time() * 1000)
-                        name = name.replace(" ", "_")
-                        table_name = f"{name}_{timestamp}"
+                        download_status = mongo_helper.retrive_dataset(mongo_database, collection, file_path)
+                        print(name, description, resource_type, download_status, file_path)
 
-                        if file_path.endswith('.csv'):
-                            df = pd.read_csv(file_path)
-                        elif file_path.endswith('.tsv'):
-                            df = pd.read_csv(file_path, sep='\t')
-                        elif file_path.endswith('.json'):
-                            df = pd.read_json(file_path)
-                        else:
-                            msg = 'This file format is currently not supported'
-                            return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                    elif resource_type == "azureStorage":
+                        azure_connection_string = request.form['azure_connection_string']
+                        container_name = request.form['container_name']
+                        file_name = request.form['file_name']
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+                        azure_helper = azure_data_helper(azure_connection_string)
+                        conn_msg = azure_helper.check_connection(container_name, file_name)
+
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('new_project.html', msg=conn_msg)
+
+                        download_status = azure_helper.download_file(container_name, file_name, file_path)
+                        print(download_status)
+
+
+                
 
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
@@ -974,8 +993,6 @@ def data_preprocessing_post(action):
     except Exception as e:
         print(e)
 
-    except Exception as e:
-        print(e)
 
 
 @app.route('/fe/<action>', methods=['GET'])
@@ -1185,6 +1202,11 @@ X_train, X_test, y_train, y_test = None, None, None, None
 
 @app.route('/model_training/<action>', methods=['POST'])
 def model_training_post(action):
+    global X_test
+    global X_train
+    global y_test
+    global y_train
+
     try:
         if 'pid' in session:
             df = load_data()
@@ -1193,11 +1215,7 @@ def model_training_post(action):
                 if action == 'help':
                     return render_template('model_training/help.html')
                 elif action == 'train_test_split':
-                    global X_test
-                    global X_train
-                    global y_test
-                    global y_train
-
+                    fe = FeatureEngineering()
                     percent = int(request.form['range'])
                     target = request.form['columns']
                     Random_State = int(request.form['Random_State'])
@@ -1207,39 +1225,54 @@ def model_training_post(action):
                     X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(self=None, cleanedData=X,
                                                                                            label=y, test_size=(
                                     1 - (percent / 100)), random_state=Random_State)
-                    return render_template('model_training/train_test_split.html', data=data)
-                elif action == 'auto_training':
-                    typ = 'Regression'
-                    if typ == 'Regression':
-                        scaler = StandardScaler()
-                        X_train = scaler.fit_transform(X_train)
-                        X_test = scaler.transform(X_test)
-                        data = ModelTrain_Regression(X_train, X_test, y_train, y_test, True)
-                        return render_template('model_training/auto_training.html', data=data.results().to_html())
-                    elif typ == 'Classification':
-                        return render_template('model_training/auto_training.html')
-                    else:
-                        return render_template('model_training/auto_training.html')
-                elif action == 'custom_training':
-                    typ = "Clustering"
-                    if typ == "Regression":
-                        return render_template('model_training/regression.html')
-                    elif typ == "Classification":
-                        data = next(request.form.items())[1]
-                        print(data)
-                        return render_template('model_training/classification.html')
-                    elif typ == "Clustering":
-                        return render_template('model_training/clustering.html')
-                    else:
-                        return render_template('model_training/custom_training.html')
-                else:
-                    return 'Non-Implemented Action'
-            else:
-                return 'No Data'
-        else:
-            return redirect(url_for('/'))
-    except Exception as e:
-        print(e)
+
+                    X = df.drop(target, axis=1)
+                    y = df[target]
+                    X_train, X_test, y_train, y_test = fe.train_test_Split(cleanedData=X, label=y,
+                                                                           test_size=(1 - (percent / 100)),
+                                                                           random_state=Random_State)
+                    # typ = "Clustering"
+
+
+                    # Data from front end
+                    data = next(request.form.items())[1]
+                    data = dict(json.loads(data))
+                    path = os.path.join(os.getcwd(), 'artifacts', 'models', 'yourModel.pkl')
+                    modelName = data["method"]
+
+                    # Model creation
+                    model = ClassificationModels(X_train, X_test, y_train, y_test, path=path)
+
+                    if modelName == 'LogisticRegression':
+                        penalty = data.get('penalty', 'l1')
+                        dual = data.get('dual', False)
+                        tol = int(data.get('dual', 0.0001))
+                        C = data.get('dual', 1.0)
+                        fit_intercept = data.get('dual', True)
+                        intercept_scaling = data.get('dual', 1)
+                        class_weight = data.get('dual', None)
+                        random_state = data.get('dual', None)
+                        solver = data.get('dual', 'lbfgs')
+                        max_iter = data.get('dual', 100)
+                        multi_class = data.get('dual', 'auto')
+                        verbose = data.get('dual', 0)
+                        warm_start = data.get('warm_start', False)
+                        n_jobs = data.get('n_jobs', None)
+                        l1_ratio = data.get('l1_ratio', None)
+
+                        result = model.logistic_regression_classifier(penalty=penalty, dual=dual, tol=tol, C=C,
+                                                                      fit_intercept=fit_intercept,
+                                                                      intercept_scaling=intercept_scaling,
+                                                                      class_weight=class_weight,
+                                                                      random_state=random_state, solver=solver,
+                                                                      max_iter=max_iter,
+                                                                      multi_class=multi_class, verbose=verbose,
+                                                                      warm_start=warm_start, n_jobs=n_jobs,
+                                                                      l1_ratio=l1_ratio)
+                        print(result)
+
+    except:
+        pass
 
 
 @app.route('/Machine/<action>', methods=['GET'])
