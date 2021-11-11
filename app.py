@@ -15,8 +15,7 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
-from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, to_excel, to_json, \
-    csv_to_excel
+from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, csv_to_excel
 from src.eda.eda_helper import EDA
 import numpy as np
 import json
@@ -32,8 +31,6 @@ from src.utils.common.cloud_helper import gcp_browser_storage
 from src.utils.common.cloud_helper import azure_data_helper
 from src.utils.common.database_helper import mysql_data_helper, mongo_data_helper
 from src.utils.common.database_helper import cassandra_connector
-from src.model.auto.Auto_regression import ModelTrain_Regression
-from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.routes.routes_api import app_api
 from loguru import logger
@@ -1236,7 +1233,8 @@ def model_training_post(action):
                         y = df[target]
                         X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(cleanedData=X,
                                                                                                label=y,
-                                                                                               test_size=(1 - ( percent / 100)),
+                                                                                               test_size=(1 - (
+                                                                                                           percent / 100)),
                                                                                                random_state=Random_State)
 
                         X = df.drop(target, axis=1)
@@ -1364,18 +1362,18 @@ def model_training_post(action):
                                 max_depth = None
                                 min_samples_split = int(data.get("min_samples_split", 2))
                                 min_samples_leaf = int(data.get("min_samples_leaf", 1))
-                                min_weight_fraction_leaf = float(data.get("min_weight_fraction_leaf",0.0))
-                                max_features = data.get("max_features",'auto')
+                                min_weight_fraction_leaf = float(data.get("min_weight_fraction_leaf", 0.0))
+                                max_features = data.get("max_features", 'auto')
                                 max_leaf_nodes = None
                                 min_impurity_decrease = float(data.get("min_impurity_decrease", 0.0))
-                                bootstrap = bool(data.get("bootstrap",True))
+                                bootstrap = bool(data.get("bootstrap", True))
                                 oob_score = False,
                                 n_jobs = None
                                 random_state = None
-                                verbose = int(data.get("verbose",0))
+                                verbose = int(data.get("verbose", 0))
                                 warm_start = False
                                 class_weight = None
-                                ccp_alpha = float(data.get("ccp_alpha",0.0))
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
                                 max_samples = None
 
                                 result = model.random_forest_classifier(n_estimators=n_estimators, criterion=criterion,
@@ -1394,26 +1392,26 @@ def model_training_post(action):
                                                                         ccp_alpha=ccp_alpha, max_samples=max_samples)
 
                             elif modelName == 'GradientBoostClassifier':
-                                loss = data.get('loss', 'deviance')
-                                learning_rate = 0.1
-                                n_estimators = 100
-                                subsample = 1.0
+                                loss = data.get("loss", 'deviance')
+                                learning_rate = float(data.get("learning_rate", 0.1))
+                                n_estimators = int(data.get("n_estimators", 100))
+                                subsample = float(data.get("subsample", 1.0))
                                 criterion = 'friedman_mse'
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
-                                max_depth = 3
-                                min_impurity_decrease = 0.0
+                                min_samples_split = int(data.get("min_samples_split", 2))
+                                min_samples_leaf = int(data.get("min_samples_leaf", 1))
+                                min_weight_fraction_leaf = float(data.get("min_weight_fraction_leaf", 0.0))
+                                max_depth = int(data.get("max_depth", 3))
+                                min_impurity_decrease = float(data.get(0.0))
                                 init = None
                                 random_state = None
                                 max_features = None
-                                verbose = 0
+                                verbose = int(data.get("verbose", 0))
                                 max_leaf_nodes = None
                                 warm_start = False
-                                validation_fraction = 0.1
+                                validation_fraction = float(data.get("validation_fraction", 0.1))
                                 n_iter_no_change = None
-                                tol = 0.0001
-                                ccp_alpha = float(data.get("ccp_alpha",0.0))
+                                tol = float(data.get("tol", 0.0001))
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
 
                                 result = model.gradient_boosting_classifier(loss=loss, learning_rate=learning_rate,
                                                                             n_estimators=n_estimators,
@@ -1434,11 +1432,11 @@ def model_training_post(action):
                                                                             ccp_alpha=ccp_alpha)
 
                             elif modelName == "AdaBoostClassifier":
-                                base_estimator = None
-                                n_estimators = 50
-                                learning_rate = 1.0
-                                algorithm = 'SAMME.R'
-                                random_state = None
+                                base_estimator = data.get("base_estimator", None)
+                                n_estimators = int(data.get("n_estimators", 50))
+                                learning_rate = float(data.get("learning_rate", 1.0))
+                                algorithm = data.get("algorithm", 'SAMME.R')
+                                random_state = int(data.get("random_state", 101))
 
                                 result = model.ada_boost_classifier(base_estimator=base_estimator,
                                                                     n_estimators=n_estimators,
@@ -1472,7 +1470,8 @@ def model_training_post(action):
                                 random_state = None
 
                                 result = model.ridge_regressor(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
-                                                               max_iter=max_iter, tol=tol, solver=solver, positive=positive,
+                                                               max_iter=max_iter, tol=tol, solver=solver,
+                                                               positive=positive,
                                                                random_state=random_state)
 
                             elif modelName == "lasso":
@@ -1532,7 +1531,8 @@ def model_training_post(action):
                                                                        min_samples_split=min_samples_split,
                                                                        min_samples_leaf=min_samples_leaf,
                                                                        min_weight_fraction_leaf=min_weight_fraction_leaf,
-                                                                       max_features=max_features, random_state=random_state,
+                                                                       max_features=max_features,
+                                                                       random_state=random_state,
                                                                        max_leaf_nodes=max_leaf_nodes,
                                                                        min_impurity_decrease=min_impurity_decrease,
                                                                        ccp_alpha=ccp_alpha)
@@ -1595,7 +1595,8 @@ def model_training_post(action):
                                 loss = data.get("loss", 'linear')
                                 random_state = None
 
-                                result = model.ada_boost_regressor(base_estimator=base_estimator, n_estimators=n_estimators,
+                                result = model.ada_boost_regressor(base_estimator=base_estimator,
+                                                                   n_estimators=n_estimators,
                                                                    learning_rate=learning_rate, loss=loss,
                                                                    random_state=random_state)
 
@@ -1663,7 +1664,8 @@ def model_training_post(action):
 
                                 result = model.kmeans_clustering(n_clusters=n_clusters, init=init, n_init=n_init,
                                                                  max_iter=max_iter, tol=tol,
-                                                                 verbose=verbose, random_state=random_state, copy_x=copy_x,
+                                                                 verbose=verbose, random_state=random_state,
+                                                                 copy_x=copy_x,
                                                                  algorithm=algorithm)
                             elif modelName == "DBSCAN":
                                 eps = float(data.get("eps", 0.5))
@@ -1738,6 +1740,7 @@ def missing_data():
         df = load_data()
         selected_column = request.json['selected_column']
         method = request.json['method']
+        new_df = None
         if method == 'Mean' or method == 'Median' or method == 'Arbitrary Value' or method == 'Interpolate':
             before = {}
             after = {}
