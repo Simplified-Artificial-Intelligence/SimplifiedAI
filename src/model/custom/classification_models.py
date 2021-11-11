@@ -81,7 +81,6 @@ class ClassificationModels:
                                  max_leaf_nodes=None, min_impurity_decrease=0.0, bootstrap=True, oob_score=False,
                                  n_jobs=None, random_state=None, verbose=0, warm_start=False, class_weight=None,
                                  ccp_alpha=0.0, max_samples=None):
-
         model = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion,
                                        max_depth=max_depth, min_samples_split=min_samples_split,
                                        min_samples_leaf=min_samples_leaf,
@@ -105,12 +104,15 @@ class ClassificationModels:
                                      verbose=0, max_leaf_nodes=None, warm_start=False, validation_fraction=0.1,
                                      n_iter_no_change=None, tol=0.0001, ccp_alpha=0.0):
         model = GradientBoostingClassifier(loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
-                                          subsample=subsample, criterion=criterion, min_samples_split=min_samples_split,
-                                          min_samples_leaf=min_samples_leaf, min_weight_fraction_leaf=min_weight_fraction_leaf,
-                                          max_depth=max_depth, min_impurity_decrease=min_impurity_decrease, init=init,
-                                          random_state=random_state, max_features=max_features, verbose=verbose,
-                                          max_leaf_nodes=max_leaf_nodes, warm_start=warm_start, validation_fraction=validation_fraction,
-                                          n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
+                                           subsample=subsample, criterion=criterion,
+                                           min_samples_split=min_samples_split,
+                                           min_samples_leaf=min_samples_leaf,
+                                           min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                           max_depth=max_depth, min_impurity_decrease=min_impurity_decrease, init=init,
+                                           random_state=random_state, max_features=max_features, verbose=verbose,
+                                           max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+                                           validation_fraction=validation_fraction,
+                                           n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
         model.fit(self.X_train, self.y_train)
 
@@ -119,10 +121,11 @@ class ClassificationModels:
 
     def ada_boost_classifier(self, base_estimator=None, n_estimators=50, learning_rate=1.0, algorithm='SAMME.R',
                              random_state=None):
-        model = AdaBoostClassifier(base_estimator=base_estimator, n_estimators=n_estimators, learning_rate=learning_rate,
+        model = AdaBoostClassifier(base_estimator=base_estimator, n_estimators=n_estimators,
+                                   learning_rate=learning_rate,
                                    algorithm=algorithm, random_state=random_state)
 
-        model.fit(self.X_train, self.y_trian)
+        model.fit(self.X_train, self.y_train)
 
         save_model(model, self.path)
         return model.predict(self.X_test)

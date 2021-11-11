@@ -1234,7 +1234,7 @@ def model_training_post(action):
                         X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(cleanedData=X,
                                                                                                label=y,
                                                                                                test_size=(1 - (
-                                                                                                           percent / 100)),
+                                                                                                       percent / 100)),
                                                                                                random_state=Random_State)
 
                         X = df.drop(target, axis=1)
@@ -1482,7 +1482,7 @@ def model_training_post(action):
                                 max_iter = np.int(data.get("max_iter", 1000))
                                 tol = float(data.get("tol", 0.0001))
                                 warm_start = data.get("warm_start", False)
-                                positive =  data.get("positive", False)
+                                positive = data.get("positive", False)
                                 random_state = None
                                 selection = data.get("selection", 'cyclic')
 
@@ -1550,7 +1550,7 @@ def model_training_post(action):
                                 oob_score = data.get("oob_score", False)
                                 n_jobs = None
                                 random_state = None
-                                verbose =  np.int(data.get("verbose", 0))
+                                verbose = np.int(data.get("verbose", 0))
                                 warm_start = data.get("warm_start", False)
                                 ccp_alpha = float(data.get("ccp_alpha", 0.0))
                                 max_samples = None
@@ -1572,7 +1572,7 @@ def model_training_post(action):
                             elif modelName == "svr":
                                 kernel = data.get("kernel", 'rbf')
                                 degree = np.int(data.get("degree", 3))
-                                gamma =  data.get("gamma", 'scale')
+                                gamma = data.get("gamma", 'scale')
                                 coef0 = np.int(data.get("coef0", 0.0))
                                 tol = float(data.get("tol", 0.001))
                                 C = float(data.get("C", 1.0))
