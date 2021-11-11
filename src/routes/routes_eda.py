@@ -4,7 +4,6 @@ from src.utils.common.data_helper import load_data
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 import numpy as np
-from logger.logger import Logger
 from src.eda.eda_helper import EDA
 from pandas_profiling import ProfileReport
 from src.constants.constants import TWO_D_GRAPH_TYPES
@@ -14,8 +13,7 @@ import plotly
 from src.utils.common.common_helper import immutable_multi_dict_to_str
 import os
 
-log = Logger()
-log.info(log_type='INFO', log_message='Check Configuration Files')
+
 app_eda = Blueprint('eda', __name__)
 
 
@@ -27,7 +25,6 @@ def eda(action):
             if df is not None:
                 if action == "data-summary":
                     ProjectReports.insert_record_eda('Redirect To Data Summary')
-                    log.info(log_type='Data Summary', log_message='Redirect To Data Summary!')
                     summary = EDA.five_point_summary(df)
                     data = summary.to_html()
                     dtypes = EDA.data_dtype_info(df)
@@ -35,12 +32,10 @@ def eda(action):
                                            column_count=df.shape[1])
                 elif action == "profiler":
                     ProjectReports.insert_record_eda('Redirect To Profile Report')
-                    log.info(log_type='Profile Report', log_message='Redirect To Profile Report')
                     return render_template('eda/profiler.html', action=action)
 
                 elif action == "show":
                     ProjectReports.insert_record_eda('Redirect To Show Dataset')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
                     data = EDA.get_no_records(df, 100)
                     data = data.to_html()
                     topselected = True
@@ -51,7 +46,6 @@ def eda(action):
                                            selectedCount=selectedCount, columns=df.columns)
                 elif action == "missing":
                     ProjectReports.insert_record_eda('Redirect To Missing Value')
-                    log.info(log_type='Missing Value Report', log_message='Redirect To Eda Show Dataset!')
                     df = EDA.missing_cells_table(df)
 
                     graphJSON = PlotlyHelper.barplot(df, x='Column', y='Missing values')
@@ -65,7 +59,6 @@ def eda(action):
 
                 elif action == "outlier":
                     ProjectReports.insert_record_eda('Redirect To Outlier')
-                    log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
                     df = EDA.z_score_outlier_detection(df)
                     graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
                     pie_graphJSON = PlotlyHelper.pieplot(
@@ -113,7 +106,6 @@ def eda_post(action):
                     optradio = request.form['optradio']
                     columns_for_list = df.columns
                     columns = request.form.getlist('columns')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Show', input=input_str)
 
@@ -129,14 +121,11 @@ def eda_post(action):
                                            selectedCount=range, columns=columns_for_list)
                 elif action == "profiler":
                     ProjectReports.insert_record_eda('Download  Profile Report')
-                    log.info(log_type='Profile Report', log_message='Download  Profile Report')
 
                     pr = ProfileReport(df, explorative=True, minimal=True,
                                        correlations={"cramers": {"calculate": False}})
-                    pr.to_widgets()
-                    filename = os.path.join(os.path.join('src', 'project_reports'), f"{session.get('pid')}.html")
-                    pr.to_file(filename)
-                    with open(filename) as fp:
+                    pr.to_file(r'C:\Users\ketan\Desktop\Project\Projectathon\artifacts\test.html')
+                    with open(r'C:\Users\ketan\Desktop\Project\Projectathon\artifacts\test.html') as fp:
                         content = fp.read()
 
                     return Response(
@@ -188,7 +177,6 @@ def eda_post(action):
                         df.sort_values(by='Total outliers', ascending=False).loc[:9, :], names='Features',
                         values='Total outliers', title='Top 10 Outliers')
 
-                    log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
                                            upper=upper, barplot=graphJSON, pieplot=pie_graphJSON)
@@ -203,23 +191,18 @@ def eda_post(action):
 
                     if selected_graph_type == "Scatter Plot":
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
 
                     elif selected_graph_type == "Pie Chart":
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
 
                     elif selected_graph_type == "Bar Graph":
                         graphJSON = PlotlyHelper.barplot(df, x=x_column, y=y_column)
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
 
                     elif selected_graph_type == "Histogram":
                         graphJSON = PlotlyHelper.histogram(df, x=x_column, y=y_column)
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
 
                     elif selected_graph_type == "Line Chart":
                         graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
 
                     return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
                                            columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
