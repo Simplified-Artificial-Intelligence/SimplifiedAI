@@ -9,13 +9,12 @@ from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.tree import DecisionTreeClassifier
 from src.utils.common.common_helper import read_config
 from loguru import logger
-import sys
 import os
 import numpy as np
 
-config_args = read_config(os.path.join(sys.path[1], "config.yaml"))
+config_args = read_config("./config.yaml")
 
-log_path = os.path.join(sys.path[1], config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
