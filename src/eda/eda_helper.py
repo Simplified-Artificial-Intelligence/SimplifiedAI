@@ -5,7 +5,6 @@ from src.utils.common.common_helper import read_config
 from loguru import logger
 import os
 
-
 config_args = read_config("./config.yaml")
 
 log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
@@ -44,6 +43,15 @@ class EDA:
                 logger.error(f"{e} occurred in Five Point Summary!")
         logger.info('Five Point Summary Implemented Successfully!')
         return pd.DataFrame(my_dict).sort_values(by=['Features'], ascending=True)
+
+    @staticmethod
+    def data_dtype_info(df):
+        df_ = pd.DataFrame()
+        df_['Column'] = list(df.dtypes.index)
+        df_['DataType'] = list(df.dtypes.values)
+        df_['Null Count'] = list(df.isnull().sum().values)
+
+        return df_
 
     @staticmethod
     def correlation_report(dataframe, method='pearson'):
