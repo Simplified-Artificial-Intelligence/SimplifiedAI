@@ -12,6 +12,8 @@ Returns:
     [type]: [description]
 """
 
+print(sys.path)
+print(os.path.join(sys.path[1], "config.yaml"))
 config_args = read_config(os.path.join(sys.path[1], "config.yaml"))
 
 log_path = os.path.join(sys.path[1], config_args['logs']['logger'], config_args['logs']['generallogs_file'])
