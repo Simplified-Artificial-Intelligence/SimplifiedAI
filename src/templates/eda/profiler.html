@@ -1,22 +1,89 @@
 {% extends 'project_base.html' %}
 {% block content %}
 
+<!-- loader section style start-->
+<style>
+    
+    .loader {
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #3498db;
+    width: 120px;
+    height: 120px;
+    -webkit-animation: spin 2s linear infinite; /* Safari */
+    animation: spin 2s linear infinite;
+    position: absolute;
+    top: -1%;
+    left: 50%;
+    }
+    
+    .spinner {
+        width: 100px;
+        height: 100px;
+        display: inline-block;
+        border-width: 5px;
+        border-color: rgba(255, 255, 255, 0.05);
+    border-top-color: #fff;
+    animation: spin 1s infinite linear;
+    border-radius: 100%;
+    border-style: solid;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+        }
+    .show {
+        opacity: 1;
+    }
+    
+    .hide {
+        opacity: 0;
+    }
+    </style>
+
+<!-- loader section style ends-->
+
 <div class="table2">
-        <div class="jumbotron text-center">
-            <h1>Data Profiling</h1>
-            <p> Data profiling is a technique used to analyze and gain a better understanding
-                of raw data. It is the first step in determining what insights data can yield
-                when you run it through machine learning algorithms in order to make predictions</p> 
+    <div class="jumbotron text-center">
+        <h1>Data Profiling</h1>
+        <p> Data profiling is a technique used to analyze and gain a better understanding
+            of raw data. It is the first step in determining what insights data can yield
+            when you run it through machine learning algorithms in order to make predictions</p> 
         </div>
         <div class="alert alert-success">
             <strong>Note!</strong> Profile Report Genefrate will take time, so please keep patience.
-          </div>
+        </div>
         <form action="/eda/{{action}}" method="post">
             <div class="row">
                 <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-                    <button type="submit" class="btn btn-warning">Genefrate Profile Report</button>
+                    <button type="submit" class="btn btn-warning show-loader">Generate Profile Report</button>
                 </div>
             </div>
-          </form>
+        </form>
     </div>
+
+    <!-- loader section markup start -->
+    <div class="load-wrapper" style = "display: none; height: 86%; width: 97%; border-radius: 10px; padding: 0; margin: 0; background-color: rgba(0, 0, 0, 0.5); position: absolute; top: 7%;">
+        <span class="spinner" style = "position: absolute; left: 50%;top: 39%;">
+        </span>
+        <span style = "color:#fff; text-transform: capitalize; position: absolute; left: 18%; top: 23%; font-size: 2rem;"> We generating profile report, please be patient...</span>
+    </div>
+    <!-- loader section ends -->
+
+    
+    <!-- loader section script start -->
+    <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      $(".show-loader").click(function () {
+        $("div.load-wrapper").css('display', 'block');
+    });
+    </script>
+<!-- loader section script end -->
+
+
 {% endblock %}
