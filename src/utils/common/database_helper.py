@@ -5,29 +5,45 @@ import json
 from textwrap import wrap
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
+from src.utils.common.common_helper import read_config
+from loguru import logger
+import os
 
+config_args = read_config("./config.yaml")
 
+log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 class mysql_data_helper:
     def __init__(self, host, port, user, password, database):
-        # def __init__(self, host, user, password, database):
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
-        self.connection = None
-        self.database = database  # dialect+driver://username:password@host:port/database.
-        self.engine = sqlalchemy.create_engine(f"""mysql+mysqlconnector://{self.user}:{self.password}@
-                                                   {self.host}:{self.port}/{self.database}""")
-
-    def connect_todb(self):  #
-        self.connection = self.engine.connect()
-        return self.connection
+        try:
+            logger.info("MySQL constructor created in database helper!")
+            self.host = host
+            self.port = port
+            self.user = user
+            self.password = password
+            self.connection = None
+            self.database = database  # dialect+driver://username:password@host:port/database.
+            self.engine = sqlalchemy.create_engine(f"""mysql+mysqlconnector://{self.user}:{self.password}@
+                                                    {self.host}:{self.port}/{self.database}""")
+        except Exception as e:
+            logger.error(f"{e} occurred in MySQL constructor!")
+    def connect_todb(self):  
+        try:
+            self.connection = self.engine.connect()
+            logger.info("MySQL connection created in database helper!")
+            return self.connection
+        except Exception as e:
+            logger.error(f"{e} occurred in MySQL connection!")
 
     def custom_query(self, query):
-        conn = self.connect_todb()
-        results = conn.execute(query).fetchall()
-        return results
-
+        try:
+            conn = self.connect_todb()
+            results = conn.execute(query).fetchall()
+            logger.info(f"Query executed successfully!")
+            return results
+        except Exception as e:  
+            logger.error(f"{e} occurred in custom query!")
+            
     def retrive_dataset_from_table(self, table_name, download_path):
         try:
             conn = self.connect_todb()
@@ -36,44 +52,48 @@ class mysql_data_helper:
             data = conn.execute(data_query).fetchall()
             schema = conn.execute(schema_query).fetchall()
             conn.close()
-
+            logger.info(f"Data and schema retrived from {table_name} table!")
             column_names = []
             for row in schema:
                 column_names.append(row[0])
             try:
                 dataframe = pd.DataFrame(data, columns=column_names).drop(columns='index')
                 dataframe.to_csv(download_path, index=False)
+                logger.info(f"Dataframe created and saved in {download_path}!")
                 return 'Successful'
             except Exception as e:
-                print(e)
+                logger.error(f"{e} occurred in creating dataframe!")
                 dataframe = pd.DataFrame(data, columns=column_names)
                 dataframe.to_csv(download_path, index=False)
                 return 'Successful'
 
         except Exception as e:
-            return e.__str__()
+            logger.error(f"{e} occurred in retrive_dataset_from_table!")
 
     def push_file_to_table(self, file, table_name):
         try:
             if file.endswith(".csv"):
                 dataframe = pd.read_csv(file)
+                logger.info(f"{file}.csv pushed to {table_name}!")
             elif file.endswith(".tsv"):
                 dataframe = pd.read_csv(file, sep="\t")
+                logger.info(f"{file}.tsv pushed to {table_name}!")
             elif file.endswith(".json"):
                 dataframe = pd.read_json(file)
+                logger.info(f"{file}.json pushed to {table_name}!")
             else:
+                logger.error(f"{file} is not a valid file!")
                 return f"{file} is not supported!"
 
             try:
                 dataframe.to_sql(con=self.engine, name=table_name, if_exists='replace', chunksize=1000)
-                return f"{file} was pushed into {table_name} table!"
+                logger.info(f"Dataframe pushed to {table_name} table!")
 
             except Exception as e:
-                print(e)
-                return f"could'nt push {file} into {table_name} table!"
+                logger.error(f"{e} occurred in pushing dataframe to {table_name} table!")
 
         except Exception as e:
-            print(e)
+            logger.error(f"{e} occurred in push_file_to_table!")
 
     def check_connection(self, table_name):
 
@@ -87,22 +107,29 @@ class mysql_data_helper:
                 for table in i:
                     table_list.append(table)
             if table_name in table_list:
+                logger.info(f"{table_name} table exists!")
                 return "Successful"
             else:
+                logger.error(f"{table_name} table does not exist!")
                 return f"{table_name} table does not exist in {self.database} database"
 
         except Exception as e:
 
             if 'Unknown database' in e.__str__():
-                return f"{self.database} database not found!!"
+                logger.error(f"{self.database} database not found!")
+                return f"{self.database} database not found!"
             elif 'Access denied' in e.__str__():
+                logger.error(f"Access denied for {self.user} user!")
                 return "Incorrect Mysql User or Password!!"
             elif "Can't connect" in e.__str__():
+                logger.error(f"Can't connect to {self.host} host!")
                 return "Incorrect Host Given"
             else:
+                logger.error(f"{e} occurred in check_connection!")
                 return "OOPS something went wrong!!"
 
     def __str__(self):
+        logger.info("MySQL object created!")
         return "mysql dataset helper"
 
 
@@ -118,15 +145,17 @@ class cassandra_connector:
             self.auth_provider = PlainTextAuthProvider(client_id, client_secret)
             self.cluster = Cluster(cloud=self.cloud_config, auth_provider=self.auth_provider)
             self.keyspace = keyspace
+            logger.info("Cassandra constructor created in database helper!")
         except Exception as e:
-            print(e)
+            logger.error(f"{e} occurred in Cassandra constructor!")
 
     def connect_to_cluster(self):
         try:
             session = self.cluster.connect(self.keyspace)
+            logger.info("Cassandra connection created in database helper!")
             return session
         except Exception as e:
-            print(e)
+            logger.error(f"{e} occurred in Cassandra connection!")
 
     def push_dataframe_to_table(self, dataframe, table_name):
 
@@ -134,7 +163,8 @@ class cassandra_connector:
             data = dataframe.to_json()
             data = wrap(data, 65000)
 
-            create_query = f'create table {table_name}('
+            create_query = f'create table {table_name}'
+            logger.info(f"Query created for creating {table_name} table!")
             column_names = []
 
             for i in range(len(data)):  # creating create table query and collect column names
@@ -156,33 +186,39 @@ class cassandra_connector:
             prepared_query = session.prepare(insert_query)
             session.execute(prepared_query, data, timeout=None)
             session.shutdown()
-            print("Cassandra session closed")
+            logger.info(f"Dataframe pushed to {table_name} table!")
+            logger.info("Cassandra session closed")
 
         except Exception as e:
-            print(e)
+            logger.error(f"{e} occurred in pushing dataframe to {table_name} table!")
 
     def custom_query(self, custom_query):
         try:
             session = self.cluster.connect(self.keyspace)
             data = session.execute(custom_query)
+            logger.info(f"Custom query executed!")
             session.shutdown()
             print("Cassandra session closed")
+            logger.info("Cassandra session closed")
             return data
 
         except Exception as e:
-            print(e)
+            logger.error(f"{e} occurred in custom_query!")
 
     def retrive_table(self, table_name, download_path):
         try:
             session = self.cluster.connect(self.keyspace)
             dataframe = pd.DataFrame(list(session.execute(f"select * from {table_name}")))
+            logger.info(f"Dataframe created from {table_name} table!")
             session.shutdown()
+            logger.info("Cassandra session closed")
             print("Cassandra session closed")
             dataframe.to_csv(download_path, index=False)
+            logger.info(f"Dataframe pushed to {download_path}!")
             return 'Successful'
 
         except Exception as e:
-            print(e)
+            logger.error(f"{e} occurred in retrive_table!")
 
     def retrive_uploded_dataset(self, table_name, download_path):
         try:
@@ -195,12 +231,14 @@ class cassandra_connector:
             dataset = json.loads(dataset_string)
             dataframe = pd.DataFrame(dataset)
             dataframe.to_csv(download_path, index=False)
+            logger.info(f"Dataframe retrived from Cassandra DB!")
             session.shutdown()
+            logger.info("Cassandra session closed")
             print("Cassandra session closed")
             return 'Successful'
 
         except Exception as e:
-            print(e)
+            logger.error(f"{e} occurred in retrive_uploded_dataset!")
 
     def check_connection(self, table_name):
         table_list = []
@@ -213,33 +251,48 @@ class cassandra_connector:
             for table in data:
                 table_list.append(table.table_name)
             if table_name in table_list:
+                logger.info(f"{table_name} table exists in {self.keyspace} keyspace!")
                 return "Successful"
             else:
+                logger.error(f"{table_name} table not found in {self.keyspace} keyspace!")
                 return f"{table_name} table in not available in '{self.keyspace}' keyspace"
 
         except Exception as e:
 
             if 'AuthenticationFailed' in e.__str__():
+                logger.error(f"Incorrect Cassandra DB User or Password!!")
                 return "Given client_id or client_secret is invalid"
             elif 'keyspace' in e.__str__():
+                logger.error(f"Incorrect Cassandra DB keyspace!!")
                 return f"Given {self.keyspace} keyspace does not exist!!"
             else:
+                logger.error(f"{e} occurred in check_connection!")
                 return "Provide valid bundel zip file!!"
 
 
 class mongo_data_helper:
 
     def __init__(self, mongo_db_url):
-        self.mongo_db_uri = mongo_db_url
-
+        try:
+            logger.info("Mongo constructor created in database helper!")
+            self.mongo_db_uri = mongo_db_url
+        except Exception as e:
+            logger.error(f"{e} occurred in Mongo constructor!")
+            
     def connect_to_mongo(self):
-        client_cloud = pymongo.MongoClient(self.mongo_db_uri)
-        return client_cloud
-
+        try:
+            client_cloud = pymongo.MongoClient(self.mongo_db_uri)
+            return client_cloud
+        except Exception as e:
+            logger.error(f"{e} occurred in Mongo connection!")
+            
     def close_connection(self, client_cloud):
-        client_cloud.close()
-        print("Mongo db connection closed")
-
+        try:
+            logger.info("Mongo connection closed!")
+            client_cloud.close()
+            print("Mongo db connection closed")
+        except Exception as e:
+            logger.error(f"{e} occurred in Mongo connection!")
 
     def retrive_dataset(self, database_name, collection_name, download_path):
         try:
@@ -248,22 +301,28 @@ class mongo_data_helper:
             collection = database[collection_name]
             dataframe = pd.DataFrame(list(collection.find())).drop(columns='_id')
             dataframe.to_csv(download_path, index=False)
+            logger.info(f"Dataframe retrived from Mongo DB!")
             self.close_connection(client_cloud)
+            logger.info("Mongo connection closed!")
             return "Successful"
 
         except Exception as e:
-            return e.__str__()
+            logger.error(f"{e} occurred in retrive_dataset!")
 
 
     def push_dataset(self, database_name, collection_name, file):
         try:
             if file.endswith('.csv'):
                 dataframe = pd.read_csv(file)
+                logger.info(f"{file}.csv pushed to {collection_name} collection in {database_name} database!")
             elif file.endswith('.tsv'):
+                logger.info(f"{file}.tsv pushed to {collection_name} collection in {database_name} database!")
                 dataframe = pd.read_csv(file, sep='\t')
             elif file.endswith('.json'):
                 dataframe = pd.read_json(file)
+                logger.info(f"{file}.json pushed to {collection_name} collection in {database_name} database!")
             else:
+                logger.error(f"{file} is not supported file format!")
                 return "given file is not supported"
 
             data = dataframe.to_dict('record')
@@ -272,14 +331,16 @@ class mongo_data_helper:
             database = client_cloud[database_name]
             collection = database[collection_name]
             collection.delete_many({})
+            logger.info(f"{collection_name} collection in {database_name} database deleted!")
             print(f"cleaned {collection_name} collection")
             collection.insert_many(data)
-
+            logger.info(f"{collection_name} collection in {database_name} database inserted!")
             self.close_connection(client_cloud)
+            logger.info("Mongo connection closed!")
             return 'Successful'
 
         except Exception as e:
-            return e.__str__()
+            logger.error(f"{e} occurred in push_dataset!")
 
     def check_connection(self, database_name, collection_name):
         try:
@@ -289,7 +350,7 @@ class mongo_data_helper:
             if database_name in DBlist:
                 database = client_cloud[database_name]
                 collection_list = database.list_collection_names()
-
+                
                 if collection_name in collection_list:
                     self.close_connection(client_cloud)
                     return "Successful"

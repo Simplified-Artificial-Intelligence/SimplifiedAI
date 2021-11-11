@@ -920,3 +920,9 @@ width:60px
   position: relative;
   float: right;
 }
+#content{
+  margin-top: 50px;
+  padding: unset !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
