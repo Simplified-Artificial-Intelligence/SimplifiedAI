@@ -43,6 +43,15 @@ class EDA():
         return pd.DataFrame(my_dict).sort_values(by=['Features'], ascending=True)
     
     @staticmethod
+    def data_dtype_info(df):
+        df_=pd.DataFrame()
+        df_['Column']=list(df.dtypes.index)
+        df_['DataType']=list(df.dtypes.values)
+        df_['Null Count']=list(df.isnull().sum().values)
+        
+        return df_
+    
+    @staticmethod
     def correlation_report(dataframe,method='pearson'):
         try:
             return dataframe.corr(method=method)

@@ -920,3 +920,17 @@ width:60px
   position: relative;
   float: right;
 }
+.margin-bottom-20{
+  margin-bottom: 20px;
+}
+
+.div_dtype{
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+#content{
+  margin-top: 50px;
+  padding: unset !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}

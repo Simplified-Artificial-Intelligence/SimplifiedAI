@@ -12,8 +12,17 @@
       </div>
       {% endif %}
 
-      <h3 class="header">Add New project</h3>
-
+    <h3 class="header">Add New project</h3>
+    <div class="row margin-bottom-20">
+     <div class="col-sm-12 sol-md-12 col-lg-12">
+      <label for="name"><b>Select Projcect Type:</b></label>
+      <select class="js-example-basic-multiple form-control" name="project_type" id="project_type">
+        {% for item in project_types %}
+        <option value="{{item['id']}}">{{item['name']}}</option>
+      {% endfor %}
+      </select>
+     </div>
+    </div>
       <label for="name"><b>Name:</b></label>
       <input type="text" placeholder="Add your project name" name="project_name" id="project_name" required>
 

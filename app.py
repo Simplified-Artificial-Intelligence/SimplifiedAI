@@ -40,6 +40,7 @@ from src.model.auto.Auto_regression import ModelTrain_Regression
 from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.routes.routes_api import app_api
+from src.routes.routes_eda import app_eda
 
 log = Logger()
 log.info(log_type='INFO', log_message='Check Configuration Files')
@@ -75,6 +76,8 @@ static_dir = config_args['dir_structure']['static_dir']
 
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
 app.register_blueprint(app_api)
+app.register_blueprint(app_eda)
+
 log.info(log_type='INFO', log_message='App Started')
 
 app.secret_key = config_args['secrets']['key']
@@ -96,10 +99,13 @@ def index():
     try:
         if 'loggedin' in session:
             query = f'''
-            select tp.Id,tp.Name,tp.Description,tp.Cassandra_Table_Name,ts.Name,ts.Indetifier,tp.Pid
+            select tp.Id,tp.Name,tp.Description,tp.Cassandra_Table_Name,
+            ts.Name,ts.Indetifier,tp.Pid,tp.TargetColumn,tpy.Name
             from tblProjects as tp
+            join tblProjectType as tpy
+                on tpy.Id=tp.ProjecTtype
             join tblProjectStatus as ts
-            on ts.Id=tp.Status
+                on ts.Id=tp.Status
             where tp.UserId={session.get('id')} and tp.IsActive=1
             order by 1 desc;'''
 
@@ -129,6 +135,7 @@ def project():
                 if source_type == 'uploadFile':
                     name = request.form['project_name']
                     description = request.form['project_desc']
+                    project_type = request.form['project_type']
                     print(source_type, name, description)
                     if len(request.files) > 0:
                         f = request.files['file']
@@ -171,8 +178,8 @@ def project():
                         userId = session.get('id')
                         status = 1
                         query = f"""INSERT INTO tblProjects (UserId, Name, Description, Status, 
-                       Cassandra_Table_Name,Pid) VALUES
-                       ("{userId}", "{name}", "{description}", "1", "{table_name}","{project_id}")"""
+                       Cassandra_Table_Name,Pid,ProjectType) VALUES
+                       ("{userId}", "{name}", "{description}", "1", "{table_name}","{project_id}","{project_type}")"""
 
                         rowcount = mysql.insert_record(query)
                         if rowcount > 0:
@@ -482,6 +489,32 @@ def renderDeleteProject(id):
         return render_template('deleteProject.html', data={"id": id})
     else:
         return redirect(url_for('login'))
+    
+    
+@app.route('/target-column', methods=['GET','POST'])
+def setTargetColumn():
+    try:
+        if 'loggedin' in session and 'id' in session:
+            df = load_data()
+            columns=list(df.columns)
+            
+            if request.method == "GET":
+                log.info(log_type='ACTION', log_message='Redirect To Set Target Column Page')
+                return render_template('target_column.html',columns=columns)
+            else:
+                status="error"
+                id=session.get('pid')
+                target_column = request.form['column']
+                log.info(log_type='Target Column', log_message=f'Selected Target columns Is {target_column}')
+                rows_count=mysql.delete_record(f'UPDATE tblProjects SET TargetColumn="{target_column}" WHERE Id={id}')
+                status="success"
+                return render_template('target_column.html',columns=columns,status=status)
+            
+        else:
+            return redirect(url_for('/'))
+    except Exception as ex:
+        pass
+    
 
 
 @app.route('/deleteProject/<id>', methods=['GET'])
@@ -516,9 +549,7 @@ def stream(pid):
             values = data.split("&")
             session['pid'] = values[1]
             session['project_name'] = values[0]
-            print(values[0], values[1])
             mongodb.get_collection_data(values[0])
-            print('inside data')
             return redirect(url_for('module'))
         else:
             return redirect(url_for('/'))
@@ -537,198 +568,6 @@ def module():
         print(e)
 
 
-@app.route('/eda/<action>')
-def eda(action):
-    try:
-        if 'pid' in session:
-            df = load_data()
-            if df is not None:
-                if action=="5point":
-                    ProjectReports.insert_record_eda('5 Points Summary')
-                    log.info(log_type='% Point Summary', log_message='Redirect To Eda 5 Point!')
-                    summary=EDA.five_point_summary(df)
-                    data=summary.to_html()
-                    return render_template('eda/5point.html',data=data)
-                elif action=="profiler":
-                    ProjectReports.insert_record_eda('Profiler')
-                    log.info(log_type='Show Profiler Report', log_message='Redirect To Eda Show Dataset!')
-                    pr = ProfileReport(df, explorative=True, minimal=True,
-                                       correlations={"cramers": {"calculate": False}})
-                    pr.to_widgets()
-                    pr.to_file("your_report.html")
-                elif action=="show":
-                    ProjectReports.insert_record_eda('Show Dataset')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
-                    data=EDA.get_no_records(df,100)
-                    data=data.to_html()
-                    topselected=True
-                    bottomSelected=False
-                    selectedCount=100
-                    return render_template('eda/showdataset.html',data=data,length=len(df),
-                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=selectedCount,columns=df.columns)
-                elif action=="missing":
-                    ProjectReports.insert_record_eda('Missing Value')
-                    log.info(log_type='Missing Value Report', log_message='Redirect To Eda Show Dataset!')
-                    df=EDA.missing_cells_table(df)
-                    
-                    graphJSON =  PlotlyHelper.barplot(df, x='Column',y='Missing values')
-                    pie_graphJSON = PlotlyHelper.pieplot(df, names='Column',values='Missing values',title='Missing Values')
-                    
-                    data=df.drop('Column', axis=1, inplace=True)
-                    data=df.to_html()
-                    return render_template('eda/missing_values.html',action=action,data=data,barplot=graphJSON,pieplot=pie_graphJSON)
-                
-                elif action=="outlier":
-                    ProjectReports.insert_record_eda('Outlier')
-                    log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                    df = EDA.z_score_outlier_detection(df)
-                    graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
-                    pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[:10, :], names='Features',
-                        values='Total outliers', title='Top 10 Outliers')
-                    data=df.to_html()
-                    return render_template('eda/outliers.html',data=data,method='zscore',action=action,barplot=graphJSON,pieplot=pie_graphJSON)
-                
-                
-                elif action=="correlation":
-                    ProjectReports.insert_record_eda('Correlation')
-                    pearson_corr=EDA.correlation_report(df,'pearson')
-                    persion_data=list(np.around(np.array(pearson_corr.values),2))
-                    fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
-                                                      y=list(pearson_corr.columns), colorscale='Viridis')
-                    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                    return render_template('eda/correlation.html',data=graphJSON,columns=list(pearson_corr.columns),action=action,method='pearson')
-                
-                elif action=="plots":
-                    ProjectReports.insert_record_eda('Plots')
-                    return render_template('eda/plots.html',columns=list(df.columns),
-                                           graphs_2d=TWO_D_GRAPH_TYPES,action=action,x_column="",y_column="")
-                else:
-                    return render_template('eda/help.html')
-            else:
-                return 'Hello'
-
-        else:
-            return redirect(url_for('/'))
-    except Exception as e:
-        ProjectReports.insert_record_eda(e)
-        print(e)
-
-
-@app.route('/eda/<action>', methods=['POST'])
-def eda_post(action):
-    try:
-        if 'pid' in session:
-            df = load_data()
-            if df is not None:
-                if action == "show":
-                    range = request.form['range']
-                    optradio = request.form['optradio']
-                    columns_for_list = df.columns
-                    columns = request.form.getlist('columns')
-                    log.info(log_type='Show Dataset', log_message='Redirect To Eda Show Dataset!')
-                    input_str = immutable_multi_dict_to_str(request.form)
-                    ProjectReports.insert_record_eda('Show', input=input_str)
-                    
-                    if len(columns)>0:
-                        df=df.loc[:,columns]
-                        
-                    data=EDA.get_no_records(df,int(range),optradio)
-                    data=data.to_html()
-                    topselected=True if optradio=='top' else False
-                    bottomSelected=True if optradio=='bottom' else False
-                    return render_template('eda/showdataset.html',data=data,length=len(df),
-                                           bottomSelected=bottomSelected,topselected=topselected,action=action,selectedCount=range,columns=columns_for_list)
-                elif action=="correlation":
-                    method = request.form['method']
-                    columns = request.form.getlist('columns')
-
-                    input_str = immutable_multi_dict_to_str(request.form)
-                    ProjectReports.insert_record_eda('Correlation', input=input_str)
-                    
-                    if method is not None:
-                        # df=df.loc[:,columns]
-                        _corr = EDA.correlation_report(df, method)
-                        if len(columns) == 0:
-                            columns = _corr.columns
-
-                        _corr = _corr.loc[:, columns]
-                        _data = list(np.around(np.array(_corr.values), 2))
-                        fig = ff.create_annotated_heatmap(_data, x=list(_corr.columns),
-                                                          y=list(_corr.index), colorscale='Viridis')
-                        # fig = ff.create_annotated_heatmap(_data, colorscale='Viridis')
-                        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                        return render_template('eda/correlation.html', data=graphJSON,
-                                               columns=list(df.columns), action=action, method=method)
-                    else:
-                        return render_template('eda/help.html')
-
-                elif action == "outlier":
-                    method = request.form['method']
-                    lower = 25
-                    upper = 75
-                    if method == "iqr":
-                        lower = request.form['lower']
-                        upper = request.form['upper']
-                        df = EDA.outlier_detection_iqr(df, int(lower), int(upper))
-                    else:
-                        df=EDA.z_score_outlier_detection(df)
-
-                    input_str = immutable_multi_dict_to_str(request.form)
-                    ProjectReports.insert_record_eda('Outlier', input=input_str)
-                    
-                    graphJSON =  PlotlyHelper.barplot(df, x='Features',y='Total outliers')
-                    pie_graphJSON = PlotlyHelper.pieplot(df.sort_values(by='Total outliers',ascending=False).loc[:9,:], names='Features',values='Total outliers',title='Top 10 Outliers')    
-
-                    log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                    data = df.to_html()
-                    return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
-                                           upper=upper, barplot=graphJSON, pieplot=pie_graphJSON)
-
-                elif action == "plots":
-                    """All Polots for all kind of features????"""
-                    selected_graph_type = request.form['graph']
-                    x_column = request.form['xcolumn']
-                    y_column = request.form['ycolumn']
-                    input_str = immutable_multi_dict_to_str(request.form)
-                    ProjectReports.insert_record_eda('Plot', input=input_str)
-                    
-                    if selected_graph_type=="Scatter Plot":
-                        graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                    
-                    elif selected_graph_type=="Pie Chart":
-                        graphJSON =  PlotlyHelper.scatterplot(df, x=x_column,y=y_column,title='Scatter Plot')                    
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                        
-                    elif selected_graph_type=="Bar Graph":
-                        graphJSON =  PlotlyHelper.barplot(df, x=x_column,y=y_column)                    
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                    
-                    elif selected_graph_type=="Histogram":
-                        graphJSON =  PlotlyHelper.histogram(df, x=x_column,y=y_column)                    
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                        
-                    elif selected_graph_type=="Line Chart":
-                        graphJSON =  PlotlyHelper.line(df, x=x_column,y=y_column)                    
-                        log.info(log_type='Outlier Value Report', log_message='Redirect To Eda Show Dataset!')
-                        
-                        
-                    return render_template('eda/plots.html',selected_graph_type=selected_graph_type,
-                                           columns=list(df.columns),graphs_2d=TWO_D_GRAPH_TYPES,
-                                           action=action,graphJSON=graphJSON,x_column=x_column,y_column=y_column)
-
-                else:
-                    return render_template('eda/help.html')
-            else:
-                """Manage This"""
-                pass
-
-        else:
-            return redirect(url_for('/'))
-    except Exception  as e:
-        ProjectReports.insert_record_eda(e)
-            
             
 @app.route('/dp/<action>')
 def data_preprocessing(action):

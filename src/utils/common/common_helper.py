@@ -43,8 +43,8 @@ def decrypt(message ):
     return encMessage.decode("utf-8")
 
 
-def immutable_multi_dict_to_str(immutable_multi_dict):
-    input_str = immutable_multi_dict.to_dict(flat=False)
+def immutable_multi_dict_to_str(immutable_multi_dict,flat=False):
+    input_str = immutable_multi_dict.to_dict(flat)
     input_str = { key: value if len(value)>1 else value[0] for key, value in input_str.items() }
     return json.dumps(input_str)
 
