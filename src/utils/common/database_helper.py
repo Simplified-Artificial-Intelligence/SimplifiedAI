@@ -2,19 +2,19 @@ import pandas as pd
 import sqlalchemy
 import pymongo
 import json
-import mysql.connector as connector
 from textwrap import wrap
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 
 
-class mysql_data_helper():
+class mysql_data_helper:
     def __init__(self, host, port, user, password, database):
         # def __init__(self, host, user, password, database):
         self.host = host
         self.port = port
         self.user = user
         self.password = password
+        self.connection = None
         self.database = database  # dialect+driver://username:password@host:port/database.
         self.engine = sqlalchemy.create_engine(f"""mysql+mysqlconnector://{self.user}:{self.password}@
                                                    {self.host}:{self.port}/{self.database}""")
@@ -69,6 +69,7 @@ class mysql_data_helper():
                 return f"{file} was pushed into {table_name} table!"
 
             except Exception as e:
+                print(e)
                 return f"could'nt push {file} into {table_name} table!"
 
         except Exception as e:
@@ -105,7 +106,6 @@ class mysql_data_helper():
         return "mysql dataset helper"
 
 
-
 class cassandra_connector:
     """
     cassandra_connector class performs cassandra database operations,eg: connecting to database,
@@ -137,7 +137,7 @@ class cassandra_connector:
             create_query = f'create table {table_name}('
             column_names = []
 
-            for i in range(len(data)):  ## creating create table query and collect column names
+            for i in range(len(data)):  # creating create table query and collect column names
                 if i == 0:
                     create_query += f'data{i * "1"} text primary key, '
                     column_names.append(f'data{i * "1"}')
@@ -151,8 +151,7 @@ class cassandra_connector:
             session = self.connect_to_cluster()
             session.execute(create_query, timeout=None)
 
-            insert_query = f'insert into {table_name}({", ".join(column_names)}) values ({"? ," * len(column_names)}'.strip(
-                ", ") + ");"
+            insert_query = f'insert into {table_name}({", ".join(column_names)}) values ({"? ," * len(column_names)}'.strip(", ") + ");"
             print(insert_query)
             prepared_query = session.prepare(insert_query)
             session.execute(prepared_query, data, timeout=None)
@@ -228,12 +227,10 @@ class cassandra_connector:
                 return "Provide valid bundel zip file!!"
 
 
-class mongo_data_helper():
+class mongo_data_helper:
 
-    def __init__(self, mongo_db_uri, database, collection_name):
-        self.mongo_db_uri = mongo_db_uri
-        self.database = database
-        self.collection_name = collection_name
+    def __init__(self, mongo_db_url):
+        self.mongo_db_uri = mongo_db_url
 
     def connect_to_mongo(self):
         client_cloud = pymongo.MongoClient(self.mongo_db_uri)
@@ -243,12 +240,12 @@ class mongo_data_helper():
         client_cloud.close()
         print("Mongo db connection closed")
 
-    def retrive_dataset(self, download_path):
 
+    def retrive_dataset(self, database_name, collection_name, download_path):
         try:
             client_cloud = self.connect_to_mongo()
-            database = client_cloud[self.database]
-            collection = database[self.collection_name]
+            database = client_cloud[database_name]
+            collection = database[collection_name]
             dataframe = pd.DataFrame(list(collection.find())).drop(columns='_id')
             dataframe.to_csv(download_path, index=False)
             self.close_connection(client_cloud)
@@ -258,8 +255,7 @@ class mongo_data_helper():
             return e.__str__()
 
 
-    def push_dataset(self, file):
-
+    def push_dataset(self, database_name, collection_name, file):
         try:
             if file.endswith('.csv'):
                 dataframe = pd.read_csv(file)
@@ -273,59 +269,42 @@ class mongo_data_helper():
             data = dataframe.to_dict('record')
 
             client_cloud = self.connect_to_mongo()
-            database = client_cloud[self.database]
-            collection = database[self.collection_name]
-            self.delete_collection_data(self.collection_name)
+            database = client_cloud[database_name]
+            collection = database[collection_name]
+            collection.delete_many({})
+            print(f"cleaned {collection_name} collection")
             collection.insert_many(data)
+
             self.close_connection(client_cloud)
             return 'Successful'
 
         except Exception as e:
             return e.__str__()
 
-    def delete_collection_data(self, collection_name):
-        """[summary]
-        Delete Collection Data
-        Args:
-            collection_name ([type]): [description]
-        """
-        try:
-            client_cloud = self.connect_to_mongo()
-            database = client_cloud[self.database]
-            collection = database[self.collection_name]
-            collection.delete_many({})
-            self.close_connection(client_cloud)
-            print(f"All records deleted from {collection_name} collection")
-
-        except Exception as e:
-            print(e)
-
-
-    def check_connection(self):
-
+    def check_connection(self, database_name, collection_name):
         try:
             client_cloud = self.connect_to_mongo()
             DBlist = client_cloud.list_database_names()
 
-            if self.database in DBlist:
-                database = client_cloud[self.database]
+            if database_name in DBlist:
+                database = client_cloud[database_name]
                 collection_list = database.list_collection_names()
 
-                if self.collection_name in collection_list:
+                if collection_name in collection_list:
                     self.close_connection(client_cloud)
                     return "Successful"
                 else:
                     self.close_connection(client_cloud)
-                    return f"Given {self.collection_name} collection does not exits in {self.database} database"
+                    return f"Given {collection_name} collection does not exits in {database_name} database"
             else:
                 self.close_connection(client_cloud)
-                return f"Given {self.database} database does not exist!!"
+                return f"Given {database_name} database does not exist!!"
 
         except Exception as e:
             print(e)
             if "Authentication failed" in e.__str__():
-                return "Wrong URI"
+                return "Provide valid Mongo DB URL"
             else:
                 return "OOPS something went wrong!!"
-
-
+              
+              

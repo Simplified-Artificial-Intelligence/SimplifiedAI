@@ -2,7 +2,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 import pickle
 
 
@@ -23,7 +23,6 @@ class ClassificationModels:
     def logistic_regression_classifier(self, penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True,
                                        intercept_scaling=1, class_weight=None, random_state=None, solver='lbfgs',
                                        max_iter=100, multi_class='auto', verbose=0,
-
                                        warm_start=False, n_jobs=None, l1_ratio=None):
         model = LogisticRegression(penalty=penalty, dual=dual, tol=tol, C=C, fit_intercept=fit_intercept,
                                    intercept_scaling=intercept_scaling, class_weight=class_weight,
@@ -95,6 +94,35 @@ class ClassificationModels:
                                        ccp_alpha=ccp_alpha, max_samples=max_samples)
 
         model.fit(self.X_train, self.y_train)
+
+        save_model(model, self.path)
+        return model.predict(self.X_test)
+
+    def gradient_boosting_classifier(self, loss='deviance', learning_rate=0.1, n_estimators=100,
+                                     subsample=1.0, criterion='friedman_mse', min_samples_split=2,
+                                     min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_depth=3,
+                                     min_impurity_decrease=0.0, init=None, random_state=None, max_features=None,
+                                     verbose=0, max_leaf_nodes=None, warm_start=False, validation_fraction=0.1,
+                                     n_iter_no_change=None, tol=0.0001, ccp_alpha=0.0):
+        model = GradientBoostingClassifier(loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+                                          subsample=subsample, criterion=criterion, min_samples_split=min_samples_split,
+                                          min_samples_leaf=min_samples_leaf, min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                          max_depth=max_depth, min_impurity_decrease=min_impurity_decrease, init=init,
+                                          random_state=random_state, max_features=max_features, verbose=verbose,
+                                          max_leaf_nodes=max_leaf_nodes, warm_start=warm_start, validation_fraction=validation_fraction,
+                                          n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
+
+        model.fit(self.X_train, self.y_train)
+
+        save_model(model, self.path)
+        return model.predict(self.X_test)
+
+    def ada_boost_classifier(self, base_estimator=None, n_estimators=50, learning_rate=1.0, algorithm='SAMME.R',
+                             random_state=None):
+        model = AdaBoostClassifier(base_estimator=base_estimator, n_estimators=n_estimators, learning_rate=learning_rate,
+                                   algorithm=algorithm, random_state=random_state)
+
+        model.fit(self.X_train, self.y_trian)
 
         save_model(model, self.path)
         return model.predict(self.X_test)

@@ -1,9 +1,10 @@
 {% extends 'project_base.html' %}
 {% block content %}
 <div class="table2">
+
     <div class="jumbotron text-center jumbtron">
         <h1>Regression Models</h1>
-        <p>Trains your data using regression models</p> 
+        <p>Trains your data using Regression models</p>
       </div>
 
       <form action="/model_training/{{action}}" method="post">
@@ -12,9 +13,8 @@
             <select class="form-control" id="exampleFormControlSelect1" name="model">
                 <option value="linear">Linear Regression</option>
                 <option value="ridge">Ridge Regression</option>
-                <option value="lassso">Lasso Regression</option>
+                <option value="lasso">Lasso Regression</option>
                 <option value="elastic">Elastic Net Regression</option>
-                <option value="polynomial">Polynomial Regression</option>
                 <option value="decision_tree">Decision Tree Regressor</option>
                 <option value="random_forest">Random Forest Regressor</option>
                 <option value="svr">Support Vector Regressor</option>
@@ -22,23 +22,25 @@
                 <option value="gbr">Gradient Boost Regressor</option>
             </select>
         </div>
-            <form class="form" role="form" action="/submit_collect" method="POST">
-                <div class="multi-field-wrapper container">
-                <div class="alert alert-info" role="alert">
-                <h3 class="text-center">Add Parameters and Values</h3>
-                     </div>
+
+            <form class="form" role="form" action="/model_training/custom_training" method="POST" id="form">
+                          <div class="multi-field-wrapper container" style = "background-color: #fafafa; margin-top: 0; width: 94%; padding: 0; height: 50%">
+                            <div class="alert alert-info" role="alert">
+                              <h3 class="text-center">Add Parameters and Values</h3>
+                            </div>
                             <div class="multi-fields">
                               <div class="multi-field d-flex justify-content-between my-3">
                                 <input
                                   type="text"
                                   class="form-control"
-                                  name="params[]"
+                                  name="params"
+                                  id="para"
                                   placeholder="Enter Parameter Name"
                                 />
                                 <input
                                   type="text"
                                   class="form-control mx-2"
-                                  name="values[]"
+                                  name="values"
                                   placeholder="Enter Parameter Values"
                                 />
                                 <button type="button" class="remove-field btn btn-danger">
@@ -54,21 +56,19 @@
                             </button>
                           </div>
                         </form>
-                        <script src="/static/js/collectParams.js"></script>
-        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-            <button type="submit" class="btn btn-default">Show Result</button>
-        </div>
-    </form>
-
-        
-      <h3 class="result">Result</h3>
-      {{data | safe}}
+                    <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+                        <button type="submit" class="btn btn-default">Show Result</button>
+                    </div>
+            </form>
+            <h3 class="result">Result</h3>
+            {{data | safe}}
 </div>
+    <script src="/static/js/collectParams.js"></script>
 <script>
     var slider = document.getElementById("range");
     var output = document.getElementById("demo");
     output.innerHTML = slider.value;
-    
+
     slider.oninput = function() {
       output.innerHTML = this.value;
     }
@@ -86,4 +86,3 @@
     });
     </script>
 {% endblock %}
-
