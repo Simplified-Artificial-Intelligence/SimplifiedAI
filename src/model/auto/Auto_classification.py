@@ -5,24 +5,41 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from src.utils.common.common_helper import read_config
+from loguru import logger
+import os
+
+config_args = read_config("./config.yaml")
+
+log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
 class ModelTrain_Classification:
     def __init__(self, X_train, X_test, y_train, y_test, start: bool):
-        self.frame = pd.DataFrame(columns=['Model_Name', 'Accuracy', 'Precision', 'Recall', 'F1_Score'])
-        self.X_train = X_train
-        self.X_test = X_test
-        self.y_train = y_train
-        self.y_test = y_test
+        try:
+            logger.info("Constructor Created!")
+            self.frame = pd.DataFrame(columns=['Model_Name', 'Accuracy', 'Precision', 'Recall', 'F1_Score'])
+            self.X_train = X_train
+            self.X_test = X_test
+            self.y_train = y_train
+            self.y_test = y_test
+        except Exception as e:
+            logger.error(f"{e} please check! and Retry again!")
 
-        if start:
-            self.LogisticRegression_()
-            self.SVC_()
-            self.KNeighborsClassifier_()
-            self.DecisionTreeClassifier_()
-            self.RandomForestClassifier_()
-            self.GradientBoostingClassifier_()
-            self.AdaBoostClassifier_()
+        try:
+            if start:
+                logger.info("Auto Classification Training Started!")
+                self.LogisticRegression_()
+                self.SVC_()
+                self.KNeighborsClassifier_()
+                self.DecisionTreeClassifier_()
+                self.RandomForestClassifier_()
+                self.GradientBoostingClassifier_()
+                self.AdaBoostClassifier_()
+                logger.info("Auto Classification Training Completed!")
+        except Exception as e:
+            logger.error(f"{e} please check! and Retry again!")
 
     def LogisticRegression_(self):
         model = LogisticRegression()
@@ -35,6 +52,7 @@ class ModelTrain_Classification:
         self.frame = self.frame.append(
             {'Model_Name': 'LogisticRegression', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
+        logger.info(f"LogisticRegression Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def SVC_(self):
         model = SVC()
@@ -47,6 +65,7 @@ class ModelTrain_Classification:
         self.frame = self.frame.append(
             {'Model_Name': 'SVC', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
+        logger.info(f"SVC Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def KNeighborsClassifier_(self):
         model = KNeighborsClassifier()
@@ -59,6 +78,7 @@ class ModelTrain_Classification:
         self.frame = self.frame.append(
             {'Model_Name': 'KNeighborsClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
+        logger.info(f"KNeighborsClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def DecisionTreeClassifier_(self):
         model = DecisionTreeClassifier()
@@ -71,6 +91,7 @@ class ModelTrain_Classification:
         self.frame = self.frame.append(
             {'Model_Name': 'DecisionTreeClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
+        logger.info(f"DecisionTreeClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def RandomForestClassifier_(self):
         model = RandomForestClassifier()
@@ -83,6 +104,7 @@ class ModelTrain_Classification:
         self.frame = self.frame.append(
             {'Model_Name': 'RandomForestClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
+        logger.info(f"RandomForestClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def GradientBoostingClassifier_(self):
         model = GradientBoostingClassifier()
@@ -95,6 +117,7 @@ class ModelTrain_Classification:
         self.frame = self.frame.append(
             {'Model_Name': 'GradientBoostingClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
+        logger.info(f"GradientBoostingClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def AdaBoostClassifier_(self):
         model = AdaBoostClassifier()
@@ -107,6 +130,7 @@ class ModelTrain_Classification:
         self.frame = self.frame.append(
             {'Model_Name': 'AdaBoostClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
+        logger.info(f"AdaBoostClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def results(self):
         return self.frame.sort_values('F1_Score')

@@ -1,13 +1,29 @@
 dir_structure:
-  root_dir: C:/Users/ketan/Desktop/Project/Projectathon
   template_dir: src/templates
   static_dir: src/static
   upload_folder: src/temp_data_store
   artifacts_dir: artifacts/models
+  eda_dir: src/eda
+  fe_dir: src/feature_engineering
+  model_dir: src/model
+  pre_dir: src/preprocessing
+  routes_dir: src/routes
+  utils_dir: src/utils
+  reports_dir: src/project_reports
+  data_store: src/data_store
 
 logs:
-  logger: logger\logs
+  logger: logger/logs
   generallogs_file: logs.log
+
+artifacts:
+  models: artificats/models
+
+email:
+  emailSender: emailSender
+
+scheduler:
+  scheduler_dir : scheduler
 
 secrets:
   key: DB128%^#*(%$ZXC345

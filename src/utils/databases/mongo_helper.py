@@ -3,9 +3,11 @@ import pandas as pd
 import time
 from src.utils.common.common_helper import read_config
 import os
-
+from loguru import logger
 
 config_args = read_config("config.yaml")
+log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
 class MongoHelper:
@@ -15,10 +17,10 @@ class MongoHelper:
             path = config_args['secrets']['mongo']
             self.client = pymongo.MongoClient(path)
             self.db = self.client['Auto-neuron']
-            print("Mongodb Connection Established")
+            logger.info("Mongodb Connection Established")
         except Exception as e:
-            print('Here')
-            print(e)
+            logger.error(e)
+            return e
         
     def create_new_project(self, collection_name, df):
         """[summary]

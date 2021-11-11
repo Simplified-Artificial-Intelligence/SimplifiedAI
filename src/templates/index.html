@@ -18,20 +18,13 @@
       <div class="card text-white bg-info mb-3" style="max-width: 25rem; min-height:18rem">
         <div class="card-header">{{item[1]}}</div>
         <div class="card-body">
-          {% if item[5]=='I' %}
-            <h5 class="badge badge-warning">{{item[4]}}</h5>
-          {% endif %}
-          {% if item[5]=='E' %}
-            <h5 class="badge badge-primary">{{item[4]}}</h5>
-          {% endif %}
-          {% if item[5]=='D' %}
-            <h5 class="badge badge-danger">{{item[4]}}</h5>
-          {% endif %}
-          {% if item[5]=='F' %}
-            <h5 class="badge badge-secondary">{{item[4]}}</h5>
-          {% endif %}
+          <p>
+            Current Status:  <b class="badge badge-danger">{{item[4]}}</b>
+          </p>
+          <p>Project Type: &nbsp; <b class="badge badge-warning">{{item[8]}}</b></p>
+          <p>Target Column: &nbsp; <b class="badge badge-success">{{item[7]}}</b></p>
           <p class="card-text project-desc" title="{{item[2]}}">{{item[2]}}</p>
-         <a href="/stream/{{item[7]}}"><button type="button" class="btn btn-warning">Continue</button></a>
+         <a href="/stream/{{item[9]}}"><button type="button" class="btn btn-warning">Continue</button></a>
           <div class="float-right">
             <a href="/exportFile/{{item[0]}}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download right-icon-pos pull-right" viewBox="0 0 16 16" style="color: #fff;">
               <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
