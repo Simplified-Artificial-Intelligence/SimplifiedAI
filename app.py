@@ -1394,7 +1394,7 @@ def model_training_post(action):
                                                                         ccp_alpha=ccp_alpha, max_samples=max_samples)
 
                             elif modelName == 'GradientBoostClassifier':
-                                loss = 'deviance'
+                                loss = data.get('loss', 'deviance')
                                 learning_rate = 0.1
                                 n_estimators = 100
                                 subsample = 1.0
@@ -1453,22 +1453,22 @@ def model_training_post(action):
                         try:
                             model = RegressionModels(X_train, X_test, y_train, y_test, path=path)
                             if modelName == "linear":
-                                fit_intercept = True
-                                copy_X = True
-                                n_jobs = None
-                                positive = False
+                                fit_intercept = data.get("fit_intercept", True)
+                                copy_X = data.get("copy_X", True)
+                                n_jobs = np.int(data.get("n_jobs", 1))
+                                positive = data.get("positive", False)
 
                                 result = model.linear_regression_regressor(fit_intercept=fit_intercept, copy_X=copy_X,
                                                                            n_jobs=n_jobs,
                                                                            positive=positive)
                             elif modelName == "ridge":
-                                alpha = 1.0
-                                fit_intercept = True
-                                copy_X = True
-                                max_iter = None
-                                tol = 0.001
-                                solver = 'auto'
-                                positive = False
+                                alpha = float(data.get("alpha", 1.0))
+                                fit_intercept = data.get("fit_intercept", True)
+                                copy_X = data.get("copy_X", True)
+                                max_iter = np.int(data.get("max_iter", None))
+                                tol = float(data.get("tol", 0.001))
+                                solver = data.get("solver", 'auto')
+                                positive = data.get("positive", False)
                                 random_state = None
 
                                 result = model.ridge_regressor(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
@@ -1476,16 +1476,16 @@ def model_training_post(action):
                                                                random_state=random_state)
 
                             elif modelName == "lasso":
-                                alpha = 1.0
-                                fit_intercept = True
-                                precompute = False
-                                copy_X = True
-                                max_iter = 1000
-                                tol = 0.0001
-                                warm_start = False
-                                positive = False
+                                alpha = float(data.get("alpha", 1.0))
+                                fit_intercept = data.get("fit_intercept", True)
+                                precompute = data.get("precompute", True)
+                                copy_X = data.get("copy_X", True)
+                                max_iter = np.int(data.get("max_iter", 1000))
+                                tol = float(data.get("tol", 0.0001))
+                                warm_start = data.get("warm_start", False)
+                                positive =  data.get("positive", False)
                                 random_state = None
-                                selection = 'cyclic'
+                                selection = data.get("selection", 'cyclic')
 
                                 result = model.lasso_regressor(alpha=alpha, fit_intercept=fit_intercept,
                                                                precompute=precompute,
@@ -1495,17 +1495,17 @@ def model_training_post(action):
                                                                random_state=random_state, selection=selection)
 
                             elif modelName == "elastic":
-                                alpha = 1.0
-                                l1_ratio = 0.5
-                                fit_intercept = True
-                                precompute = False
-                                max_iter = 1000
-                                copy_X = True
-                                tol = 0.0001
-                                warm_start = False
-                                positive = False
+                                alpha = float(data.get("alpha", 1.0))
+                                l1_ratio = float(data.get("l1_ratio", 0.5))
+                                fit_intercept = data.get("fit_intercept", True)
+                                precompute = data.get("precompute", True)
+                                max_iter = np.int(data.get("max_iter", 1000))
+                                copy_X = data.get("copy_X", True)
+                                tol = float(data.get("tol", 0.0001))
+                                warm_start = data.get("warm_start", False)
+                                positive = data.get("positive", False)
                                 random_state = None
-                                selection = 'cyclic'
+                                selection = data.get("selection", 'cyclic')
 
                                 result = model.elastic_net_regressor(alpha=alpha, l1_ratio=l1_ratio,
                                                                      fit_intercept=fit_intercept,
@@ -1515,17 +1515,17 @@ def model_training_post(action):
                                                                      positive=positive,
                                                                      random_state=random_state, selection=selection)
                             elif modelName == "decision_tree":
-                                criterion = 'squared_error'
-                                splitter = 'best'
+                                criterion = data.get("criterion", 'mse')
+                                splitter = data.get("splitter", 'best')
                                 max_depth = None
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
+                                min_samples_split = np.int(data.get("min_samples_split", 2))
+                                min_samples_leaf = np.int(data.get("min_samples_leaf", 1))
+                                min_weight_fraction_leaf = data.get("min_weight_fraction_leaf", 0.0)
                                 max_features = None
                                 random_state = None
                                 max_leaf_nodes = None
-                                min_impurity_decrease = 0.0
-                                ccp_alpha = 0.0
+                                min_impurity_decrease = data.get("min_impurity_decrease", 0.0)
+                                ccp_alpha = data.get("ccp_alpha", 0.0)
 
                                 result = model.decision_tree_regressor(criterion=criterion, splitter=splitter,
                                                                        max_depth=max_depth,
@@ -1537,22 +1537,22 @@ def model_training_post(action):
                                                                        min_impurity_decrease=min_impurity_decrease,
                                                                        ccp_alpha=ccp_alpha)
                             elif modelName == "random_forest":
-                                n_estimators = 100
-                                criterion = 'squared_error'
+                                n_estimators = np.int(data.get("n_estimators", 10))
+                                criterion = data.get("criterion", 'mse')
                                 max_depth = None
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
-                                max_features = 'auto'
+                                min_samples_split = np.int(data.get("min_samples_split", 2))
+                                min_samples_leaf = np.int(data.get("min_samples_leaf", 1))
+                                min_weight_fraction_leaf = data.get("min_weight_fraction_leaf", 0.0)
+                                max_features = data.get("max_features", 'auto')
                                 max_leaf_nodes = None
-                                min_impurity_decrease = 0.0
-                                bootstrap = True
-                                oob_score = False
+                                min_impurity_decrease = float(data.get("min_impurity_decrease", 0.0))
+                                bootstrap = data.get("bootstrap", True)
+                                oob_score = data.get("oob_score", False)
                                 n_jobs = None
                                 random_state = None
-                                verbose = 0
-                                warm_start = False
-                                ccp_alpha = 0.0
+                                verbose =  np.int(data.get("verbose", 0))
+                                warm_start = data.get("warm_start", False)
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
                                 max_samples = None
 
                                 result = model.random_forest_regressor(n_estimators=n_estimators, criterion=criterion,
@@ -1570,17 +1570,17 @@ def model_training_post(action):
                                                                        ccp_alpha=ccp_alpha,
                                                                        max_samples=max_samples)
                             elif modelName == "svr":
-                                kernel = 'rbf'
-                                degree = 3
-                                gamma = 'scale'
-                                coef0 = 0.0
-                                tol = 0.001
-                                C = 1.0
-                                epsilon = 0.1
-                                shrinking = True
-                                cache_size = 200
-                                verbose = False
-                                max_iter = - 1
+                                kernel = data.get("kernel", 'rbf')
+                                degree = np.int(data.get("degree", 3))
+                                gamma =  data.get("gamma", 'scale')
+                                coef0 = np.int(data.get("coef0", 0.0))
+                                tol = float(data.get("tol", 0.001))
+                                C = float(data.get("C", 1.0))
+                                epsilon = float(data.get("epsilon", 0.1))
+                                shrinking = data.get("shrinking", True)
+                                cache_size = np.int(data.get("cache_size", 200))
+                                verbose = data.get("verbose", False)
+                                max_iter = np.int(data.get("max_iter", -1))
 
                                 result = model.support_vector_regressor(kernel=kernel, degree=degree, gamma=gamma,
                                                                         coef0=coef0,
@@ -1588,11 +1588,11 @@ def model_training_post(action):
                                                                         epsilon=epsilon,
                                                                         shrinking=shrinking, cache_size=cache_size,
                                                                         verbose=verbose, max_iter=max_iter)
-                            elif modelName == "adr":
-                                base_estimator = None
-                                n_estimators = 50
-                                learning_rate = 1.0
-                                loss = 'linear'
+                            elif modelName == "abr":
+                                base_estimator = data.get("base_estimator", None)
+                                n_estimators = np.int(data.get("n_estimators", 50))
+                                learning_rate = float(data.get("learning_rate", 1.0))
+                                loss = data.get("loss", 'linear')
                                 random_state = None
 
                                 result = model.ada_boost_regressor(base_estimator=base_estimator, n_estimators=n_estimators,
@@ -1600,27 +1600,27 @@ def model_training_post(action):
                                                                    random_state=random_state)
 
                             elif modelName == "gbr":
-                                loss = 'squared_error'
-                                learning_rate = 0.1
-                                n_estimators = 100
-                                subsample = 1.0
-                                criterion = 'friedman_mse'
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
-                                max_depth = 3
-                                min_impurity_decrease = 0.0
+                                loss = data.get("loss", 'squared_error')
+                                learning_rate = float(data.get("learning_rate", 0.1))
+                                n_estimators = np.int(data.get("n_estimators", 100))
+                                subsample = float(data.get("subsample", 1.0))
+                                criterion = data.get("criterion", 'friedman_mse')
+                                min_samples_split = np.int(data.get("min_samples_split", 2))
+                                min_samples_leaf = np.int(data.get("min_samples_leaf", 1))
+                                min_weight_fraction_leaf = data.get("min_weight_fraction_leaf", 0.0)
+                                max_depth = np.int(data.get("max_depth", 3))
+                                min_impurity_decrease = float(data.get("min_impurity_decrease", 0.0))
                                 init = None
                                 random_state = None
                                 max_features = None
-                                alpha = 0.9
-                                verbose = 0
+                                alpha = float(data.get("alpha", 0.9))
+                                verbose = np.int(data.get("verbose", 0))
                                 max_leaf_nodes = None
-                                warm_start = False
-                                validation_fraction = 0.1
+                                warm_start = data.get("warm_start", False)
+                                validation_fraction = float(data.get("validation_fraction", 0.1))
                                 n_iter_no_change = None
-                                tol = 0.0001
-                                ccp_alpha = 0.0
+                                tol = float(data.get("tol", 0.0001))
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
 
                                 result = model.gradient_boosting_regressor(loss=loss, learning_rate=learning_rate,
                                                                            n_estimators=n_estimators,
@@ -1651,27 +1651,27 @@ def model_training_post(action):
                             model = ClusteringModels(X_train, X_test, path=path)
 
                             if modelName == "KMeans":
-                                n_clusters = 8
-                                init = 'k-means++'
-                                n_init = 10
-                                max_iter = 300
-                                tol = 0.0001
-                                verbose = 0
+                                n_clusters = np.int(data.get("n_clusters", 8))
+                                init = data.get("init", 'k-means++')
+                                n_init = np.int(data.get("n_init", 10))
+                                max_iter = np.int(data.get("max_iter", 300))
+                                tol = float(data.get("tol", 0.0001))
+                                verbose = np.int(data.get("verbose", 0))
                                 random_state = None
-                                copy_x = True
-                                algorithm = 'auto'
+                                copy_x = data.get("copy_x", True)
+                                algorithm = data.get("algorithm", 'auto')
 
                                 result = model.kmeans_clustering(n_clusters=n_clusters, init=init, n_init=n_init,
                                                                  max_iter=max_iter, tol=tol,
                                                                  verbose=verbose, random_state=random_state, copy_x=copy_x,
                                                                  algorithm=algorithm)
                             elif modelName == "DBSCAN":
-                                eps = 0.5
-                                min_samples = 5
-                                metric = 'euclidean'
+                                eps = float(data.get("eps", 0.5))
+                                min_samples = np.int(data.get("min_samples", 5))
+                                metric = data.get("metric", 'euclidean')
                                 metric_params = None
-                                algorithm = 'auto'
-                                leaf_size = 30
+                                algorithm = data.get("algorithm", 'auto')
+                                leaf_size = np.int(data.get("leaf_size", 30))
                                 p = None
                                 n_jobs = None
 
@@ -1680,14 +1680,14 @@ def model_training_post(action):
                                                                  algorithm=algorithm, leaf_size=leaf_size, p=p,
                                                                  n_jobs=n_jobs)
                             elif modelName == "AgglomerativeClustering":
-                                n_clusters = 2
-                                affinity = 'euclidean'
+                                n_clusters = np.int(data.get("n_clusters", 2))
+                                affinity = data.get("affinity", 'euclidean')
                                 memory = None
                                 connectivity = None
-                                compute_full_tree = 'auto'
-                                linkage = 'ward'
+                                compute_full_tree = data.get("compute_full_tree", 'auto')
+                                linkage = data.get("linkage", 'ward')
                                 distance_threshold = None
-                                compute_distances = False
+                                compute_distances = data.get("compute_distances", False)
 
                                 result = model.agglomerative_clustering(n_clusters=n_clusters, affinity=affinity,
                                                                         memory=memory,

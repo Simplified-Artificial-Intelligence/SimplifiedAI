@@ -3,18 +3,16 @@ import numpy as np
 from math import floor
 from src.utils.common.common_helper import read_config
 from loguru import logger
-import sys
 import os
-
 """[summary]
 Class for EDA Operations
 Returns:
     [type]: [description]
 """
 
-config_args = read_config(os.path.join(sys.path[1], "config.yaml"))
+config_args = read_config(r"./config.yaml")
 
-log_path = os.path.join(sys.path[1], config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
