@@ -1394,26 +1394,26 @@ def model_training_post(action):
                                                                         ccp_alpha=ccp_alpha, max_samples=max_samples)
 
                             elif modelName == 'GradientBoostClassifier':
-                                loss = 'deviance'
-                                learning_rate = 0.1
-                                n_estimators = 100
-                                subsample = 1.0
+                                loss = data.get("loss",'deviance')
+                                learning_rate = float(data.get("learning_rate", 0.1))
+                                n_estimators = int(data.get("n_estimators", 100))
+                                subsample = float(data.get("subsample", 1.0))
                                 criterion = 'friedman_mse'
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
-                                max_depth = 3
-                                min_impurity_decrease = 0.0
+                                min_samples_split = int(data.get("min_samples_split",2))
+                                min_samples_leaf = int(data.get("min_samples_leaf",1))
+                                min_weight_fraction_leaf = float(data.get("min_weight_fraction_leaf",0.0))
+                                max_depth = int(data.get("max_depth",3))
+                                min_impurity_decrease = float(data.get(0.0))
                                 init = None
                                 random_state = None
                                 max_features = None
-                                verbose = 0
+                                verbose = int(data.get("verbose",0))
                                 max_leaf_nodes = None
                                 warm_start = False
-                                validation_fraction = 0.1
+                                validation_fraction = float(data.get("validation_fraction",0.1))
                                 n_iter_no_change = None
-                                tol = 0.0001
-                                ccp_alpha = float(data.get("ccp_alpha",0.0))
+                                tol = float(data.get("tol", 0.0001))
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
 
                                 result = model.gradient_boosting_classifier(loss=loss, learning_rate=learning_rate,
                                                                             n_estimators=n_estimators,
@@ -1434,11 +1434,11 @@ def model_training_post(action):
                                                                             ccp_alpha=ccp_alpha)
 
                             elif modelName == "AdaBoostClassifier":
-                                base_estimator = None
-                                n_estimators = 50
-                                learning_rate = 1.0
-                                algorithm = 'SAMME.R'
-                                random_state = None
+                                base_estimator = data.get("base_estimator", None)
+                                n_estimators = int(data.get("n_estimators", 50))
+                                learning_rate = float(data.get("learning_rate", 1.0))
+                                algorithm = data.get("algorithm",'SAMME.R')
+                                random_state = int(data.get("random_state", 101))
 
                                 result = model.ada_boost_classifier(base_estimator=base_estimator,
                                                                     n_estimators=n_estimators,
@@ -1738,6 +1738,7 @@ def missing_data():
         df = load_data()
         selected_column = request.json['selected_column']
         method = request.json['method']
+        new_df = None
         if method == 'Mean' or method == 'Median' or method == 'Arbitrary Value' or method == 'Interpolate':
             before = {}
             after = {}
