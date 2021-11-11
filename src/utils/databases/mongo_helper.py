@@ -84,3 +84,18 @@ class MongoHelper:
 
         except Exception as e:
             print(e)
+
+    def drop_collection(self, collection_name):
+        """[summary]
+        Delete Collection from mongo
+        Args:
+            collection_name ([type]): [description]
+        """
+        try:
+            begin = time.time()
+            collection = self.db[collection_name]
+            collection.drop()
+            end = time.time()
+            print(f"Dropped {collection_name} collection from database. Total time taken: {end - begin} seconds.")
+        except Exception as e:
+            print(e)

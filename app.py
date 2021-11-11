@@ -513,6 +513,8 @@ def deleteProject(id):
     if 'loggedin' in session:
         if id:
             mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Id={id}')
+            collection_name = mysql.fetch_one(f'SELECT pid from tblProjects WHERE Id={id}')[0]
+            mongodb.drop_collection(collection_name)
             log.info(log_type='INFO', log_message='Data Successfully Deleted From Database')
             return redirect(url_for('index'))
         else:
