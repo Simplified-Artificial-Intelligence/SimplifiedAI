@@ -305,6 +305,21 @@ def project(df=None, table_name=None):
                         download_status = azure_helper.download_file(container_name, file_name, file_path)
                         print(download_status)
 
+                    if download_status == 'Successful':
+                        timestamp = round(time.time() * 1000)
+                        name = name.replace(" ", "_")
+                        table_name = f"{name}_{timestamp}"
+
+                        if file_path.endswith('.csv'):
+                            df = pd.read_csv(file_path)
+                        elif file_path.endswith('.tsv'):
+                            df = pd.read_csv(file_path, sep='\t')
+                        elif file_path.endswith('.json'):
+                            df = pd.read_json(file_path)
+                        else:
+                            msg = 'This file format is currently not supported'
+                            return render_template('new_project.html', msg=msg)
+
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
 
@@ -410,70 +425,113 @@ def signup():
 @app.route('/exportFile/<id>', methods=['GET'])
 def exportForm(id):
     if 'loggedin' in session:
+        project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Id={id}')
         logger.info('Redirect To Export File Page')
-        return render_template('exportFile.html', data={"id": id})
+        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id})
     else:
         return redirect(url_for('login'))
 
 
-@app.route('/exportFile', methods=['POST'])
-def exportFile():
+@app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
+def exportFile(project_name, project_id):
     try:
+        global download_status
         if 'loggedin' in session:
+            print(project_name)
             logger.info('Export File')
-            fileType = request.form['fileType']
-            filename = get_filename()
+            source_type = request.form['source_type']
 
-            if fileType == 'csv':
-                with open(filename) as fp:
-                    content = fp.read()
-                return Response(
-                    content,
-                    mimetype="text/csv",
-                    headers={"Content-disposition": "attachment; filename=test.csv"})
+            if source_type == 'uploadFile':
+                fileType = request.form['fileType']
+                filename = get_filename()
 
-            elif fileType == 'tsv':
-                filename = filename.rsplit('.', 1)[0]
-                to_tsv()
-                with open(filename + '.tsv') as fp:
-                    content = fp.read()
+                if fileType == 'csv':
+                    with open(filename) as fp:
+                        content = fp.read()
+                    return Response(
+                        content,
+                        mimetype="text/csv",
+                        headers={"Content-disposition": "attachment; filename=test.csv"})
 
-                if os.path.isfile(filename + '.tsv'):
-                    os.remove(filename + '.tsv')
-                else:
-                    print(filename + '.tsv file doesnt exist')
-                return Response(
-                    content,
-                    mimetype="text/csv",
-                    headers={"Content-disposition": "attachment; filename=test.tsv"})
+                elif fileType == 'tsv':
+                    filename = filename.rsplit('.', 1)[0]
+                    to_tsv()
+                    with open(filename + '.tsv') as fp:
+                        content = fp.read()
 
-            elif fileType == 'excel':
-                wb = csv_to_excel()
+                    if os.path.isfile(filename + '.tsv'):
+                        os.remove(filename + '.tsv')
+                    else:
+                        print(filename + '.tsv file doesnt exist')
+                    return Response(
+                        content,
+                        mimetype="text/csv",
+                        headers={"Content-disposition": "attachment; filename=test.tsv"})
 
-                file_stream = BytesIO()
-                wb.save(file_stream)
-                file_stream.seek(0)
+                elif fileType == 'excel':
+                    wb = csv_to_excel()
 
-                filename = filename.rsplit('.', 1)[0]
-                if os.path.isfile(filename + '.xlsx'):
-                    os.remove(filename + '.xlsx')
-                else:
-                    print(filename + '.xlsx file doesnt exist')
+                    file_stream = BytesIO()
+                    wb.save(file_stream)
+                    file_stream.seek(0)
 
-                return send_file(file_stream, attachment_filename="tdd-excel.xlsx", as_attachment=True)
+                    filename = filename.rsplit('.', 1)[0]
+                    if os.path.isfile(filename + '.xlsx'):
+                        os.remove(filename + '.xlsx')
+                    else:
+                        print(filename + '.xlsx file doesnt exist')
 
-            elif fileType == 'json':
-                content = csv_to_json(filename)
-                return Response(
-                    content,
-                    mimetype="text/json",
-                    headers={"Content-disposition": "attachment; filename=test.json"})
+                    return send_file(file_stream, attachment_filename="tdd-excel.xlsx", as_attachment=True)
+
+                elif fileType == 'json':
+                    content = csv_to_json(filename)
+                    return Response(
+                        content,
+                        mimetype="text/json",
+                        headers={"Content-disposition": "attachment; filename=test.json"})
+
+            elif source_type == 'uploadCloud':
+                cloudType = request.form['cloudType']
+
+                if cloudType == 'awsS3bucket':
+                    region_name = request.form['region_name']
+                    aws_access_key_id = request.form['aws_access_key_id']
+                    aws_secret_access_key = request.form['aws_secret_access_key']
+                    bucket_name = request.form['bucket_name']
+                    #file_type = 'none'
+                    aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
+                    conn_msg = aws_s3.check_connection(bucket_name, 'none')
+                    print(conn_msg)
+                    if conn_msg != 'File does not exist!!':
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg=conn_msg)
+
+                    if f'{project_id}.csv' not in os.listdir(os.path.join(os.getcwd(), 'src\data')):
+                        download_status = mongodb.download_collection_data(project_id)
+                        file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
+                    elif f'{project_id}.csv' in os.listdir(os.path.join(os.getcwd(), 'src\data')):
+                        download_status = 'Successful'
+                        file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
+                    else:
+                        render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg="OOPS something went wrong!!")
+
+                    timestamp = round(time.time() * 1000)
+                    upload_status = aws_s3.push_file_to_s3(bucket_name, file_path, f'{project_name}_{timestamp}.csv')
+                    if download_status!= 'Successful' or upload_status != 'Successful':
+                        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg=upload_status)
+
+                    print(f'{project_name}_{timestamp}.csv was pushed to {bucket_name} bucket')
+                    return redirect(url_for('index'))
+
+
+            elif source_type == 'uploadDatabase':
+                return render_template('exportFile.html', data={"project_name": project_name}, msg="database")
 
         else:
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', msg=e.__str__())
+        return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
 
 
 @app.route('/deletePage/<id>', methods=['GET'])

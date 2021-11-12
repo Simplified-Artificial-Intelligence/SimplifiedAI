@@ -52,9 +52,7 @@
             
             <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
             <input type="text" class="form-control awsS3bucket" id="bucket_name" name="bucket_name" placeholder="" required>
-            
-            <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
-            <input type="text" class="form-control awsS3bucket" id="file_name" name="file_name" placeholder="" required>
+
         </div>
     
         <div id="gcpStorage" class="upload-other-resource">
@@ -310,7 +308,7 @@
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/exportFile",
+              url: "/exportProject/{{data.project_name}}/{{data.project_id}}",
               data: data,
               processData: false,
               contentType: false,

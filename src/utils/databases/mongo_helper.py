@@ -85,6 +85,21 @@ class MongoHelper:
         except Exception as e:
             print(e)
 
+    def download_collection_data(self, project_id):
+        try:
+            path = os.path.join(os.path.join('src', 'data'), f"{project_id}.csv")
+            begin = time.time()
+            collection = self.db[project_id]
+            df = pd.DataFrame(list(collection.find()))
+            end = time.time()
+            df.to_csv(path)
+            print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
+            return "Successful"
+
+        except Exception as e:
+            print(e.__str__())
+            return "Unsuccessful"
+
     def drop_collection(self, collection_name):
         """[summary]
         Delete Collection from mongo
