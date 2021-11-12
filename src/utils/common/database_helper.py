@@ -8,11 +8,13 @@ from cassandra.auth import PlainTextAuthProvider
 from src.utils.common.common_helper import read_config
 from loguru import logger
 import os
-
+from from_root import from_root
 config_args = read_config("./config.yaml")
 
-log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
+
+
 class mysql_data_helper:
     def __init__(self, host, port, user, password, database):
         try:
@@ -27,6 +29,7 @@ class mysql_data_helper:
                                                     {self.host}:{self.port}/{self.database}""")
         except Exception as e:
             logger.error(f"{e} occurred in MySQL constructor!")
+
     def connect_todb(self):  
         try:
             self.connection = self.engine.connect()
@@ -309,7 +312,6 @@ class mongo_data_helper:
         except Exception as e:
             logger.error(f"{e} occurred in retrive_dataset!")
 
-
     def push_dataset(self, database_name, collection_name, file):
         try:
             if file.endswith('.csv'):
@@ -362,7 +364,7 @@ class mongo_data_helper:
                 return f"Given {database_name} database does not exist!!"
 
         except Exception as e:
-            print(e)
+            logger.error(f"{e} occurred in check_connection!")
             if "Authentication failed" in e.__str__():
                 return "Provide valid Mongo DB URL"
             else:

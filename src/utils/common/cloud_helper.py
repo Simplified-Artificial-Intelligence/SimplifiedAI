@@ -7,10 +7,10 @@ from google.cloud import storage
 from azure.storage.blob import BlobClient
 from azure.storage.blob import ContainerClient
 from azure.storage.blob import BlobServiceClient
-
+from from_root import from_root
 config_args = read_config("./config.yaml")
 
-log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
@@ -225,7 +225,7 @@ class gcp_browser_storage:
             logger.error(f'{e} occurred in check connection in GCP!')
 
 
-class azure_data_helper():
+class azure_data_helper:
     def __init__(self, connection_string):
         try:
             self.connection_string = connection_string
@@ -276,7 +276,6 @@ class azure_data_helper():
             return 'Successful'
 
         except Exception as e:
-            print(e.__str__())
             if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
                 logger.error('Provide valid azure connection string')
                 return 'Provide valid azure connection string'
@@ -296,7 +295,6 @@ class azure_data_helper():
             return 'Successful'
 
         except Exception as e:
-            print(e.__str__())
             if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
                 logger.error('Provide valid azure connection string')
                 return 'Provide valid azure connection string'
@@ -313,7 +311,6 @@ class azure_data_helper():
             return container_list
 
         except Exception as e:
-            # print(e.__str__())
             if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
                 logger.error('Provide valid azure connection string')
                 return 'Provide valid azure connection string'
@@ -333,7 +330,6 @@ class azure_data_helper():
             return my_blob_list
 
         except Exception as e:
-            print(e.__str__())
             if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
                 logger.error('Provide valid azure connection string')
                 return 'Provide valid azure connection string'
@@ -360,7 +356,6 @@ class azure_data_helper():
                 return f"{container_name} container does not exist!!"
 
         except Exception as e:
-            print(e.__str__())
             if 'Server failed to authenticate' or 'blank or malformed' in e.__str__():
                 logger.error('Provide valid azure connection string')
                 return 'Provide valid azure connection string'
