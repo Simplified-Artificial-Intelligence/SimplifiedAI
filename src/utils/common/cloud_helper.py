@@ -69,7 +69,7 @@ class aws_s3_helper:
     def push_file_to_s3(self, bucket, file, user_project_name):
         try:
             self.s3.Bucket(bucket).upload_file(Filename=file, Key=user_project_name)
-            print(f"{file} uploaded successfully to {bucket}")
+            print(f"{user_project_name} uploaded successfully to {bucket}")
             return 'Successful'
         except Exception as e:
             return e.__str__()

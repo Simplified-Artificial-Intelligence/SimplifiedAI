@@ -15,8 +15,7 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
-from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, to_excel, to_json, \
-    csv_to_excel
+from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, to_excel, to_json, check_file_presence, csv_to_excel
 from src.eda.eda_helper import EDA
 import numpy as np
 import json
@@ -498,7 +497,8 @@ def exportFile(project_name, project_id):
                     aws_access_key_id = request.form['aws_access_key_id']
                     aws_secret_access_key = request.form['aws_secret_access_key']
                     bucket_name = request.form['bucket_name']
-                    #file_type = 'none'
+                    file_type = request.form['fileType']
+
                     aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
                     conn_msg = aws_s3.check_connection(bucket_name, 'none')
                     print(conn_msg)
@@ -506,21 +506,16 @@ def exportFile(project_name, project_id):
                         logger.info(conn_msg)
                         return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg=conn_msg)
 
-                    if f'{project_id}.csv' not in os.listdir(os.path.join(os.getcwd(), 'src\data')):
-                        download_status = mongodb.download_collection_data(project_id)
-                        file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
-                    elif f'{project_id}.csv' in os.listdir(os.path.join(os.getcwd(), 'src\data')):
-                        download_status = 'Successful'
-                        file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
-                    else:
+                    download_status, file_path = mongodb.download_collection_data(project_id, file_type)
+                    print(download_status, file_path)
+                    if download_status != "Successful":
                         render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg="OOPS something went wrong!!")
 
                     timestamp = round(time.time() * 1000)
-                    upload_status = aws_s3.push_file_to_s3(bucket_name, file_path, f'{project_name}_{timestamp}.csv')
-                    if download_status!= 'Successful' or upload_status != 'Successful':
+                    upload_status = aws_s3.push_file_to_s3(bucket_name, file_path, f'{project_name}_{timestamp}.{file_type}')
+                    if upload_status != 'Successful':
                         return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg=upload_status)
 
-                    print(f'{project_name}_{timestamp}.csv was pushed to {bucket_name} bucket')
                     return redirect(url_for('index'))
 
 
