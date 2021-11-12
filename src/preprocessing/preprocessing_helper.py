@@ -9,10 +9,10 @@ from scipy.stats import skew, kurtosis
 from src.utils.common.common_helper import read_config
 from loguru import logger
 import os
-
+from from_root import from_root
 config_args = read_config("./config.yaml")
 
-log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 

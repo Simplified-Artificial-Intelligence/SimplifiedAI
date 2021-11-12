@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, send_file, jsonify
+from flask import Flask, redirect, url_for, render_template, request, session, send_file
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
@@ -7,7 +7,7 @@ from io import BytesIO
 import re
 from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, \
-    OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES, TWO_D_GRAPH_TYPES
+    OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -30,13 +30,13 @@ from src.feature_engineering.feature_engineering_helper import FeatureEngineerin
 from src.routes.routes_api import app_api
 from loguru import logger
 from src.routes.routes_eda import app_eda
-
+from from_root import from_root
 # Yaml Config File
 config_args = read_config("./config.yaml")
 
-log_path = os.path.join(os.getcwd(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
-logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.remove()
+logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 logger.info('Fetching Data from configuration file')
 # SQL Connection code
 host = config_args['secrets']['host']

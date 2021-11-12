@@ -9,10 +9,10 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-
+from from_root import from_root
 config_args = read_config("./config.yaml")
 
-log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
@@ -30,7 +30,7 @@ class ModelTrain_Regression:
 
         try:
             if start:
-                logger.info("Auto Regression training started successfully!")
+                logger.info("Auto Regression training started!")
                 self.linear_regression_()
                 self.Lasso_()
                 self.ridge_()

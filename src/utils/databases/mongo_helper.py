@@ -20,8 +20,7 @@ class MongoHelper:
             logger.info("Mongodb Connection Established")
         except Exception as e:
             logger.error(e)
-            return e
-        
+
     def create_new_project(self, collection_name, df):
         """[summary]
             Create New Project and Upload data
@@ -37,13 +36,13 @@ class MongoHelper:
             self.delete_collection_data(collection_name)
             rec = collection.insert_many(df.to_dict('records'))
             end = time.time()
-            print(f"Your data is uploaded. Total time taken: {end - begin} seconds.")
+            logger.info(f"Your data is uploaded. Total time taken: {end - begin} seconds.")
             
             if rec:
                 return len(rec.inserted_ids)
             return 0
         except Exception as e:
-            print(e)
+            logger.error(e)
         
     def delete_collection_data(self, collection_name):
         """[summary]
@@ -56,9 +55,9 @@ class MongoHelper:
             collection = self.db[collection_name]
             collection.delete_many({})
             end = time.time()  
-            print(f"All records deleted. Total time taken: {end - begin} seconds.")
+            logger.info(f"All records deleted. Total time taken: {end - begin} seconds.")
         except Exception as e:
-            print(e)
+            logger.error(e)
             
     def get_collection_data(self, project_name):
         """[summary]
@@ -79,10 +78,11 @@ class MongoHelper:
                 begin = time.time()
                 collection = self.db[project_name]
                 df = pd.DataFrame(list(collection.find()))
-                end = time.time()  
+                end = time.time()
+                logger.info(f"All records deleted. Total time taken: {end - begin} seconds.")
                 df.to_csv(path)
                 df.to_csv(backup_path)
                 return df
 
         except Exception as e:
-            print(e)
+            logger.error(e)

@@ -12,7 +12,7 @@ import json
 import plotly
 from src.utils.common.common_helper import immutable_multi_dict_to_str
 import os
-
+from from_root import from_root
 
 app_eda = Blueprint('eda', __name__)
 
@@ -53,7 +53,7 @@ def eda(action):
                                                          title='Missing Values')
 
                     data = df.drop('Column', axis=1, inplace=True)
-                    data = df.to_html()
+                    data = data.to_html()
                     return render_template('eda/missing_values.html', action=action, data=data, barplot=graphJSON,
                                            pieplot=pie_graphJSON)
 
@@ -67,7 +67,6 @@ def eda(action):
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method='zscore', action=action,
                                            barplot=graphJSON, pieplot=pie_graphJSON)
-
 
                 elif action == "correlation":
                     ProjectReports.insert_record_eda('Redirect To Correlation')
@@ -101,6 +100,7 @@ def eda_post(action):
         if 'pid' in session:
             df = load_data()
             if df is not None:
+                graphJSON = None
                 if action == "show":
                     range = request.form['range']
                     optradio = request.form['optradio']
@@ -124,8 +124,10 @@ def eda_post(action):
 
                     pr = ProfileReport(df, explorative=True, minimal=True,
                                        correlations={"cramers": {"calculate": False}})
-                    pr.to_file(r'C:\Users\ketan\Desktop\Project\Projectathon\artifacts\test.html')
-                    with open(r'C:\Users\ketan\Desktop\Project\Projectathon\artifacts\test.html') as fp:
+
+                    report_path = os.path.join(from_root(), "artifacts", f"{session.get('id')}_report.html")
+                    pr.to_file(report_path)
+                    with open(report_path) as fp:
                         content = fp.read()
 
                     return Response(

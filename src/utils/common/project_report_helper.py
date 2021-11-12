@@ -1,13 +1,14 @@
 import os
 from src.utils.common.common_helper import read_config
 from loguru import logger
-from flask import Flask, redirect, url_for, render_template, request, session
+from flask import session
 from src.utils.databases.mysql_helper import MySqlHelper
 
 config_args = read_config("./config.yaml")
 
 log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
+
 
 class ProjectReports:    
     @staticmethod
