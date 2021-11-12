@@ -431,9 +431,71 @@ def exportForm(id):
     else:
         return redirect(url_for('login'))
 
+@app.route('/exportFile', methods=['GET', 'POST'])
+def exportFile():
+    try:
+        global download_status
+        if 'loggedin' in session:
+            logger.info('Export File')
+
+            fileType = request.form['fileType']
+            filename = get_filename()
+
+            if fileType == 'csv':
+                with open(filename) as fp:
+                    content = fp.read()
+                return Response(
+                    content,
+                    mimetype="text/csv",
+                    headers={"Content-disposition": "attachment; filename=test.csv"})
+
+            elif fileType == 'tsv':
+                filename = filename.rsplit('.', 1)[0]
+                to_tsv()
+                with open(filename + '.tsv') as fp:
+                    content = fp.read()
+
+                if os.path.isfile(filename + '.tsv'):
+                    os.remove(filename + '.tsv')
+                else:
+                    print(filename + '.tsv file doesnt exist')
+                return Response(
+                    content,
+                    mimetype="text/csv",
+                    headers={"Content-disposition": "attachment; filename=test.tsv"})
+
+            elif fileType == 'excel':
+                wb = csv_to_excel()
+
+                file_stream = BytesIO()
+                wb.save(file_stream)
+                file_stream.seek(0)
+
+                filename = filename.rsplit('.', 1)[0]
+                if os.path.isfile(filename + '.xlsx'):
+                    os.remove(filename + '.xlsx')
+                else:
+                    print(filename + '.xlsx file doesnt exist')
+
+                return send_file(file_stream, attachment_filename="test.xlsx", as_attachment=True)
+
+            elif fileType == 'json':
+                content = csv_to_json(filename)
+                return Response(
+                    content,
+                    mimetype="text/json",
+                    headers={"Content-disposition": "attachment; filename=test.json"})
+
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.info(e)
+        return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
+
+
 
 @app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
-def exportFile(project_name, project_id):
+def exportCloudDatabaseFile(project_name, project_id):
     try:
         global download_status
         if 'loggedin' in session:
@@ -441,56 +503,7 @@ def exportFile(project_name, project_id):
             logger.info('Export File')
             source_type = request.form['source_type']
 
-            if source_type == 'uploadFile':
-                fileType = request.form['fileType']
-                filename = get_filename()
-
-                if fileType == 'csv':
-                    with open(filename) as fp:
-                        content = fp.read()
-                    return Response(
-                        content,
-                        mimetype="text/csv",
-                        headers={"Content-disposition": "attachment; filename=test.csv"})
-
-                elif fileType == 'tsv':
-                    filename = filename.rsplit('.', 1)[0]
-                    to_tsv()
-                    with open(filename + '.tsv') as fp:
-                        content = fp.read()
-
-                    if os.path.isfile(filename + '.tsv'):
-                        os.remove(filename + '.tsv')
-                    else:
-                        print(filename + '.tsv file doesnt exist')
-                    return Response(
-                        content,
-                        mimetype="text/csv",
-                        headers={"Content-disposition": "attachment; filename=test.tsv"})
-
-                elif fileType == 'excel':
-                    wb = csv_to_excel()
-
-                    file_stream = BytesIO()
-                    wb.save(file_stream)
-                    file_stream.seek(0)
-
-                    filename = filename.rsplit('.', 1)[0]
-                    if os.path.isfile(filename + '.xlsx'):
-                        os.remove(filename + '.xlsx')
-                    else:
-                        print(filename + '.xlsx file doesnt exist')
-
-                    return send_file(file_stream, attachment_filename="test.xlsx", as_attachment=True)
-
-                elif fileType == 'json':
-                    content = csv_to_json(filename)
-                    return Response(
-                        content,
-                        mimetype="text/json",
-                        headers={"Content-disposition": "attachment; filename=test.json"})
-
-            elif source_type == 'uploadCloud':
+            if source_type == 'uploadCloud':
                 cloudType = request.form['cloudType']
 
                 if cloudType == 'awsS3bucket':
