@@ -481,7 +481,7 @@ def exportFile(project_name, project_id):
                     else:
                         print(filename + '.xlsx file doesnt exist')
 
-                    return send_file(file_stream, attachment_filename="tdd-excel.xlsx", as_attachment=True)
+                    return send_file(file_stream, attachment_filename="test.xlsx", as_attachment=True)
 
                 elif fileType == 'json':
                     content = csv_to_json(filename)
