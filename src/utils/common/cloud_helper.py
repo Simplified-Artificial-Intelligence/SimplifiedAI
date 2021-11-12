@@ -66,12 +66,13 @@ class aws_s3_helper:
             print(e)
             return False
 
-    def push_file_to_s3(self, bucket, file):
+    def push_file_to_s3(self, bucket, file, user_project_name):
         try:
-            self.s3.Bucket(bucket).upload_file(Filename=file, Key=file)
+            self.s3.Bucket(bucket).upload_file(Filename=file, Key=user_project_name)
+            print(f"{file} uploaded successfully to {bucket}")
+            return 'Successful'
         except Exception as e:
-            return e
-        return f"{file} uploaded successfully to {bucket}"
+            return e.__str__()
 
     def read_file_from_s3(self, bucket, file):
         dataframe = None
