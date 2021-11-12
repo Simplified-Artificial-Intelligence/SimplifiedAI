@@ -87,19 +87,17 @@ class MongoHelper:
 
     def download_collection_data(self, project_id, file_type):
         try:
-            print(file_type)
             path = os.path.join(os.path.join('src', 'temp_data_store'), f"{project_id}.{file_type}")
             begin = time.time()
             collection = self.db[project_id]
             df = pd.DataFrame(list(collection.find()))
-            df.drop(columns='_id')
+            df.drop(columns=df.iloc[:, 0:2].columns, inplace=True)
             end = time.time()
             if file_type == 'csv':
                 df.to_csv(path)
             elif file_type == 'tsv':
                 df.to_csv(path, sep='\t')
             elif file_type == 'json':
-                print(file_type)
                 df.to_json(path)
             elif file_type == 'xlsx':
                 df.to_excel(path)

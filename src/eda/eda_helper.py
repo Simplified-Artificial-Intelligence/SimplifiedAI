@@ -13,6 +13,8 @@ Returns:
 """
 
 print(os.path.join(os.getcwd(), "config.yaml"))
+
+# config_args = read_config(os.path.join(sys.path[0], "config.yaml"))
 config_args = read_config(os.path.join(os.getcwd(), "config.yaml"))
 
 log_path = os.path.join(sys.path[1], config_args['logs']['logger'], config_args['logs']['generallogs_file'])
