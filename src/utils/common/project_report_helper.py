@@ -73,3 +73,19 @@ class ProjectReports:
         # query=f"""Update tblProjects SET Status={moduleId} Where Id={session.get('id')}"""
         # rowcount = mysql.insert_record(query)
         pass
+    
+        """[summary]
+        Method To Add Project Actions Report
+        """
+    @staticmethod
+    def insert_project_action_report(projectActionId, input='', output=''):
+        try:
+            mysql = MySqlHelper.get_connection_obj()
+
+            query = f"""INSERT INTO 
+            tblProject_Actions_Reports(`ProjectId`, `ProjectActionId`, `Input`, `Output`)
+            VALUES ('{session.get('id')}','{projectActionId}','{input}','{output}')"""
+            
+            rowcount = mysql.insert_record(query)
+        except Exception as e:
+            print(e)

@@ -11,7 +11,7 @@
     {% if status=="error" %}
     <div class="alert alert-danger">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <strong>Error!</strong>This Scalling couldn't be performed, please select other options.
+        <strong>Error!</strong>{{msg}}
       </div>
     {% endif %}
     <div class="jumbotron text-center">
@@ -32,7 +32,7 @@
                   </select>
             </div>
         </div>
-        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+        <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
             <div class="form-group">
                 <label for="exampleFormControlSelect1">Select Columns</label>
                 <select class="js-example-basic-multiple form-control" name="columns" id="columns" multiple="multiple">
@@ -41,14 +41,14 @@
                     {% endfor %}
                 </select>
             </div>
-        </div>
-        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+        </div> -->
+        <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
             <div class="form-group">
                 <div class="checkbox" id="">
                     <input type="checkbox" value="" id="selectall"/><label>&nbsp; Select All</label>
                   </div>
                 </div>
-        </div>
+        </div> -->
     </div>
         <div class="row">
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">

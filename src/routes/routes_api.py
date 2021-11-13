@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify,session
 from src.utils.common.data_helper import load_data
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.utils.common.plotly_helper import PlotlyHelper
@@ -9,6 +9,11 @@ import numpy as np
 app_api = Blueprint('api', __name__)
 
 
+"""[summary]
+Api for feature engeenring
+Returns:
+    [type]: [description]
+"""
 @app_api.route('/api/feature_selection', methods=['POST'])
 def fe_feature_selection():
     try:
@@ -144,7 +149,11 @@ def fe_encoding():
     try:
         df = load_data()
         encoding_type = request.json['encoding_type']
-        columns = request.json['columns']
+        columns = df.columns
+        
+        if session['target_column'] is not None:
+            columns = list(df.columns[df.columns != session['target_column']])
+                            
         d = {'success': True}
         df = df.loc[:, columns]
         if encoding_type == "Base N Encoder":

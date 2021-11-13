@@ -1,50 +1,6 @@
 {% extends 'project_base.html' %}
 {% block content %}
 
-<!-- loader section style start-->
-<style>
-    
-    .loader {
-    border: 16px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 16px solid #3498db;
-    width: 120px;
-    height: 120px;
-    -webkit-animation: spin 2s linear infinite; /* Safari */
-    animation: spin 2s linear infinite;
-    position: absolute;
-    top: -1%;
-    left: 50%;
-    }
-    
-    .spinner {
-        width: 100px;
-        height: 100px;
-        display: inline-block;
-        border-width: 5px;
-        border-color: rgba(255, 255, 255, 0.05);
-    border-top-color: #fff;
-    animation: spin 1s infinite linear;
-    border-radius: 100%;
-    border-style: solid;
-}
-
-@keyframes spin {
-    100% {
-        transform: rotate(360deg);
-    }
-        }
-    .show {
-        opacity: 1;
-    }
-    
-    .hide {
-        opacity: 0;
-    }
-    </style>
-
-<!-- loader section style ends-->
-
 <div class="table2">
     <div class="jumbotron text-center">
         <h1>Data Profiling</h1>
@@ -63,14 +19,6 @@
             </div>
         </form>
     </div>
-
-    <!-- loader section markup start -->
-    <div class="load-wrapper" style = "display: none; height: 86%; width: 97%; border-radius: 10px; padding: 0; margin: 0; background-color: rgba(0, 0, 0, 0.5); position: absolute; top: 7%;">
-        <span class="spinner" style = "position: absolute; left: 50%;top: 39%;">
-        </span>
-        <span style = "color:#fff; text-transform: capitalize; position: absolute; left: 18%; top: 23%; font-size: 2rem;"> We generating profile report, please be patient...</span>
-    </div>
-    <!-- loader section ends -->
 
     
     <!-- loader section script start -->

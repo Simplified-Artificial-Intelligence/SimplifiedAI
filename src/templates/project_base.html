@@ -150,14 +150,19 @@
   <div id="content">
     {% block content %}{% endblock %}
 </div>
-    <!-- <div class="overlay show"></div>
-    <div class="spanner show">
-      <div class="loader"></div>
-      <p>Processing Your Data. please be patient.</p>
-    </div> -->
 
 
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+</div>
+    <!-- loader section markup start -->
+    <div class="load-wrapper" style = "z-index: 1100; display: none; height: 86%; width: 100%; border-radius: 10px; padding: 0; margin: 0; background-color: rgba(0, 0, 0, 0.5); position: absolute; top: 7%;">
+      <span class="spinner" style = "position: absolute; left: 50%;top: 39%;">
+      </span>
+      <span style = "color:#fff; text-transform: capitalize; position: absolute; left: 48%; top: 23%; font-size: 2rem;"> Loading...</span>
+  </div>
+  <!-- loader section ends -->
+
+
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script type="text/javascript">
   $(document).ready(function () {
@@ -166,6 +171,55 @@
       });
   });
 </script>
-</div>
+ <script>
+      $(".show-loader").click(function () {
+        $("div.load-wrapper").css('display', 'block');
+    });
+    </script>
+<!-- loader section style start-->
+<style>
+    
+  .loader {
+  z-index: ;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+  position: absolute;
+  top: -1%;
+  left: 50%;
+  }
+  
+  .spinner {
+      width: 100px;
+      height: 100px;
+      display: inline-block;
+      border-width: 5px;
+      border-color: rgba(255, 255, 255, 0.05);
+  border-top-color: #fff;
+  animation: spin 1s infinite linear;
+  border-radius: 100%;
+  border-style: solid;
+}
+
+@keyframes spin {
+  100% {
+      transform: rotate(360deg);
+  }
+      }
+  .show {
+      opacity: 1;
+  }
+  
+  .hide {
+      opacity: 0;
+  }
+  </style>
+
+<!-- loader section style ends-->
+
 </body>
 </html>

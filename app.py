@@ -30,6 +30,8 @@ from src.feature_engineering.feature_engineering_helper import FeatureEngineerin
 from src.routes.routes_api import app_api
 from loguru import logger
 from src.routes.routes_eda import app_eda
+from src.routes.routes_dp import app_dp
+from src.routes.routes_fe import app_fe
 from from_root import from_root
 # Yaml Config File
 config_args = read_config("./config.yaml")
@@ -53,9 +55,12 @@ template_dir = config_args['dir_structure']['template_dir']
 static_dir = config_args['dir_structure']['static_dir']
 
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
-app.register_blueprint(app_api)
 logger.info('App Started')
+
+app.register_blueprint(app_api)
 app.register_blueprint(app_eda)
+app.register_blueprint(app_dp)
+app.register_blueprint(app_fe)
 
 app.secret_key = config_args['secrets']['key']
 app.config["UPLOAD_FOLDER"] = config_args['dir_structure']['upload_folder']
@@ -100,8 +105,6 @@ def index():
         logger.error(e)
 
 
-status = None
-download_status = None
 
 
 @app.route('/project', methods=['GET', 'POST'])
@@ -486,7 +489,10 @@ def renderDeleteProject(id):
 @app.route('/target-column', methods=['GET', 'POST'])
 def setTargetColumn():
     try:
-        if 'loggedin' in session and 'id' in session:
+        if 'loggedin' in session and 'id' in session and session['project_type']!=3 and  session['target_column'] is not None:
+            
+            logger.info('Redirect To Target Column Page')
+            
             df = load_data()
             columns = list(df.columns)
 
@@ -503,6 +509,7 @@ def setTargetColumn():
                 return render_template('target_column.html', columns=columns, status=status)
 
         else:
+            logger.info('Redirect To Home Page')
             return redirect(url_for('/'))
     except Exception as ex:
         pass
@@ -522,7 +529,13 @@ def deleteProject(id):
         logger.info('Login Needed')
         return redirect(url_for('login'))
 
-
+"""[summary]
+Route for logout
+Raises:
+    Exception: [description]
+Returns:
+    [type]: [description]
+"""
 @app.route('/logout', methods=['POST'])
 def logout():
     session.pop('loggedin', None)
@@ -530,10 +543,20 @@ def logout():
     session.pop('username', None)
     session.pop('pid', None)
     session.pop('project_name', None)
+    session.pop('project_type', None)
+    session.pop('target_column', None)
     logger.info('Thanks For Using System!')
     return redirect(url_for('login'))
 
 
+
+"""[summary]
+Entry Point on Any Project when click on project name
+Raises:
+    Exception: [description]
+Returns:
+    [type]: [description]
+"""
 @app.route('/stream/<pid>')
 def stream(pid):
     try:
@@ -542,10 +565,14 @@ def stream(pid):
             values = data.split("&")
             session['pid'] = values[1]
             session['project_name'] = values[0]
-            logger.info(values[0])
-            logger.info(values[1])
+            query_=f"Select ProjectType, TargetColumn from tblProjects  where id={session['pid']}"
+            info = mysql.fetch_one(query_)
+            if info:
+                session['project_type']=info[0]
+                if info[0]!=3:
+                    session['target_column']=info[1]
+                
             mongodb.get_collection_data(values[0])
-            logger.info('inside data')
             return redirect(url_for('module'))
         else:
             return redirect(url_for('/'))
@@ -565,408 +592,6 @@ def module():
     except Exception as e:
         logger.error(e)
 
-
-@app.route('/dp/<action>')
-def data_preprocessing(action):
-    try:
-        if 'pid' in session:
-            df = load_data()
-            if df is not None:
-                if action == "delete-columns":
-                    logger.info('Redirect To Delete Columns!')
-                    return render_template('dp/delete_columns.html', columns=list(df.columns), action=action)
-                elif action == "duplicate-data":
-                    duplicate_data = df[df.duplicated()].head(500)
-                    data = duplicate_data.to_html()
-                    logger.info('Redirect To Handle Duplicate Data!')
-                    return render_template('dp/duplicate.html', columns=list(df.columns), action=action, data=data,
-                                           duplicate_count=len(duplicate_data))
-
-                elif action == "outlier":
-                    logger.info('Redirect To Handler Outlier!')
-                    columns = Preprocessing.col_seperator(df, 'Numerical_columns')
-                    return render_template('dp/outliers.html', columns=columns, action=action)
-
-                elif action == "missing-values":
-                    logger.info('Redirect To Missing-Values!')
-                    columns = list(df.columns)
-                    return render_template('dp/missing_values.html', columns=columns, action=action)
-
-                elif action == "delete-outlier" or action == "remove-duplicate-data":
-                    logger.info('Redirect To Handler Outlier!')
-                    columns = Preprocessing.col_seperator(df, 'Numerical_columns')
-                    return redirect('/dp/outlier')
-
-                elif action == "imbalance-data":
-                    logger.info('Redirect To Handle Imbalance Data!')
-                    columns = list(df.columns)
-                    return render_template('dp/handle_imbalance.html', action=action, columns=columns)
-                else:
-                    return render_template('eda/help.html')
-            else:
-                logger.critical('Data Frame is None')
-
-        else:
-            return redirect(url_for('/'))
-    except Exception as e:
-        logger.error(e)
-
-
-@app.route('/dp/<action>', methods=['POST'])
-def data_preprocessing_post(action):
-    try:
-        if 'pid' in session:
-            df = load_data()
-            if df is not None:
-                if action == "delete-columns":
-                    logger.info('Redirect To Delete Columns!')
-                    columns = request.form.getlist('columns')
-                    df = Preprocessing.delete_col(df, columns)
-                    df = update_data(df)
-                    return render_template('dp/delete_columns.html', columns=list(df.columns), action=action,
-                                           status='success')
-
-                elif action == "duplicate-data":
-                    logger.info('Redirect To Handle Duplicate Data!')
-                    columns = request.form.getlist('columns')
-                    if len(columns) > 0:
-                        df = df[df.duplicated(columns)]
-                    else:
-                        df = df[df.duplicated()]
-                    data = df.head(500).to_html()
-                    return render_template('dp/duplicate.html', columns=list(df.columns), action=action,
-                                           data=data, duplicate_count=len(df), selected_column=','.join(columns))
-
-                elif action == "remove-duplicate-data":
-                    logger.info('Redirect To Handle Duplicate Data POST API')
-                    columns = request.form['selected_column']
-
-                    if len(columns) > 0:
-                        data = df.drop_duplicates(subset=list(columns.split(",")), keep='last')
-                    else:
-                        data = df.drop_duplicates(keep='last')
-
-                    df = update_data(data)
-
-                    duplicate_data = df[df.duplicated()]
-                    data = duplicate_data.head(500).to_html()
-                    return render_template('dp/duplicate.html', columns=list(df.columns), action="duplicate-data",
-                                           data=data,
-                                           duplicate_count=len(duplicate_data), success=True)
-
-                elif action == "outlier":
-                    logger.info('Redirected to outlier POST API')
-                    method = request.form['method']
-                    column = request.form['columns']
-                    lower = 25
-                    upper = 75
-                    graphJSON = ""
-                    pie_graphJSON = ""
-                    columns = Preprocessing.col_seperator(df, 'Numerical_columns')
-                    outliers_list = []
-                    logger.info(f'Method {method}')
-                    logger.info(f'Columns {column}')
-                    if method == "iqr":
-                        # lower = request.form['lower']
-                        # upper = request.form['upper']
-                        result = EDA.outlier_detection_iqr(df.loc[:, [column]], int(lower), int(upper))
-                        if len(result) > 0:
-                            graphJSON = PlotlyHelper.boxplot(df, column)
-                        data = result.to_html()
-
-                        outliers_list = EDA.outlier_detection(list(df.loc[:, column]), 'iqr')
-                        unique_outliers = np.unique(outliers_list)
-                    else:
-                        result = EDA.z_score_outlier_detection(df.loc[:, [column]])
-                        if len(result) > 0:
-                            list_ = list(df[~df.loc[:, column].isnull()][column])
-                            graphJSON = PlotlyHelper.distplot(list_, column)
-                        data = result.to_html()
-
-                        outliers_list = EDA.outlier_detection(list(df.loc[:, column]), 'z-score')
-                        unique_outliers = np.unique(outliers_list)
-
-                    df_outliers = pd.DataFrame(pd.Series(outliers_list).value_counts(), columns=['value']).reset_index(
-                        level=0)
-                    if len(df_outliers) > 0:
-                        pie_graphJSON = PlotlyHelper.pieplot(df_outliers, names='index', values='value',
-                                                             title='Missing Values Count')
-
-                    logger.info('Sending Data on the front end')
-                    return render_template('dp/outliers.html', columns=columns, method=method, selected_column=column,
-                                           outliers_list=outliers_list, unique_outliers=unique_outliers,
-                                           pie_graphJSON=pie_graphJSON,
-                                           action=action, data=data,
-                                           outliercount=result['Total outliers'][0] if len(
-                                               result['Total outliers']) > 0 else 0,
-                                           graphJSON=graphJSON)
-
-                elif action == "missing-values":
-                    logger.info('Redirect To Missing Values POST API!')
-                    if 'method' in request.form:
-                        method = request.form['method']
-                        selected_column = request.form['selected_column']
-                        success = False
-                        logger.info(f'Method {method}')
-                        logger.info(f'Columns {selected_column}')
-                        if method == 'Mean':
-                            df[selected_column] = Preprocessing.fill_numerical(df, 'Mean', [selected_column])
-                        elif method == 'Median':
-                            df[selected_column] = Preprocessing.fill_numerical(df, 'Median', [selected_column])
-                        elif method == 'Arbitrary Value':
-                            df[selected_column] = Preprocessing.fill_numerical(df, 'Median', [selected_column],
-                                                                               request.form['arbitrary'])
-                        elif method == 'Interpolate':
-                            df[selected_column] = Preprocessing.fill_numerical(df, 'Interpolate', [selected_column],
-                                                                               request.form['interpolate'])
-                        elif method == 'Mode':
-                            df[selected_column] = Preprocessing.fill_categorical(df, 'Mode', selected_column)
-                        elif method == 'New Category':
-                            df[selected_column] = Preprocessing.fill_categorical(df, 'New Category', selected_column,
-                                                                                 request.form['newcategory'])
-                        elif method == 'Select Exist':
-                            df[selected_column] = Preprocessing.fill_categorical(df, 'New Category', selected_column,
-                                                                                 request.form['selectcategory'])
-
-                        df = update_data(df)
-                        success = True
-                        columns = list(df.columns)
-                        logger.info('Sending Data on Front End')
-                        return render_template('dp/missing_values.html', columns=columns, action=action,
-                                               success=success)
-                    else:
-                        logger.info('Method is not present in request.form')
-                        columns = list(df.columns)
-                        selected_column = request.form['columns']
-                        data = EDA.missing_cells_table(df.loc[:, [selected_column]])
-                        null_value_count = 0
-                        unique_category = []
-                        outlier_handler_methods = []
-                        if len(data) > 0:
-                            unique_category = list(df[df[selected_column].notna()][selected_column].unique())
-                            null_value_count = data['Missing values'][0]
-                            if df[selected_column].dtype == 'object':
-                                outlier_handler_methods = OBJECT_MISSING_HANDLER
-
-                            else:
-                                outlier_handler_methods = NUMERIC_MISSING_HANDLER
-
-                        data = data.to_html()
-                        logger.info('Sending Data on Front End')
-                        return render_template('dp/missing_values.html', unique_category=unique_category,
-                                               columns=columns, selected_column=selected_column, action=action,
-                                               data=data, null_value_count=null_value_count,
-                                               handler_methods=outlier_handler_methods)
-
-                elif action == "delete-outlier":
-                    logger.info('Delete outlier')
-                    values = request.form.getlist('columns')
-                    selected_column = request.form['selected_column']
-                    columns = Preprocessing.col_seperator(df, 'Numerical_columns')
-                    df = df[~df[selected_column].isin(list(values))]
-                    df = update_data(df)
-                    logger.info('Sending Data on Front End')
-                    return render_template('dp/outliers.html', columns=columns, action="outlier", status="success")
-
-                elif action == "imbalance-data":
-                    logger.info('Redirected to Imbalanced Data')
-                    try:
-                        if 'perform_action' in request.form:
-                            target_column = request.form['target_column']
-                            method = request.form['method']
-                            range = request.form['range']
-                            logger.info(f'{target_column} {method} {range}')
-
-                            if method == 'OS':
-                                new_df = Preprocessing.over_sample(df, target_column, float(range))
-                            elif method == 'US':
-                                new_df = Preprocessing.under_sample(df, target_column, float(range))
-                            else:
-                                new_df = Preprocessing.smote_technique(df, target_column, float(range))
-
-                            df = update_data(new_df)
-                            logger.info('Sending New Data on the front end')
-                            return render_template('dp/handle_imbalance.html', columns=list(df.columns),
-                                                   target_column=target_column, success=True)
-                        else:
-                            logger.info('perform_action was not found on request form')
-                            target_column = request.form['target_column']
-                            df_counts = pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
-                            y = list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
-                            graphJSON = PlotlyHelper.barplot(df_counts, x=target_column, y=y)
-                            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=target_column, values=y, title='')
-
-                            logger.info('Sending Data on Handle Imbalance page')
-                            return render_template('dp/handle_imbalance.html', columns=list(df.columns),
-                                                   target_column=target_column, action="imbalance-data",
-                                                   pie_graphJSON=pie_graphJSON, graphJSON=graphJSON,
-                                                   perform_action=True)
-
-                    except Exception as e:
-                        logger.error(e)
-                        return render_template('dp/handle_imbalance.html', action=action, columns=list(df.columns),
-                                               error=str(e))
-
-
-                else:
-                    return redirect('dp/help.html')
-            else:
-                logger.critical('DataFrame has no Data')
-
-        else:
-            return redirect(url_for('/'))
-    except Exception as e:
-        logger.error(e)
-
-
-@app.route('/fe/<action>', methods=['GET'])
-def feature_engineering(action):
-    try:
-        if 'pid' in session:
-            df = load_data()
-            if df is not None:
-                data = df.head().to_html()
-                if action == 'help':
-                    return render_template('fe/help.html')
-                elif action == 'handle-datatype':
-                    return render_template('fe/handle_datatype.html', action=action,
-                                           columns=df.dtypes.apply(lambda x: x.name).to_dict(),
-                                           supported_dtypes=SUPPORTED_DATA_TYPES)
-                elif action == 'encoding':
-                    return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,
-                                           columns=list(df.columns[df.dtypes == 'object']), action=action)
-                elif action == 'change-column-name':
-                    return render_template('fe/change_column_name.html', columns=list(df.columns), action=action)
-                elif action == 'scaling':
-                    return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,
-                                           columns=list(df.columns[df.dtypes != 'object']))
-                elif action == 'feature_selection':
-                    return render_template('fe/feature_selection.html',
-                                           methods=FEATURE_SELECTION_METHODS_CLASSIFICATION,
-                                           columns_len=df.shape[1] - 1)
-                elif action == 'dimension_reduction':
-                    ### Check this remove target column
-                    data = df.head(200).to_html()
-                    return render_template('fe/dimension_reduction.html', action=action, data=data)
-
-                elif action == 'train_test_split':
-                    return render_template('fe/train_test_split.html', data=data)
-                else:
-                    return 'Non-Implemented Action'
-            else:
-                return 'No Data'
-        else:
-            return redirect(url_for('/'))
-    except Exception as e:
-        print(e)
-
-
-@app.route('/fe/<action>', methods=['POST'])
-def feature_engineering_post(action):
-    try:
-        if 'pid' in session:
-            df = load_data()
-            if df is not None:
-                data = df.head().to_html()
-                if action == 'handle-datatype':
-                    try:
-                        selected_column = request.form['column']
-                        datatype = request.form['datatype']
-                        df = FeatureEngineering.change_data_type(df, selected_column, datatype)
-                        df = update_data(df)
-                        return render_template('fe/handle_datatype.html', status="success", action=action,
-                                               columns=df.dtypes.apply(lambda x: x.name).to_dict(),
-                                               supported_dtypes=SUPPORTED_DATA_TYPES)
-
-                    except Exception as e:
-                        return render_template('fe/handle_datatype.html', status="error", action=action,
-                                               columns=df.dtypes.apply(lambda x: x.name).to_dict(),
-                                               supported_dtypes=SUPPORTED_DATA_TYPES)
-                elif action == 'change-column-name':
-                    try:
-                        selected_column = request.form['selected_column']
-                        column_name = request.form['column_name']
-                        df = FeatureEngineering.change_column_name(df, selected_column, column_name.strip())
-                        df = update_data(df)
-                        return render_template('fe/change_column_name.html', status="success", columns=list(df.columns),
-                                               action=action)
-                    except Exception as e:
-                        return render_template('fe/change_column_name.html', status="error", columns=list(df.columns),
-                                               action=action)
-                elif action == 'encoding':
-                    try:
-                        encoding_type = request.form['encoding_type']
-                        columns = request.form.getlist('columns')
-                        d = {'success': True}
-                        df_ = df.loc[:, columns]
-                        scaling_method = request.form['scaling_method']
-                        if encoding_type == "Base N Encoder":
-                            df_ = FeatureEngineering.encodings(df_, columns, encoding_type,
-                                                               base=int(request.form['base']))
-                        elif encoding_type == "Target Encoder":
-                            df_ = FeatureEngineering.encodings(df_, columns, encoding_type,
-                                                               n_components=request.form['target'])
-                        elif encoding_type == "Hash Encoder":
-                            """This is remaining to handle"""
-                            df_ = FeatureEngineering.encodings(df_, columns, encoding_type,
-                                                               n_components=int(request.form['hash']))
-                        else:
-                            df_ = FeatureEngineering.encodings(df_, columns, encoding_type)
-
-                        df = Preprocessing.delete_col(df, columns)
-                        frames = [df, df_]
-                        df = pd.concat(frames)
-                        df = update_data(df)
-                        return render_template('fe/encoding.html', status="success", encoding_types=ENCODING_TYPES,
-                                               columns=list(df.columns[df.dtypes == 'object']), action=action)
-                    except Exception as e:
-                        return render_template('fe/encoding.html', status="error", encoding_types=ENCODING_TYPES,
-                                               columns=list(df.columns[df.dtypes == 'object']), action=action)
-
-                elif action == 'scaling':
-                    try:
-                        scaling_method = request.form['scaling_method']
-                        columns = request.form.getlist('columns')
-                        if len(columns) <= 0:
-                            raise Exception("Column can not be zero")
-
-                        df[columns] = FeatureEngineering.scaler(df[columns], scaling_method)
-                        df = update_data(df)
-                        return render_template('fe/scaling.html', status="success",
-                                               scaler_types=SUPPORTED_SCALING_TYPES,
-                                               columns=list(df.columns[df.dtypes != 'object']))
-
-                    except:
-                        return render_template('fe/scaling.html', status="error", scaler_types=SUPPORTED_SCALING_TYPES,
-                                               columns=list(df.columns[df.dtypes != 'object']))
-                elif action == 'feature_selection':
-                    return render_template('fe/feature_selection.html', data=data)
-                elif action == 'dimension_reduction':
-                    # Check this remove target column
-                    try:
-                        df_ = df.loc[:, df.columns != 'Label']
-                        no_pca_selected = request.form['range']
-                        df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
-                        df_ = df_[:, :int(no_pca_selected)]
-                        df_evr = pd.DataFrame()
-                        data = pd.DataFrame(df_, columns=[f"Col_{col + 1}" for col in np.arange(0, df_.shape[1])])
-                        data['Label'] = df.loc[:, 'Label']
-                        df = update_data(data)
-                        data = df.head(200).to_html()
-                        return render_template('fe/dimension_reduction.html', status="success", action=action,
-                                               data=data)
-                    except Exception as e:
-                        print(e)
-                        return render_template('fe/dimension_reduction.html', status="error", action=action, data=data)
-                else:
-                    return 'Non-Implemented Action'
-            else:
-                return 'No Data'
-        else:
-            return redirect(url_for('/'))
-
-    except Exception as e:
-        print(e)
 
 
 @app.route('/systemlogs/<action>', methods=['GET'])
