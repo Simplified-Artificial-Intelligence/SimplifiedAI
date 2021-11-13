@@ -369,7 +369,7 @@ class mongo_data_helper:
                     return "Successful"
                 else:
                     self.close_connection(client_cloud)
-                    return f"Given {collection_name} collection does not exits in {database_name} database"
+                    return "collection does not exits!!"
             else:
                 self.close_connection(client_cloud)
                 return f"Given {database_name} database does not exist!!"

@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, send_file
+from flask import Flask, redirect, url_for, render_template, request, session, send_file, flash, get_flashed_messages
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
@@ -504,7 +504,6 @@ def exportCloudDatabaseFile(project_name, project_id):
 
             if source_type == 'uploadCloud':
                 cloudType = request.form['cloudType']
-                print("cloud type", cloudType )
 
                 if cloudType == 'awsS3bucket':
                     region_name = request.form['region_name']
@@ -654,31 +653,28 @@ def exportCloudDatabaseFile(project_name, project_id):
                     print(f'{project_name}_{timestamp} table created in {keyspace} keyspace')
                     return redirect(url_for('index'))
                 
-                elif databaseType == 'mongo':
+                elif databaseType == 'mongodb':
                     mongo_db_url = request.form['mongo_db_url']
                     mongo_database = request.form['mongo_database']
-                    collection = request.form['collection']
-
-                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], (collection + ".csv"))
-
-                    mongo_db = mongo_data_helper(mongo_db_url)
-                    mongo_database = request.form['mongo_database']
-                    conn_msg = mongo_db.check_connection(mongo_database, collection)
-
-                    if conn_msg != 'File does not exist!!':
+                    mongo_helper = mongo_data_helper(mongo_db_url)
+                    conn_msg = mongo_helper.check_connection(mongo_database, 'none')
+                    if conn_msg != "collection does not exits!!":
                         logger.info(conn_msg)
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
-
+                    download_status, file_path = mongodb.download_collection_data(project_id, "csv")
+                    if download_status != "Successful":
+                        render_template('exportFile.html', data={"project_name": project_name,
+                                                                 "project_id": project_id},msg="OOPS something went wrong!!")
                     timestamp = round(time.time() * 1000)
-                    upload_status = mongo_db.push_dataset(mongo_database, collection, file_path)
+                    upload_status = mongo_helper.push_dataset(mongo_database, f'{project_name}_{timestamp}', file_path)
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
 
-                    print(f'{project_name}_{timestamp}.csv was pushed to {collection} collection')
+                    print(f'{project_name}_{timestamp} collection created in {mongo_database} database')
                     return redirect(url_for('index'))
 
         else:
