@@ -100,8 +100,15 @@
                 <label for="container_name" class="col-form-label"><b> Container Name </b></label>
                 <input type="text" class="form-control azureStorage" id="container_name" name="container_name" placeholder="" required>
 
-                <label for="file_name" class="col-form-label"><b> File Name </b></label>
-                <input type="text" class="form-control azureStorage" id="file_name" name="file_name" placeholder="" required>
+                <label for="file_type" class="col-form-label"><b> File Type </b></label>
+                <select class="form-control azureStorage" name="fileTypeAzure" id="fileTypeAzure">
+                    <option value=""> Select any one </option>
+                    <option value="csv"> csv </option>
+                    <option value="tsv"> tsv </option>
+                    <option value="json"> json </option>
+                    <option value="excel"> xlsx </option>
+                </select>
+
             </div>
 
 
