@@ -650,7 +650,7 @@ def model_training(action):
 X_train, X_test, y_train, y_test = None, None, None, None
 
 
-@app.route('/model_training/<action>', methods=['POST'])
+@app.route('/model_training/<action>/<typ>', methods=['POST'])
 def model_training_post(action):
     global X_test
     global X_train
@@ -668,17 +668,13 @@ def model_training_post(action):
                     typ = "Regression"
                     if typ == "Regression":
                         fe = FeatureEngineering()
-                        percent = int(request.form['range'])
-                        target = request.form['columns']
-                        Random_State = int(request.form['Random_State'])
                         df = pd.read_csv(r'AMES_Final_DF.csv')
                         X = df.drop(target, axis=1)
                         y = df[target]
                         X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(cleanedData=X,
                                                                                                label=y,
-                                                                                               test_size=(1 - (
-                                                                                                       percent / 100)),
-                                                                                               random_state=Random_State)
+                                                                                               test_size= 0.25,
+                                                                                               random_state=101)
 
                         X = df.drop(target, axis=1)
                         y = df[target]
