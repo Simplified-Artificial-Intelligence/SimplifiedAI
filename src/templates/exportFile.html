@@ -153,11 +153,11 @@
                 <label for="password" class="col-form-label"><b> Password </b></label>
                 <input type="password" class="form-control mySql" id="password" name="password" placeholder="" required>
 
-                <label for="database" class="col-form-label"><b> Database </b></b></label>
+                <label for="database" class="col-form-label"><b> Database </b></label>
                 <input type="text" class="form-control mySql" id="database" name="database" placeholder="" required>
 
-                <label for="table_name" class="col-form-label"><b> Table name </b></b></label>
-                <input type="text" class="form-control mySql" id="table_name" name="table_name" placeholder="" required>
+                <label for="db_table_name" class="col-form-label"><b> Table name </b></label>
+                <input type="text" class="form-control mySql" id="db_table_name" name="db_table_name" placeholder="" required>
             </div>
 
             <div id="mongodb" class="upload-other-resource">
@@ -200,8 +200,8 @@
       });
 
       var selectedCloudType = "" 
-      $('#cloudType').change(function(e) {   //jQuery Change Function
-        selectedCloudType = $(this).val();                  //Get value from select element
+      $('#cloudType').change(function(e) {   
+        selectedCloudType = $(this).val();                  
         $('.upload-other-resource').each(function(i, obj) {
           if (selectedCloudType === $(this).attr('id') ) {
             $('#' + selectedCloudType).show();
@@ -327,9 +327,9 @@
 
           data.delete("data_in_tabular");
 
-          var object = {};
-          data.forEach((value, key) => object[key] = value);
-          console.log(JSON.stringify(object))
+          // var object = {};
+          // data.forEach((value, key) => object[key] = value);
+          // console.log(JSON.stringify(object))
     
           $.ajax({
               type: "POST",

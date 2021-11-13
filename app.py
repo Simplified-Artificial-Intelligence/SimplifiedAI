@@ -561,7 +561,47 @@ def exportCloudDatabaseFile(project_name, project_id):
 
 
             elif source_type == 'uploadDatabase':
-                return render_template('exportFile.html', data={"project_name": project_name}, msg="database")
+                databaseType = request.form['databaseType']
+
+                if databaseType == 'mySql':
+                    host = request.form['host']
+                    port = request.form['port']
+                    user = request.form['user']
+                    password = request.form['password']
+                    database = request.form['database']
+                    db_table_name = request.form['db_table_name']
+
+                    # file_type = 'none'
+                    mySql = mysql_data_helper(host, port, user, password, database)
+                    conn_msg = mySql.check_connection(db_table_name)
+                    print(conn_msg)
+
+                    if conn_msg != 'File does not exist!!':
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+
+                    if f'{project_id}.csv' not in os.listdir(os.path.join(os.getcwd(), 'src\data')):
+                        download_status = mongodb.download_collection_data(project_id)
+                        file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
+                    elif f'{project_id}.csv' in os.listdir(os.path.join(os.getcwd(), 'src\data')):
+                        download_status = 'Successful'
+                        file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
+                    else:
+                        render_template('exportFile.html',
+                                        data={"project_name": project_name, "project_id": project_id},
+                                        msg="OOPS something went wrong!!")
+
+                    timestamp = round(time.time() * 1000)
+                    upload_status = mySql.push_file_to_table(f'{project_name}_{timestamp}.csv', db_table_name)
+                    if download_status != 'Successful' or upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+
+                    print(f'{project_name}_{timestamp}.csv was pushed to {db_table_name} table')
+                    return redirect(url_for('index'))
 
         else:
             return redirect(url_for('login'))
