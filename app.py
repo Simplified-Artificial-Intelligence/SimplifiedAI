@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, send_file, jsonify
+from flask import Flask, redirect, url_for, render_template, request, session, send_file
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
@@ -7,7 +7,7 @@ from io import BytesIO
 import re
 from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, \
-    OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES, TWO_D_GRAPH_TYPES
+    OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -15,34 +15,29 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
+
 from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, to_excel, to_json, check_file_presence, csv_to_excel
 from src.eda.eda_helper import EDA
 import numpy as np
 import json
-import plotly
-import plotly.figure_factory as ff
-from pandas_profiling import ProfileReport
 from src.utils.common.plotly_helper import PlotlyHelper
-from src.utils.common.project_report_helper import ProjectReports
-from src.utils.common.common_helper import immutable_multi_dict_to_str
 
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
 from src.utils.common.cloud_helper import azure_data_helper
 from src.utils.common.database_helper import mysql_data_helper, mongo_data_helper
 from src.utils.common.database_helper import cassandra_connector
-from src.model.auto.Auto_regression import ModelTrain_Regression
-from sklearn.preprocessing import StandardScaler
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.routes.routes_api import app_api
 from loguru import logger
-
+from src.routes.routes_eda import app_eda
+from from_root import from_root
 # Yaml Config File
 config_args = read_config("./config.yaml")
 
-log_path = os.path.join(os.getcwd(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+logger.remove()
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
-
 logger.info('Fetching Data from configuration file')
 # SQL Connection code
 host = config_args['secrets']['host']
@@ -61,6 +56,7 @@ static_dir = config_args['dir_structure']['static_dir']
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
 app.register_blueprint(app_api)
 logger.info('App Started')
+app.register_blueprint(app_eda)
 
 app.secret_key = config_args['secrets']['key']
 app.config["UPLOAD_FOLDER"] = config_args['dir_structure']['upload_folder']
@@ -81,10 +77,13 @@ def index():
     try:
         if 'loggedin' in session:
             query = f'''
-            select tp.Id,tp.Name,tp.Description,tp.Cassandra_Table_Name,ts.Name,ts.Indetifier,tp.Pid
+            select tp.Id,tp.Name,tp.Description,tp.Cassandra_Table_Name,
+            ts.Name,ts.Indetifier,tp.Pid,tp.TargetColumn,tpy.Name
             from tblProjects as tp
+            join tblProjectType as tpy
+                on tpy.Id=tp.ProjecTtype
             join tblProjectStatus as ts
-            on ts.Id=tp.Status
+                on ts.Id=tp.Status
             where tp.UserId={session.get('id')} and tp.IsActive=1
             order by 1 desc;'''
 
@@ -118,6 +117,7 @@ def project(df=None, table_name=None):
                 if source_type == 'uploadFile':
                     name = request.form['project_name']
                     description = request.form['project_desc']
+                    project_type = request.form['project_type']
                     print(source_type, name, description)
                     if len(request.files) > 0:
                         f = request.files['file']
@@ -162,8 +162,8 @@ def project(df=None, table_name=None):
                         userId = session.get('id')
                         status = 1
                         query = f"""INSERT INTO tblProjects (UserId, Name, Description, Status, 
-                       Cassandra_Table_Name,Pid) VALUES
-                       ("{userId}", "{name}", "{description}", "1", "{table_name}","{project_id}")"""
+                       Cassandra_Table_Name,Pid,ProjectType) VALUES
+                       ("{userId}", "{name}", "{description}", "1", "{table_name}","{project_id}","{project_type}")"""
 
                         rowcount = mysql.insert_record(query)
                         if rowcount > 0:
@@ -617,6 +617,31 @@ def renderDeleteProject(id):
         return redirect(url_for('login'))
 
 
+@app.route('/target-column', methods=['GET', 'POST'])
+def setTargetColumn():
+    try:
+        if 'loggedin' in session and 'id' in session:
+            df = load_data()
+            columns = list(df.columns)
+
+            if request.method == "GET":
+                #log.info(log_type='ACTION', log_message='Redirect To Set Target Column Page')
+                return render_template('target_column.html', columns=columns)
+            else:
+                status = "error"
+                id = session.get('pid')
+                target_column = request.form['column']
+                #log.info(log_type='Target Column', log_message=f'Selected Target columns Is {target_column}')
+                rows_count = mysql.delete_record(f'UPDATE tblProjects SET TargetColumn="{target_column}" WHERE Id={id}')
+                status = "success"
+                return render_template('target_column.html', columns=columns, status=status)
+
+        else:
+            return redirect(url_for('/'))
+    except Exception as ex:
+        pass
+
+
 @app.route('/deleteProject/<id>', methods=['GET'])
 def deleteProject(id):
     if 'loggedin' in session:
@@ -676,214 +701,6 @@ def module():
             logger.info('Redirected to login')
             return redirect(url_for('/'))
     except Exception as e:
-        logger.error(e)
-
-
-@app.route('/eda/<action>')
-def eda(action):
-    try:
-        if 'pid' in session:
-            df = load_data()
-            if df is not None:
-                if action == "5point":
-                    ProjectReports.insert_record_eda('5 Points Summary')
-                    logger.info('Redirect To Eda Data summary')
-                    summary = EDA.five_point_summary(df)
-                    data = summary.to_html()
-                    return render_template('eda/5point.html', data=data)
-                elif action == "profiler":
-                    ProjectReports.insert_record_eda('Profiler')
-                    logger.info('Redirect To Eda Show Dataset!')
-                    pr = ProfileReport(df, explorative=True, minimal=True,
-                                       correlations={"cramers": {"calculate": False}})
-                    pr.to_widgets()
-                    pr.to_file("your_report.html")
-                elif action == "show":
-                    ProjectReports.insert_record_eda('Show Dataset')
-                    logger.info('Redirect To Eda Show Dataset!')
-                    data = EDA.get_no_records(df, 100)
-                    data = data.to_html()
-                    topselected = True
-                    bottomSelected = False
-                    selectedCount = 100
-                    return render_template('eda/showdataset.html', data=data, length=len(df),
-                                           bottomSelected=bottomSelected, topselected=topselected, action=action,
-                                           selectedCount=selectedCount, columns=df.columns)
-                elif action == "missing":
-                    ProjectReports.insert_record_eda('Missing Value')
-                    logger.info('Redirect To Eda Show Dataset!')
-                    df = EDA.missing_cells_table(df)
-                    graphJSON = PlotlyHelper.barplot(df, x='Column', y='Missing values')
-                    pie_graphJSON = PlotlyHelper.pieplot(df, names='Column', values='Missing values',
-                                                         title='Missing Values')
-
-                    data = df.drop('Column', axis=1, inplace=True)
-                    data = df.to_html()
-                    return render_template('eda/missing_values.html', action=action, data=data, barplot=graphJSON,
-                                           pieplot=pie_graphJSON)
-
-                elif action == "outlier":
-                    ProjectReports.insert_record_eda('Outlier')
-                    logger.info('Redirect To outlier')
-                    df = EDA.z_score_outlier_detection(df)
-                    graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
-                    pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[:10, :], names='Features',
-                        values='Total outliers', title='Top 10 Outliers')
-                    data = df.to_html()
-                    logger.info('Showing data on outlier page')
-                    return render_template('eda/outliers.html', data=data, method='zscore', action=action,
-                                           barplot=graphJSON, pieplot=pie_graphJSON)
-
-                elif action == "correlation":
-                    ProjectReports.insert_record_eda('Correlation')
-                    pearson_corr = EDA.correlation_report(df, 'pearson')
-                    persion_data = list(np.around(np.array(pearson_corr.values), 2))
-                    fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
-                                                      y=list(pearson_corr.columns), colorscale='Viridis')
-                    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                    logger.info('Showing data on correlation page')
-                    return render_template('eda/correlation.html', data=graphJSON, columns=list(pearson_corr.columns),
-                                           action=action, method='pearson')
-
-                elif action == "plots":
-                    ProjectReports.insert_record_eda('Plots')
-                    logger.info('Redirected to Plots')
-                    return render_template('eda/plots.html', columns=list(df.columns),
-                                           graphs_2d=TWO_D_GRAPH_TYPES, action=action, x_column="", y_column="")
-                else:
-                    logger.info('Showing EDA help')
-                    return render_template('eda/help.html')
-            else:
-                logger.info('Data frame is None')
-                return None
-
-        else:
-            return redirect(url_for('/'))
-    except Exception as e:
-        ProjectReports.insert_record_eda(e)
-        logger.error(e)
-
-
-@app.route('/eda/<action>', methods=['POST'])
-def eda_post(action):
-    try:
-        if 'pid' in session:
-            df = load_data()
-            if df is not None:
-                if action == "show":
-                    logger.info('Redirect To Eda Show Dataset!')
-                    range = request.form['range']
-                    optradio = request.form['optradio']
-                    columns_for_list = df.columns
-                    columns = request.form.getlist('columns')
-                    input_str = immutable_multi_dict_to_str(request.form)
-                    ProjectReports.insert_record_eda('Show', input=input_str)
-
-                    if len(columns) > 0:
-                        df = df.loc[:, columns]
-
-                    data = EDA.get_no_records(df, int(range), optradio)
-                    data = data.to_html()
-                    topselected = True if optradio == 'top' else False
-                    bottomSelected = True if optradio == 'bottom' else False
-                    logger.info('Sending Data on front end')
-                    return render_template('eda/showdataset.html', data=data, length=len(df),
-                                           bottomSelected=bottomSelected, topselected=topselected, action=action,
-                                           selectedCount=range, columns=columns_for_list)
-                elif action == "correlation":
-                    logger.info('Redirect To correlation')
-                    method = request.form['method']
-                    columns = request.form.getlist('columns')
-
-                    input_str = immutable_multi_dict_to_str(request.form)
-                    ProjectReports.insert_record_eda('Correlation', input=input_str)
-
-                    if method is not None:
-                        # df=df.loc[:,columns]
-                        _corr = EDA.correlation_report(df, method)
-                        if len(columns) == 0:
-                            columns = _corr.columns
-
-                        _corr = _corr.loc[:, columns]
-                        _data = list(np.around(np.array(_corr.values), 2))
-                        fig = ff.create_annotated_heatmap(_data, x=list(_corr.columns),
-                                                          y=list(_corr.index), colorscale='Viridis')
-                        # fig = ff.create_annotated_heatmap(_data, colorscale='Viridis')
-                        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                        logger.info('Sending Data on front end')
-                        return render_template('eda/correlation.html', data=graphJSON,
-                                               columns=list(df.columns), action=action, method=method)
-                    else:
-                        return render_template('eda/help.html')
-
-                elif action == "outlier":
-                    logger.info('Redirected to outlier page')
-                    method = request.form['method']
-                    lower = 25
-                    upper = 75
-                    if method == "iqr":
-                        lower = request.form['lower']
-                        upper = request.form['upper']
-                        df = EDA.outlier_detection_iqr(df, int(lower), int(upper))
-                    else:
-                        df = EDA.z_score_outlier_detection(df)
-
-                    input_str = immutable_multi_dict_to_str(request.form)
-                    ProjectReports.insert_record_eda('Outlier', input=input_str)
-
-                    graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
-                    pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[:9, :], names='Features',
-                        values='Total outliers', title='Top 10 Outliers')
-                    data = df.to_html()
-                    logger.info('Sending Data on the front end')
-                    return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
-                                           upper=upper, barplot=graphJSON, pieplot=pie_graphJSON)
-
-                elif action == "plots":
-                    logger.info('Redirected to Plots')
-                    selected_graph_type = request.form['graph']
-                    x_column = request.form['xcolumn']
-                    y_column = request.form['ycolumn']
-                    input_str = immutable_multi_dict_to_str(request.form)
-                    ProjectReports.insert_record_eda('Plot', input=input_str)
-
-                    if selected_graph_type == "Scatter Plot":
-                        graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
-                        logger.info('Displaying scatter plot')
-
-                    elif selected_graph_type == "Pie Chart":
-                        graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
-                        logger.info('Displaying pie Chart')
-
-                    elif selected_graph_type == "Bar Graph":
-                        graphJSON = PlotlyHelper.barplot(df, x=x_column, y=y_column)
-                        logger.info('Displaying Bar Graph')
-
-                    elif selected_graph_type == "Histogram":
-                        graphJSON = PlotlyHelper.histogram(df, x=x_column, y=y_column)
-                        logger.info('Displaying Histogram')
-
-                    elif selected_graph_type == "Line Chart":
-                        graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
-                        logger.info('Displaying Line Chart')
-
-                    logger.info('Loading plot on front end')
-                    return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
-                                           columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
-                                           action=action, graphJSON=graphJSON, x_column=x_column, y_column=y_column)
-
-                else:
-                    logger.info('Redirected to help page')
-                    return render_template('eda/help.html')
-            else:
-                logger.info('Data frame is None')
-
-        else:
-            return redirect(url_for('/'))
-    except Exception as e:
-        ProjectReports.insert_record_eda(e)
         logger.error(e)
 
 
@@ -1372,7 +1189,8 @@ def model_training_post(action):
                         y = df[target]
                         X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(cleanedData=X,
                                                                                                label=y,
-                                                                                               test_size=(1 - ( percent / 100)),
+                                                                                               test_size=(1 - (
+                                                                                                       percent / 100)),
                                                                                                random_state=Random_State)
 
                         X = df.drop(target, axis=1)
@@ -1500,18 +1318,18 @@ def model_training_post(action):
                                 max_depth = None
                                 min_samples_split = int(data.get("min_samples_split", 2))
                                 min_samples_leaf = int(data.get("min_samples_leaf", 1))
-                                min_weight_fraction_leaf = float(data.get("min_weight_fraction_leaf",0.0))
-                                max_features = data.get("max_features",'auto')
+                                min_weight_fraction_leaf = float(data.get("min_weight_fraction_leaf", 0.0))
+                                max_features = data.get("max_features", 'auto')
                                 max_leaf_nodes = None
                                 min_impurity_decrease = float(data.get("min_impurity_decrease", 0.0))
-                                bootstrap = bool(data.get("bootstrap",True))
+                                bootstrap = bool(data.get("bootstrap", True))
                                 oob_score = False,
                                 n_jobs = None
                                 random_state = None
-                                verbose = int(data.get("verbose",0))
+                                verbose = int(data.get("verbose", 0))
                                 warm_start = False
                                 class_weight = None
-                                ccp_alpha = float(data.get("ccp_alpha",0.0))
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
                                 max_samples = None
 
                                 result = model.random_forest_classifier(n_estimators=n_estimators, criterion=criterion,
@@ -1530,26 +1348,26 @@ def model_training_post(action):
                                                                         ccp_alpha=ccp_alpha, max_samples=max_samples)
 
                             elif modelName == 'GradientBoostClassifier':
-                                loss = 'deviance'
-                                learning_rate = 0.1
-                                n_estimators = 100
-                                subsample = 1.0
+                                loss = data.get("loss", 'deviance')
+                                learning_rate = float(data.get("learning_rate", 0.1))
+                                n_estimators = int(data.get("n_estimators", 100))
+                                subsample = float(data.get("subsample", 1.0))
                                 criterion = 'friedman_mse'
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
-                                max_depth = 3
-                                min_impurity_decrease = 0.0
+                                min_samples_split = int(data.get("min_samples_split", 2))
+                                min_samples_leaf = int(data.get("min_samples_leaf", 1))
+                                min_weight_fraction_leaf = float(data.get("min_weight_fraction_leaf", 0.0))
+                                max_depth = int(data.get("max_depth", 3))
+                                min_impurity_decrease = float(data.get(0.0))
                                 init = None
                                 random_state = None
                                 max_features = None
-                                verbose = 0
+                                verbose = int(data.get("verbose", 0))
                                 max_leaf_nodes = None
                                 warm_start = False
-                                validation_fraction = 0.1
+                                validation_fraction = float(data.get("validation_fraction", 0.1))
                                 n_iter_no_change = None
-                                tol = 0.0001
-                                ccp_alpha = float(data.get("ccp_alpha",0.0))
+                                tol = float(data.get("tol", 0.0001))
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
 
                                 result = model.gradient_boosting_classifier(loss=loss, learning_rate=learning_rate,
                                                                             n_estimators=n_estimators,
@@ -1570,11 +1388,11 @@ def model_training_post(action):
                                                                             ccp_alpha=ccp_alpha)
 
                             elif modelName == "AdaBoostClassifier":
-                                base_estimator = None
-                                n_estimators = 50
-                                learning_rate = 1.0
-                                algorithm = 'SAMME.R'
-                                random_state = None
+                                base_estimator = data.get("base_estimator", None)
+                                n_estimators = int(data.get("n_estimators", 50))
+                                learning_rate = float(data.get("learning_rate", 1.0))
+                                algorithm = data.get("algorithm", 'SAMME.R')
+                                random_state = int(data.get("random_state", 101))
 
                                 result = model.ada_boost_classifier(base_estimator=base_estimator,
                                                                     n_estimators=n_estimators,
@@ -1589,39 +1407,40 @@ def model_training_post(action):
                         try:
                             model = RegressionModels(X_train, X_test, y_train, y_test, path=path)
                             if modelName == "linear":
-                                fit_intercept = True
-                                copy_X = True
-                                n_jobs = None
-                                positive = False
+                                fit_intercept = data.get("fit_intercept", True)
+                                copy_X = data.get("copy_X", True)
+                                n_jobs = np.int(data.get("n_jobs", 1))
+                                positive = data.get("positive", False)
 
                                 result = model.linear_regression_regressor(fit_intercept=fit_intercept, copy_X=copy_X,
                                                                            n_jobs=n_jobs,
                                                                            positive=positive)
                             elif modelName == "ridge":
-                                alpha = 1.0
-                                fit_intercept = True
-                                copy_X = True
-                                max_iter = None
-                                tol = 0.001
-                                solver = 'auto'
-                                positive = False
+                                alpha = float(data.get("alpha", 1.0))
+                                fit_intercept = data.get("fit_intercept", True)
+                                copy_X = data.get("copy_X", True)
+                                max_iter = np.int(data.get("max_iter", None))
+                                tol = float(data.get("tol", 0.001))
+                                solver = data.get("solver", 'auto')
+                                positive = data.get("positive", False)
                                 random_state = None
 
                                 result = model.ridge_regressor(alpha=alpha, fit_intercept=fit_intercept, copy_X=copy_X,
-                                                               max_iter=max_iter, tol=tol, solver=solver, positive=positive,
+                                                               max_iter=max_iter, tol=tol, solver=solver,
+                                                               positive=positive,
                                                                random_state=random_state)
 
                             elif modelName == "lasso":
-                                alpha = 1.0
-                                fit_intercept = True
-                                precompute = False
-                                copy_X = True
-                                max_iter = 1000
-                                tol = 0.0001
-                                warm_start = False
-                                positive = False
+                                alpha = float(data.get("alpha", 1.0))
+                                fit_intercept = data.get("fit_intercept", True)
+                                precompute = data.get("precompute", True)
+                                copy_X = data.get("copy_X", True)
+                                max_iter = np.int(data.get("max_iter", 1000))
+                                tol = float(data.get("tol", 0.0001))
+                                warm_start = data.get("warm_start", False)
+                                positive = data.get("positive", False)
                                 random_state = None
-                                selection = 'cyclic'
+                                selection = data.get("selection", 'cyclic')
 
                                 result = model.lasso_regressor(alpha=alpha, fit_intercept=fit_intercept,
                                                                precompute=precompute,
@@ -1631,17 +1450,17 @@ def model_training_post(action):
                                                                random_state=random_state, selection=selection)
 
                             elif modelName == "elastic":
-                                alpha = 1.0
-                                l1_ratio = 0.5
-                                fit_intercept = True
-                                precompute = False
-                                max_iter = 1000
-                                copy_X = True
-                                tol = 0.0001
-                                warm_start = False
-                                positive = False
+                                alpha = float(data.get("alpha", 1.0))
+                                l1_ratio = float(data.get("l1_ratio", 0.5))
+                                fit_intercept = data.get("fit_intercept", True)
+                                precompute = data.get("precompute", True)
+                                max_iter = np.int(data.get("max_iter", 1000))
+                                copy_X = data.get("copy_X", True)
+                                tol = float(data.get("tol", 0.0001))
+                                warm_start = data.get("warm_start", False)
+                                positive = data.get("positive", False)
                                 random_state = None
-                                selection = 'cyclic'
+                                selection = data.get("selection", 'cyclic')
 
                                 result = model.elastic_net_regressor(alpha=alpha, l1_ratio=l1_ratio,
                                                                      fit_intercept=fit_intercept,
@@ -1651,44 +1470,45 @@ def model_training_post(action):
                                                                      positive=positive,
                                                                      random_state=random_state, selection=selection)
                             elif modelName == "decision_tree":
-                                criterion = 'squared_error'
-                                splitter = 'best'
+                                criterion = data.get("criterion", 'mse')
+                                splitter = data.get("splitter", 'best')
                                 max_depth = None
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
+                                min_samples_split = np.int(data.get("min_samples_split", 2))
+                                min_samples_leaf = np.int(data.get("min_samples_leaf", 1))
+                                min_weight_fraction_leaf = data.get("min_weight_fraction_leaf", 0.0)
                                 max_features = None
                                 random_state = None
                                 max_leaf_nodes = None
-                                min_impurity_decrease = 0.0
-                                ccp_alpha = 0.0
+                                min_impurity_decrease = data.get("min_impurity_decrease", 0.0)
+                                ccp_alpha = data.get("ccp_alpha", 0.0)
 
                                 result = model.decision_tree_regressor(criterion=criterion, splitter=splitter,
                                                                        max_depth=max_depth,
                                                                        min_samples_split=min_samples_split,
                                                                        min_samples_leaf=min_samples_leaf,
                                                                        min_weight_fraction_leaf=min_weight_fraction_leaf,
-                                                                       max_features=max_features, random_state=random_state,
+                                                                       max_features=max_features,
+                                                                       random_state=random_state,
                                                                        max_leaf_nodes=max_leaf_nodes,
                                                                        min_impurity_decrease=min_impurity_decrease,
                                                                        ccp_alpha=ccp_alpha)
                             elif modelName == "random_forest":
-                                n_estimators = 100
-                                criterion = 'squared_error'
+                                n_estimators = np.int(data.get("n_estimators", 10))
+                                criterion = data.get("criterion", 'mse')
                                 max_depth = None
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
-                                max_features = 'auto'
+                                min_samples_split = np.int(data.get("min_samples_split", 2))
+                                min_samples_leaf = np.int(data.get("min_samples_leaf", 1))
+                                min_weight_fraction_leaf = data.get("min_weight_fraction_leaf", 0.0)
+                                max_features = data.get("max_features", 'auto')
                                 max_leaf_nodes = None
-                                min_impurity_decrease = 0.0
-                                bootstrap = True
-                                oob_score = False
+                                min_impurity_decrease = float(data.get("min_impurity_decrease", 0.0))
+                                bootstrap = data.get("bootstrap", True)
+                                oob_score = data.get("oob_score", False)
                                 n_jobs = None
                                 random_state = None
-                                verbose = 0
-                                warm_start = False
-                                ccp_alpha = 0.0
+                                verbose = np.int(data.get("verbose", 0))
+                                warm_start = data.get("warm_start", False)
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
                                 max_samples = None
 
                                 result = model.random_forest_regressor(n_estimators=n_estimators, criterion=criterion,
@@ -1706,17 +1526,17 @@ def model_training_post(action):
                                                                        ccp_alpha=ccp_alpha,
                                                                        max_samples=max_samples)
                             elif modelName == "svr":
-                                kernel = 'rbf'
-                                degree = 3
-                                gamma = 'scale'
-                                coef0 = 0.0
-                                tol = 0.001
-                                C = 1.0
-                                epsilon = 0.1
-                                shrinking = True
-                                cache_size = 200
-                                verbose = False
-                                max_iter = - 1
+                                kernel = data.get("kernel", 'rbf')
+                                degree = np.int(data.get("degree", 3))
+                                gamma = data.get("gamma", 'scale')
+                                coef0 = np.int(data.get("coef0", 0.0))
+                                tol = float(data.get("tol", 0.001))
+                                C = float(data.get("C", 1.0))
+                                epsilon = float(data.get("epsilon", 0.1))
+                                shrinking = data.get("shrinking", True)
+                                cache_size = np.int(data.get("cache_size", 200))
+                                verbose = data.get("verbose", False)
+                                max_iter = np.int(data.get("max_iter", -1))
 
                                 result = model.support_vector_regressor(kernel=kernel, degree=degree, gamma=gamma,
                                                                         coef0=coef0,
@@ -1724,39 +1544,40 @@ def model_training_post(action):
                                                                         epsilon=epsilon,
                                                                         shrinking=shrinking, cache_size=cache_size,
                                                                         verbose=verbose, max_iter=max_iter)
-                            elif modelName == "adr":
-                                base_estimator = None
-                                n_estimators = 50
-                                learning_rate = 1.0
-                                loss = 'linear'
+                            elif modelName == "abr":
+                                base_estimator = data.get("base_estimator", None)
+                                n_estimators = np.int(data.get("n_estimators", 50))
+                                learning_rate = float(data.get("learning_rate", 1.0))
+                                loss = data.get("loss", 'linear')
                                 random_state = None
 
-                                result = model.ada_boost_regressor(base_estimator=base_estimator, n_estimators=n_estimators,
+                                result = model.ada_boost_regressor(base_estimator=base_estimator,
+                                                                   n_estimators=n_estimators,
                                                                    learning_rate=learning_rate, loss=loss,
                                                                    random_state=random_state)
 
                             elif modelName == "gbr":
-                                loss = 'squared_error'
-                                learning_rate = 0.1
-                                n_estimators = 100
-                                subsample = 1.0
-                                criterion = 'friedman_mse'
-                                min_samples_split = 2
-                                min_samples_leaf = 1
-                                min_weight_fraction_leaf = 0.0
-                                max_depth = 3
-                                min_impurity_decrease = 0.0
+                                loss = data.get("loss", 'squared_error')
+                                learning_rate = float(data.get("learning_rate", 0.1))
+                                n_estimators = np.int(data.get("n_estimators", 100))
+                                subsample = float(data.get("subsample", 1.0))
+                                criterion = data.get("criterion", 'friedman_mse')
+                                min_samples_split = np.int(data.get("min_samples_split", 2))
+                                min_samples_leaf = np.int(data.get("min_samples_leaf", 1))
+                                min_weight_fraction_leaf = data.get("min_weight_fraction_leaf", 0.0)
+                                max_depth = np.int(data.get("max_depth", 3))
+                                min_impurity_decrease = float(data.get("min_impurity_decrease", 0.0))
                                 init = None
                                 random_state = None
                                 max_features = None
-                                alpha = 0.9
-                                verbose = 0
+                                alpha = float(data.get("alpha", 0.9))
+                                verbose = np.int(data.get("verbose", 0))
                                 max_leaf_nodes = None
-                                warm_start = False
-                                validation_fraction = 0.1
+                                warm_start = data.get("warm_start", False)
+                                validation_fraction = float(data.get("validation_fraction", 0.1))
                                 n_iter_no_change = None
-                                tol = 0.0001
-                                ccp_alpha = 0.0
+                                tol = float(data.get("tol", 0.0001))
+                                ccp_alpha = float(data.get("ccp_alpha", 0.0))
 
                                 result = model.gradient_boosting_regressor(loss=loss, learning_rate=learning_rate,
                                                                            n_estimators=n_estimators,
@@ -1787,27 +1608,28 @@ def model_training_post(action):
                             model = ClusteringModels(X_train, X_test, path=path)
 
                             if modelName == "KMeans":
-                                n_clusters = 8
-                                init = 'k-means++'
-                                n_init = 10
-                                max_iter = 300
-                                tol = 0.0001
-                                verbose = 0
+                                n_clusters = np.int(data.get("n_clusters", 8))
+                                init = data.get("init", 'k-means++')
+                                n_init = np.int(data.get("n_init", 10))
+                                max_iter = np.int(data.get("max_iter", 300))
+                                tol = float(data.get("tol", 0.0001))
+                                verbose = np.int(data.get("verbose", 0))
                                 random_state = None
-                                copy_x = True
-                                algorithm = 'auto'
+                                copy_x = data.get("copy_x", True)
+                                algorithm = data.get("algorithm", 'auto')
 
                                 result = model.kmeans_clustering(n_clusters=n_clusters, init=init, n_init=n_init,
                                                                  max_iter=max_iter, tol=tol,
-                                                                 verbose=verbose, random_state=random_state, copy_x=copy_x,
+                                                                 verbose=verbose, random_state=random_state,
+                                                                 copy_x=copy_x,
                                                                  algorithm=algorithm)
                             elif modelName == "DBSCAN":
-                                eps = 0.5
-                                min_samples = 5
-                                metric = 'euclidean'
+                                eps = float(data.get("eps", 0.5))
+                                min_samples = np.int(data.get("min_samples", 5))
+                                metric = data.get("metric", 'euclidean')
                                 metric_params = None
-                                algorithm = 'auto'
-                                leaf_size = 30
+                                algorithm = data.get("algorithm", 'auto')
+                                leaf_size = np.int(data.get("leaf_size", 30))
                                 p = None
                                 n_jobs = None
 
@@ -1816,14 +1638,14 @@ def model_training_post(action):
                                                                  algorithm=algorithm, leaf_size=leaf_size, p=p,
                                                                  n_jobs=n_jobs)
                             elif modelName == "AgglomerativeClustering":
-                                n_clusters = 2
-                                affinity = 'euclidean'
+                                n_clusters = np.int(data.get("n_clusters", 2))
+                                affinity = data.get("affinity", 'euclidean')
                                 memory = None
                                 connectivity = None
-                                compute_full_tree = 'auto'
-                                linkage = 'ward'
+                                compute_full_tree = data.get("compute_full_tree", 'auto')
+                                linkage = data.get("linkage", 'ward')
                                 distance_threshold = None
-                                compute_distances = False
+                                compute_distances = data.get("compute_distances", False)
 
                                 result = model.agglomerative_clustering(n_clusters=n_clusters, affinity=affinity,
                                                                         memory=memory,
@@ -1865,176 +1687,6 @@ def scheduler_post(action):
 
     if action == 'Training_scheduler':
         return render_template('scheduler/Training_scheduler.html')
-
-
-# Missing data Api
-@app.route('/api/missing-data', methods=['GET', 'POST'])
-def missing_data():
-    try:
-        df = load_data()
-        selected_column = request.json['selected_column']
-        method = request.json['method']
-        if method == 'Mean' or method == 'Median' or method == 'Arbitrary Value' or method == 'Interpolate':
-            before = {}
-            after = {}
-            list_ = list(df[~df.loc[:, selected_column].isnull()][selected_column])
-            before['graph'] = PlotlyHelper.distplot(list_, selected_column)
-            before['skewness'] = Preprocessing.find_skewness(list_)
-            before['kurtosis'] = Preprocessing.find_kurtosis(list_)
-
-            if method == 'Mean':
-                new_df = Preprocessing.fill_numerical(df, 'Mean', [selected_column])
-            elif method == 'Median':
-                new_df = Preprocessing.fill_numerical(df, 'Median', [selected_column])
-            elif method == 'Arbitrary Value':
-                new_df = Preprocessing.fill_numerical(df, 'Median', [selected_column], request.json['Arbitrary_Value'])
-            elif method == 'Interpolate':
-                new_df = Preprocessing.fill_numerical(df, 'Interpolate', [selected_column], request.json['Interpolate'])
-            else:
-                pass
-
-            new_list = list(new_df.loc[:, selected_column])
-
-            after['graph'] = PlotlyHelper.distplot(new_list, selected_column)
-            after['skewness'] = Preprocessing.find_skewness(new_list)
-            after['kurtosis'] = Preprocessing.find_kurtosis(new_list)
-
-            d = {
-                'success': True,
-                'before': before,
-                'after': after
-            }
-            return jsonify(d)
-
-        if method == 'Mode' or method == 'New Category' or method == 'Select Exist':
-            before = {}
-            after = {}
-            df_counts = pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-            y = list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:, 1].values)
-            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column, values=y, title='')
-            before['graph'] = pie_graphJSON
-
-            if method == 'Mode':
-                df[selected_column] = Preprocessing.fill_categorical(df, 'Mode', selected_column)
-                df_counts = pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y = list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:, 1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column, values=y, title='')
-
-                after['graph'] = pie_graphJSON
-            elif method == 'New Category':
-                df[selected_column] = Preprocessing.fill_categorical(df, 'New Category', selected_column,
-                                                                     request.json['newcategory'])
-                df_counts = pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y = list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:, 1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column, values=y, title='')
-                after['graph'] = pie_graphJSON
-
-            elif method == 'Select Exist':
-                df[selected_column] = Preprocessing.fill_categorical(df, 'Select Exist', selected_column,
-                                                                     request.json['selectcategory'])
-                df_counts = pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0)
-                y = list(pd.DataFrame(df.groupby(selected_column).count()).reset_index(level=0).iloc[:, 1].values)
-                pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=selected_column, values=y, title='')
-
-                after['graph'] = pie_graphJSON
-
-            d = {
-                'success': True,
-                'before': before,
-                'after': after
-            }
-            return jsonify(d)
-
-    except Exception as e:
-        print(e)
-        return jsonify({'success': False})
-
-
-# Feature Encoding Api
-@app.route('/api/encoding', methods=['GET', 'POST'])
-def fe_encoding():
-    try:
-        df = load_data()
-        encoding_type = request.json['encoding_type']
-        columns = request.json['columns']
-        d = {'success': True}
-        df = df.loc[:, columns]
-        if encoding_type == "Base N Encoder":
-            df = FeatureEngineering.encodings(df, columns, encoding_type, base=request.json['base'])
-        elif encoding_type == "Target Encoder":
-            df = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['target'])
-        elif encoding_type == "Hash Encoder":
-            """This is remaining to handle"""
-            df = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['hash'])
-        else:
-            df = FeatureEngineering.encodings(df, columns, encoding_type)
-        data = df.head(200).to_html()
-        d['data'] = data
-        return jsonify(d)
-
-    except Exception as e:
-        print(e)
-        return jsonify({'success': False})
-
-
-# Dimension Reduction Api
-@app.route('/api/pca', methods=['POST'])
-def fe_pca():
-    try:
-        df = load_data()
-        df_ = df.loc[:, df.columns != 'Label']
-        df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
-        d = {'success': True}
-
-        df_evr = pd.DataFrame()
-        df_evr['No of Components'] = np.arange(0, len(evr_)) + 1
-        df_evr['Variance %'] = evr_.round(2)
-
-        data = pd.DataFrame(df_, columns=[f"Col_{col + 1}" for col in np.arange(0, df_.shape[1])]).head(200).to_html()
-        graph = PlotlyHelper.line(df_evr, 'No of Components', 'Variance %')
-
-        d['data'] = data
-        d['graph'] = graph
-        d['no_pca'] = len(evr_)
-        return jsonify(d)
-
-    except Exception as e:
-        print(e)
-        return jsonify({'success': False})
-
-
-# Feature Selection Api
-@app.route('/api/feature_selection', methods=['POST'])
-def fe_feature_selection():
-    try:
-        df = load_data()
-        df_ = df.loc[:, df.columns != 'Label']
-        method = request.json['method']
-        d = {'success': True}
-
-        if method == "Find Constant Features":
-            threshold = request.json['threshold']
-            high_variance_columns = FeatureEngineering.feature_selection(df_, 'Label', method,
-                                                                         threshold=float(threshold))
-            high_variance_columns = list(high_variance_columns)
-            low_variance_columns = [col for col in df_.columns if col not in high_variance_columns]
-            d['high_variance_columns'] = high_variance_columns
-            d['low_variance_columns'] = list(low_variance_columns)
-
-        elif method == "Mutual Info Classification" or method == "Extra Trees Classifier":
-            df_ = FeatureEngineering.feature_selection(df_, df.loc[:, 'Label'], method)
-            graph = PlotlyHelper.barplot(df_, 'Feature', 'Value')
-            d['graph'] = graph
-
-        elif method == "Correlation":
-            graph = PlotlyHelper.heatmap(df)
-            d['graph'] = graph
-
-        return jsonify(d)
-
-    except Exception as e:
-        print(e)
-        return jsonify({'success': False})
 
 
 if __name__ == '__main__':

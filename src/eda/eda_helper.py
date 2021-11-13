@@ -3,21 +3,17 @@ import numpy as np
 from math import floor
 from src.utils.common.common_helper import read_config
 from loguru import logger
-import sys
 import os
+from from_root import from_root
+config_args = read_config("./config.yaml")
 
 """[summary]
 Class for EDA Operations
 Returns:
     [type]: [description]
 """
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 
-print(os.path.join(os.getcwd(), "config.yaml"))
-
-# config_args = read_config(os.path.join(sys.path[0], "config.yaml"))
-config_args = read_config(os.path.join(os.getcwd(), "config.yaml"))
-
-log_path = os.path.join(sys.path[1], config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
@@ -51,13 +47,22 @@ class EDA:
                 my_dict['Max'].append(np.max(column_data))
             except Exception as e:
                 logger.error(f"{e} occurred in Five Point Summary!")
-        logger.info('Five Point Summary Implemented Successfully!')
+        logger.info('Five Point Summary Implemented!')
         return pd.DataFrame(my_dict).sort_values(by=['Features'], ascending=True)
+
+    @staticmethod
+    def data_dtype_info(df):
+        df_ = pd.DataFrame()
+        df_['Column'] = list(df.dtypes.index)
+        df_['DataType'] = list(df.dtypes.values)
+        df_['Null Count'] = list(df.isnull().sum().values)
+
+        return df_
 
     @staticmethod
     def correlation_report(dataframe, method='pearson'):
         try:
-            logger.info("Correlation Report Implemented Successfully!")
+            logger.info("Correlation Report Implemented!")
             return dataframe.corr(method=method)
 
         except Exception as e:
@@ -67,10 +72,10 @@ class EDA:
     def get_no_records(dataframe, count=100, order='top'):
         try:
             if order == 'top':
-                logger.info("Get No of Records Implemented Successfully!")
+                logger.info("Get No of Records Implemented!")
                 return dataframe.head(count)
             else:
-                logger.info("Get No of Records Implemented Successfully!")
+                logger.info("Get No of Records Implemented!")
                 return dataframe.tail(count)
 
         except Exception as e:
@@ -81,7 +86,7 @@ class EDA:
         try:
             for i in df3.columns:
                 yield str(df3[i].dtypes)
-            logger.info("Find Dtypes Implemented Successfully!")
+            logger.info("Find Dtypes Implemented!")
         except Exception as e:
             logger.error(f"{e} occurred in Find Dtypes!")
 
@@ -93,7 +98,7 @@ class EDA:
                     yield str(round(df3[i].median(), 2))
                 else:
                     yield str('-')
-            logger.info("Find Median Implemented Successfully!")
+            logger.info("Find Median Implemented!")
         except Exception as e:
             logger.error(f"{e} occurred in Find Median!")
 
@@ -102,7 +107,7 @@ class EDA:
         try:
             for i in df3.columns:
                 yield str(df3[i].mode()[0])
-            logger.info("Find Mode Implemented Successfully!")
+            logger.info("Find Mode Implemented!")
         except Exception as e:
             logger.error(f"{e} occurred in Find Mode!")
 
@@ -114,7 +119,7 @@ class EDA:
                     yield str(round(df3[i].mean(), 2))
                 else:
                     yield str('-')
-            logger.info("Find Mean Implemented Successfully!")
+            logger.info("Find Mean Implemented!")
         except Exception as e:
             logger.error(f"{e} occurred in Find Mean!")
 
@@ -132,7 +137,7 @@ class EDA:
                 'Mode': EDA.find_mode(df),
                 'Datatype': EDA.find_dtypes(df)
             }).sort_values(by='Missing values', ascending=False)
-            logger.info("Missing Cells Table Implemented Successfully!")
+            logger.info("Missing Cells Table Implemented!")
             return missing_value_df
         except Exception as e:
             logger.error(f"{e} occurred in Missing Cells Table!")
@@ -168,7 +173,7 @@ class EDA:
                 my_dict['Outlier percent'].append(round((upper_count + lower_count) / len(dataframe[column]) * 100, 2))
             except Exception as e:
                 logger.error(f"{e} occurred in Outlier Detection IQR!")
-        logger.info("Outlier Detection IQR Implemented Successfully!")
+        logger.info("Outlier Detection IQR Implemented!")
         return pd.DataFrame(my_dict).sort_values(by=['Total outliers'], ascending=False)
 
     @staticmethod
@@ -203,7 +208,7 @@ class EDA:
             except Exception as e:
                 logger.error(f"{e} occurred in Outlier Detection Zscore!")
         df = pd.DataFrame(my_dict).sort_values(by=['Total outliers'], ascending=False).reset_index()
-        logger.info("Outlier Detection Zscore Implemented Successfully!")
+        logger.info("Outlier Detection Zscore Implemented!")
         return df
 
     @staticmethod
@@ -235,6 +240,6 @@ class EDA:
                         outliers.append(da)
 
                 return outliers
-            logger.info("Outlier Detection Implemented Successfully!")
+            logger.info("Outlier Detection Implemented!")
         except Exception as e:
             logger.error(f"{e} occurred in Outlier Detection Zscore!")

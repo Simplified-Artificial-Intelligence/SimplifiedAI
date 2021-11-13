@@ -9,13 +9,13 @@ from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
 from src.utils.common.common_helper import read_config
 from loguru import logger
-import sys
 import os
 import numpy as np
+from from_root import from_root
 
-config_args = read_config(os.path.join(os.getcwd(), "config.yaml"))
+config_args = read_config("./config.yaml")
 
-log_path = os.path.join(os.getcwd(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
@@ -37,7 +37,7 @@ class FeatureEngineering:
         """
         try:
             df = df.rename(columns={column: new_name})
-            logger.info("Renaming Column implemented successfully!")
+            logger.info("Renaming Column implemented!")
             return df
         except Exception as e:
             logger.error(f"{e} occurred in Remaining Columns!")
@@ -56,7 +56,7 @@ class FeatureEngineering:
         """
         try:
             df[column] = df[column].astype(type_)
-            logger.info("Change Datatype implemented successfully!")
+            logger.info("Change Datatype implemented !")
             return df
         except Exception as e:
             logger.error(f"{e} occurred in Change Datatype!")
@@ -65,7 +65,7 @@ class FeatureEngineering:
         try:
             X_train, X_test, y_train, y_test = train_test_split(cleanedData, label, test_size=test_size,
                                                                 random_state=random_state)
-            logger.info("Train Test Split implemented successfully!")
+            logger.info("Train Test Split implemented!")
             return X_train, X_test, y_train, y_test
         except Exception as e:
             logger.error(f"{e} occurred in Train Test Split!")
@@ -76,7 +76,7 @@ class FeatureEngineering:
             if typ == 'MinMax Scaler':
                 scaler = MinMaxScaler()
                 scaled_data = scaler.fit_transform(data)
-                logger.info("MinMax Scaler implemented successfully!")
+                logger.info("MinMax Scaler implemented!")
                 return scaled_data
         except Exception as e:
             logger.error(f"{e} occurred in Min Max Scaler!")
@@ -84,7 +84,7 @@ class FeatureEngineering:
             if typ == 'Standard Scaler':
                 scaler = StandardScaler()
                 scaled_data = scaler.fit_transform(data)
-                logger.info("Standard Scaler implemented successfully!")
+                logger.info("Standard Scaler implemented!")
                 return scaled_data
         except Exception as e:
             logger.error(f"{e} occurred in Standard Scaler!")
@@ -92,7 +92,7 @@ class FeatureEngineering:
             if typ == 'Robust Scaler':
                 scaler = RobustScaler()
                 scaled_data = scaler.fit_transform(data)
-                logger.info("Robust Scaler implemented successfully!")
+                logger.info("Robust Scaler implemented!")
                 return scaled_data
         except Exception as e:
             logger.error(f"{e} occurred in Robust Scaler")
@@ -100,7 +100,7 @@ class FeatureEngineering:
             if typ == 'Power Transformer Scaler':
                 scaler = PowerTransformer(method='yeo-johnson')
                 scaled_data = scaler.fit_transform(data)
-                logger.info("Power Transformer Scaler implemented successfully!")
+                logger.info("Power Transformer Scaler implemented!")
                 return scaled_data
         except Exception as e:
             logger.error(f"{e} occurred in Power Transformer Scaler!")
@@ -108,7 +108,7 @@ class FeatureEngineering:
             if typ == 'Max Abs Scaler':
                 scaler = MaxAbsScaler()
                 scaled_data = scaler.fit_transform(data)
-                logger.info("Max Abs Scaler implemented successfully!")
+                logger.info("Max Abs Scaler implemented!")
                 return scaled_data
         except Exception as e:
             logger.error(f"{e} occurred in Max Abs Scaler!")
@@ -120,7 +120,7 @@ class FeatureEngineering:
             if kind == 'Label/Ordinal Encoder':
                 label = ce.OrdinalEncoder(cols=cols, **kwargs)
                 label_df = label.fit_transform(df)
-                logger.info("Label/Ordinal Encoder implemented successfully!")
+                logger.info("Label/Ordinal Encoder implemented!")
                 return label_df
         except Exception as e:
             logger.error(f"{e} occurred in Label/Ordinal Encoder!")
@@ -128,7 +128,7 @@ class FeatureEngineering:
             if kind == 'One Hot Encoder':
                 onehot = ce.OneHotEncoder(cols=cols)
                 onehot_df = onehot.fit_transform(df)
-                logger.info("One Hot Encoder implemented successfully!")
+                logger.info("One Hot Encoder implemented!")
                 return onehot_df
         except Exception as e:
             logger.error(f"{e} occurred in One Hot Encoder!")
@@ -136,7 +136,7 @@ class FeatureEngineering:
             if kind == 'Binary Encoder':
                 onehot = ce.BinaryEncoder(cols=cols, **kwargs)
                 onehot_df = onehot.fit_transform(df)
-                logger.info("Binary Encoder implemented successfully!")
+                logger.info("Binary Encoder implemented!")
                 return onehot_df
         except Exception as e:
             logger.error(f"{e} occurred in Binary Encoder!")
@@ -145,7 +145,7 @@ class FeatureEngineering:
             if kind == 'Base N Encoder':
                 onehot = ce.BaseNEncoder(cols=cols)
                 onehot_df = onehot.fit_transform(df)
-                logger.info("Base N Encoder implemented successfully!")
+                logger.info("Base N Encoder implemented !")
                 return onehot_df
         except Exception as e:
             logger.error(f"{e} occurred in Base N Encoder!")
@@ -153,7 +153,7 @@ class FeatureEngineering:
             if kind == 'Hash Encoder':
                 hash_ = ce.HashingEncoder(cols=cols, **kwargs)
                 hash_df = hash_.fit_transform(df)
-                logger.info("Hash Encoder implemented successfully!")
+                logger.info("Hash Encoder implemented!")
                 return hash_df
         except Exception as e:
             logger.error(f"{e} occurred in Hash Encoder!")
@@ -161,7 +161,7 @@ class FeatureEngineering:
             if kind == 'Target Encoder':
                 target = ce.TargetEncoder(cols=cols)
                 target_df = target.fit_transform(df, **kwargs)
-                logger.info("Target Encoder implemented successfully!")
+                logger.info("Target Encoder implemented!")
                 return target_df
         except Exception as e:
             logger.error(f"{e} occurred in Target Encoder!")
@@ -184,7 +184,7 @@ class FeatureEngineering:
                 count += 1
 
             frame = pd.concat([frame, year, day, month], axis=1)
-            logger.info("Handle Date-Time implemented successfully!")
+            logger.info("Handle Date-Time implemented!")
             return frame
         except Exception as e:
             logger.error(f"{e} occurred in Handle Date-Time Encoder!")
@@ -199,7 +199,7 @@ class FeatureEngineering:
                 imp = best_features.fit(features, target)
                 important_features['score'] = imp.scores_
                 important_features['columns'] = features.columns
-                logger.info("SelectKBest implemented successfully!")
+                logger.info("SelectKBest implemented!")
                 return important_features.sort_values('scores', ascending=False)
         except Exception as e:
             logger.error(f"{e} occurred in SelectKBest!")
@@ -209,7 +209,7 @@ class FeatureEngineering:
                 # chi2 + anova test
                 vari_thr = VarianceThreshold(**kwargs)
                 imp = vari_thr.fit(features)
-                logger.info("Find Constant Features implemented successfully!")
+                logger.info("Find Constant Features implemented!")
                 return features.columns[imp.get_support()]
         except Exception as e:
             logger.error(f"{e} occurred in Find Constant Features!")
@@ -222,7 +222,7 @@ class FeatureEngineering:
                 df = pd.DataFrame()
                 df['Value'] = best_features.feature_importances_
                 df['Feature'] = features.columns
-                logger.info("Extra Trees Classifier implemented successfully!")
+                logger.info("Extra Trees Classifier implemented!")
                 return df.sort_values(by='Value', ascending=False)
         except Exception as e:
             logger.error(f"{e} occurred in Extra Trees Classifier!")
@@ -233,7 +233,7 @@ class FeatureEngineering:
                 best_features.fit(features, target)
                 important_features['score'] = best_features.feature_importances_
                 important_features['columns'] = features.columns
-                logger.info("Extra Trees Regressor implemented successfully!")
+                logger.info("Extra Trees Regressor implemented!")
                 return important_features.sort_values('scores', ascending=False)
         except Exception as e:
             logger.error(f"{e} occurred in Extra Trees Regressor")
@@ -249,7 +249,7 @@ class FeatureEngineering:
 
                 sfs = SequentialFeatureSelector(dclas, scoring='balanced_accuracy', **kwargs)
                 sfs.fit(features, target)
-                logger.info("Mutual Info Classification implemented successfully!")
+                logger.info("Mutual Info Classification implemented!")
                 return list(features.columns[sfs.get_support()])
         except Exception as e:
             logger.error(f"{e} occurred in Mutual Info Classification!")
@@ -259,18 +259,17 @@ class FeatureEngineering:
                 dclas = DecisionTreeClassifier()
                 sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwargs)
                 sfs.fit(features, target)
-                logger.info("Backward Elimination implemented successfully!")
+                logger.info("Backward Elimination implemented!")
                 return list(features.columns[sfs.get_support()])
         except Exception as e:
             logger.error(f"{e} occurred in Backward Elimination!")
-
 
     @staticmethod
     def dimenstion_reduction(data, comp):
         try:
             model = PCA(n_components=comp)
             pca = model.fit_transform(data)
-            logger.info("PCA implemented successfully!")
-            return (pca, np.cumsum(model.explained_variance_ratio_))
+            logger.info("PCA implemented !")
+            return pca, np.cumsum(model.explained_variance_ratio_)
         except Exception as e:
             logger.error(f"{e} occurred in PCA!")

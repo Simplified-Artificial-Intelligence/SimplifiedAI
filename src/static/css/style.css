@@ -193,9 +193,6 @@ width:60px
   padding-bottom: 10px;
 }
 
-.eda-image{
-
-}
 
 .terminal{
     background-color: black;
@@ -919,4 +916,20 @@ width:60px
 .datepicker.compact .buttons-container {
   position: relative;
   float: right;
+}
+
+.margin-bottom-20{
+  margin-bottom: 20px;
+}
+
+.div_dtype{
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+#content{
+  margin-top: 50px;
+  padding: unset !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
 }

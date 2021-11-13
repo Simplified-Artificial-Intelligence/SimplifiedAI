@@ -3,9 +3,11 @@ import pandas as pd
 import time
 from src.utils.common.common_helper import read_config
 import os
-
+from loguru import logger
 
 config_args = read_config("config.yaml")
+log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
 class MongoHelper:
@@ -15,11 +17,10 @@ class MongoHelper:
             path = config_args['secrets']['mongo']
             self.client = pymongo.MongoClient(path)
             self.db = self.client['Auto-neuron']
-            print("Mongodb Connection Established")
+            logger.info("Mongodb Connection Established")
         except Exception as e:
-            print('Here')
-            print(e)
-        
+            logger.error(e)
+
     def create_new_project(self, collection_name, df):
         """[summary]
             Create New Project and Upload data
@@ -35,13 +36,13 @@ class MongoHelper:
             self.delete_collection_data(collection_name)
             rec = collection.insert_many(df.to_dict('records'))
             end = time.time()
-            print(f"Your data is uploaded. Total time taken: {end - begin} seconds.")
+            logger.info(f"Your data is uploaded. Total time taken: {end - begin} seconds.")
             
             if rec:
                 return len(rec.inserted_ids)
             return 0
         except Exception as e:
-            print(e)
+            logger.error(e)
         
     def delete_collection_data(self, collection_name):
         """[summary]
@@ -54,9 +55,9 @@ class MongoHelper:
             collection = self.db[collection_name]
             collection.delete_many({})
             end = time.time()  
-            print(f"All records deleted. Total time taken: {end - begin} seconds.")
+            logger.info(f"All records deleted. Total time taken: {end - begin} seconds.")
         except Exception as e:
-            print(e)
+            logger.error(e)
             
     def get_collection_data(self, project_name):
         """[summary]
@@ -77,13 +78,14 @@ class MongoHelper:
                 begin = time.time()
                 collection = self.db[project_name]
                 df = pd.DataFrame(list(collection.find()))
-                end = time.time()  
+                end = time.time()
+                logger.info(f"All records deleted. Total time taken: {end - begin} seconds.")
                 df.to_csv(path)
                 df.to_csv(backup_path)
                 return df
 
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def download_collection_data(self, project_id, file_type):
         try:
@@ -124,3 +126,4 @@ class MongoHelper:
             print(f"Dropped {collection_name} collection from database. Total time taken: {end - begin} seconds.")
         except Exception as e:
             print(e)
+

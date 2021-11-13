@@ -1,9 +1,13 @@
 import mysql.connector as connector
 import mysql.connector.pooling
 from src.utils.common.common_helper import read_config
+import os
+from loguru import logger
 
-# Path has to be managed here
 config_args = read_config("config.yaml")
+log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
+
 
 """
     [summary]
@@ -61,7 +65,7 @@ class MySqlHelper:
             else:
                 return MySqlHelper.connection_obj
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def connect_todb(self):
         self.connection = connector.connect(host=self.host, port=self.port, user=self.user,
@@ -117,11 +121,11 @@ class MySqlHelper:
             return data
 
         except connector.Error as error:
-            print("Error: {}".format(error))
+            logger.error("Error: {}".format(error))
 
         finally:
             self.close(conn, cursor)
-            print("MySQL connection is closed")
+            logger.info("MySQL connection is closed")
 
     def fetch_one(self, query):
         """
@@ -142,12 +146,12 @@ class MySqlHelper:
             return data
 
         except connector.Error as error:
-            print("Error: {}".format(error))
+            logger.error("Error: {}".format(error))
 
         finally:
             conn.commit()
             self.close(conn, cursor)
-            print("MySQL connection is closed")
+            logger.info("MySQL connection is closed")
 
     def delete_record(self, query):
         """
@@ -168,12 +172,12 @@ class MySqlHelper:
             return rowcount
 
         except connector.Error as error:
-            print("Error: {}".format(error))
+            logger.error("Error: {}".format(error))
 
         finally:
             conn.commit()
             self.close(conn, cursor)
-            print("MySQL connection is closed")
+            logger.info("MySQL connection is closed")
 
     def insert_record(self, query):
         """
@@ -195,7 +199,8 @@ class MySqlHelper:
             return rowcount
 
         except connector.Error as error:
-            print("Error: {}".format(error))
+            logger.error("Error: {}".format(error))
 
         finally:
             self.close(conn, cursor)
+            logger.info("MySQL connection is closed")
