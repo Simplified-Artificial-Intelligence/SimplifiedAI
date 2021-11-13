@@ -91,7 +91,7 @@ class MongoHelper:
             begin = time.time()
             collection = self.db[project_id]
             df = pd.DataFrame(list(collection.find()))
-            df.drop(columns=df.iloc[:, 0:2].columns, inplace=True)
+            df.drop(columns=['_id'], inplace=True)
             end = time.time()
             if file_type == 'csv':
                 df.to_csv(path)

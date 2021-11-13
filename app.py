@@ -509,8 +509,8 @@ def exportCloudDatabaseFile(project_name, project_id):
                     region_name = request.form['region_name']
                     aws_access_key_id = request.form['aws_access_key_id']
                     aws_secret_access_key = request.form['aws_secret_access_key']
-                    bucket_name = request.form['bucket_name']
-                    file_type = request.form['fileType']
+                    bucket_name = request.form['aws_bucket_name']
+                    file_type = request.form['fileTypeAws']
 
                     aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
                     conn_msg = aws_s3.check_connection(bucket_name, 'none')
@@ -531,15 +531,17 @@ def exportCloudDatabaseFile(project_name, project_id):
 
                     return redirect(url_for('index'))
 
-                elif cloudType == 'awsS3bucket':
-                    region_name = request.form['region_name']
-                    aws_access_key_id = request.form['aws_access_key_id']
-                    aws_secret_access_key = request.form['aws_secret_access_key']
-                    bucket_name = request.form['bucket_name']
-                    file_type = request.form['fileType']
-
-                    aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
-                    conn_msg = aws_s3.check_connection(bucket_name, 'none')
+                elif cloudType == 'gcpStorage':
+                    credentials_file = request.files['GCP_credentials_file']
+                    bucket_name = request.form['gcp_bucket_name']
+                    file_type = request.form['fileTypeGcp']
+                    print(bucket_name, file_type)
+                    credentials_filename = secure_filename(credentials_file.filename)
+                    credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
+                    credentials_file.save(credentials_file_path)
+                    gcp = gcp_browser_storage(credentials_file_path)
+                    print(bucket_name, 'bucket')
+                    conn_msg = gcp.check_connection(bucket_name, 'none')
                     print(conn_msg)
                     if conn_msg != 'File does not exist!!':
                         logger.info(conn_msg)
@@ -551,7 +553,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                         render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg="OOPS something went wrong!!")
 
                     timestamp = round(time.time() * 1000)
-                    upload_status = aws_s3.push_file_to_s3(bucket_name, file_path, f'{project_name}_{timestamp}.{file_type}')
+                    upload_status = gcp.upload_to_bucket(f'{project_name}_{timestamp}.{file_type}', file_path, bucket_name)
                     if upload_status != 'Successful':
                         return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg=upload_status)
 
@@ -2001,4 +2003,4 @@ if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
-        app.run(host="127.0.0.1", port=5000, debug=True)
+        app.run(host="127.0.0.1", port=5000, debug=False)

@@ -61,10 +61,10 @@
                 <input type="text" class="form-control awsS3bucket" id="aws_secret_access_key" name="aws_secret_access_key" placeholder="" required>
 
                 <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
-                <input type="text" class="form-control awsS3bucket" id="bucket_name" name="bucket_name" placeholder="" required>
+                <input type="text" class="form-control awsS3bucket" id="aws_bucket_name" name="aws_bucket_name" placeholder="" required>
 
                 <label for="file_type" class="col-form-label"><b> File Type </b></label>
-                <select class="form-control awsS3bucket" name="fileType" id="fileType">
+                <select class="form-control awsS3bucket" name="fileTypeAws" id="fileTypeAws">
                     <option value=""> Select any one </option>
                     <option value="csv"> csv </option>
                     <option value="tsv"> tsv </option>
@@ -80,10 +80,17 @@
                 <p>allowed file *.json</p>
 
                 <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
-                <input type="text" class="form-control gcpStorage" id="bucket_name" name="bucket_name" placeholder="" required>
+                <input type="text" class="form-control gcpStorage" id="gcp_bucket_name" name="gcp_bucket_name" placeholder="" required>
 
-                <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
-                <input type="text" class="form-control gcpStorage" id="file_name" name="file_name" placeholder="" required>
+                <label for="file_type" class="col-form-label"><b> File Type </b></label>
+                <select class="form-control gcpStorage" name="fileTypeGcp" id="fileTypeGcp">
+                    <option value=""> Select any one </option>
+                    <option value="csv"> csv </option>
+                    <option value="tsv"> tsv </option>
+                    <option value="json"> json </option>
+                    <option value="excel"> excel </option>
+                </select>
+
             </div>
 
             <div id="azureStorage" class="upload-other-resource">
