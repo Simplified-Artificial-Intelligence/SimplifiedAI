@@ -93,16 +93,16 @@ class MongoHelper:
             begin = time.time()
             collection = self.db[project_id]
             df = pd.DataFrame(list(collection.find()))
-            df.drop(columns=df.iloc[:, 0:2].columns, inplace=True)
+            df.drop(columns=['_id'], inplace=True)
             end = time.time()
             if file_type == 'csv':
-                df.to_csv(path)
+                df.to_csv(path, index_col=False)
             elif file_type == 'tsv':
-                df.to_csv(path, sep='\t')
+                df.to_csv(path, sep='\t', index_col=False)
             elif file_type == 'json':
                 df.to_json(path)
             elif file_type == 'xlsx':
-                df.to_excel(path)
+                df.to_excel(path, index_col=False)
             print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
             download_status = 'Successful'
             return download_status, path

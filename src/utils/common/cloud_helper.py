@@ -179,11 +179,12 @@ class gcp_browser_storage:
             bucket = self.storage_client.get_bucket(bucket_name)
             blob = bucket.blob(blob_name)
             blob.upload_from_filename(file_path)
-            logger.info(f"{blob_name} uploaded successfully to {bucket_name}")
-            return blob
+            print(f"{blob_name} was uploaded to {bucket_name}")
+            return 'Successful'
 
         except Exception as e:
-            logger.error(f'{e} occurred in upload to bucket in GCP!')
+            print(f"{blob_name} was not uploaded to {bucket_name}")
+            print(e)
 
     def download_file_from_bucket(self, blob_name, file_path, bucket_name):
 
@@ -212,6 +213,7 @@ class gcp_browser_storage:
         try:
             for bucket in self.storage_client.list_buckets():
                 bucket_list.append(bucket.name)
+            print(bucket_list, bucket_name)
             if bucket_name in bucket_list:
                 for file in self.storage_client.list_blobs(bucket_name):
                     file_list.append(file.name)
@@ -219,7 +221,11 @@ class gcp_browser_storage:
                     logger.info(f"{file_name} found in {bucket_name}!")
                     return 'Successful'
                 else:
+<<<<<<< HEAD
                     logger.info(f'The {file_name} does not exist {bucket_name} bucket!')
+=======
+                    return 'File does not exist!!'
+>>>>>>> main-ketan
             else:
                 logger.info(f'The {bucket_name} bucket does not exist!')
 
