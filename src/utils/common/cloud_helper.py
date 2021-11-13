@@ -221,11 +221,8 @@ class gcp_browser_storage:
                     logger.info(f"{file_name} found in {bucket_name}!")
                     return 'Successful'
                 else:
-<<<<<<< HEAD
-                    logger.info(f'The {file_name} does not exist {bucket_name} bucket!')
-=======
+                    # logger.info(f'The {file_name} does not exist {bucket_name} bucket!')
                     return 'File does not exist!!'
->>>>>>> main-ketan
             else:
                 logger.info(f'The {bucket_name} bucket does not exist!')
 

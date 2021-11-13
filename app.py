@@ -582,17 +582,6 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
 
-                    if f'{project_id}.csv' not in os.listdir(os.path.join(os.getcwd(), 'src\data')):
-                        download_status = mongodb.download_collection_data(project_id)
-                        file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
-                    elif f'{project_id}.csv' in os.listdir(os.path.join(os.getcwd(), 'src\data')):
-                        download_status = 'Successful'
-                        file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
-                    else:
-                        render_template('exportFile.html',
-                                        data={"project_name": project_name, "project_id": project_id},
-                                        msg="OOPS something went wrong!!")
-
                     timestamp = round(time.time() * 1000)
                     upload_status = mySql.push_file_to_table(f'{project_name}_{timestamp}.csv', db_table_name)
                     if download_status != 'Successful' or upload_status != 'Successful':
@@ -601,6 +590,68 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                msg=upload_status)
 
                     print(f'{project_name}_{timestamp}.csv was pushed to {db_table_name} table')
+                    return redirect(url_for('index'))
+
+                elif databaseType == 'cassandra':
+                    secure_connect_bundle = request.form['secure_connect_bundle']
+                    client_id = request.form['client_id']
+                    client_secret = request.form['client_secret']
+                    keyspace = request.form['keyspace']
+                    table_name = request.form['table_name']
+                    data_in_tabular = request.form['data_in_tabular']
+
+                    secure_connect_bundle_filename = secure_filename(secure_connect_bundle.filename)
+                    secure_connect_bundle_file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                                                    secure_connect_bundle_filename)
+                    secure_connect_bundle.save(secure_connect_bundle_file_path)
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], (table_name + ".csv"))
+                    logger.info(secure_connect_bundle_file_path, file_path)
+
+                    cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret,
+                                                        keyspace)
+                    conn_msg = cassandra_db.check_connection(table_name)
+
+                    if conn_msg != 'File does not exist!!':
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+
+                    timestamp = round(time.time() * 1000)
+                    upload_status = cassandra_db.push_dataframe_to_table(pd.DataFrame(file_path), table_name)
+                    if download_status != 'Successful' or upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+
+                    print(f'{project_name}_{timestamp}.csv was pushed to {table_name} table')
+                    return redirect(url_for('index'))
+                
+                elif databaseType == 'mongo':
+                    mongo_db_url = request.form['mongo_db_url']
+                    mongo_database = request.form['mongo_database']
+                    collection = request.form['collection']
+
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], (collection + ".csv"))
+
+                    mongo_db = mongo_data_helper(mongo_db_url)
+                    mongo_database = request.form['mongo_database']
+                    conn_msg = mongo_db.check_connection(mongo_database, collection)
+
+                    if conn_msg != 'File does not exist!!':
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+
+                    timestamp = round(time.time() * 1000)
+                    upload_status = mongo_db.push_dataset(mongo_database, collection, file_path)
+                    if download_status != 'Successful' or upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+
+                    print(f'{project_name}_{timestamp}.csv was pushed to {collection} collection')
                     return redirect(url_for('index'))
 
         else:
