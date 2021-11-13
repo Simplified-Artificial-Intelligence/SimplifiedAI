@@ -63,6 +63,15 @@
                 <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
                 <input type="text" class="form-control awsS3bucket" id="bucket_name" name="bucket_name" placeholder="" required>
 
+                <label for="file_type" class="col-form-label"><b> File Type </b></label>
+                <select class="form-control awsS3bucket" name="fileType" id="fileType">
+                    <option value=""> Select any one </option>
+                    <option value="csv"> csv </option>
+                    <option value="tsv"> tsv </option>
+                    <option value="json"> json </option>
+                    <option value="excel"> excel </option>
+                </select>
+
             </div>
 
             <div id="gcpStorage" class="upload-other-resource">

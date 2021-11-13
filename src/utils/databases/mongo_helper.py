@@ -85,20 +85,30 @@ class MongoHelper:
         except Exception as e:
             print(e)
 
-    def download_collection_data(self, project_id):
+    def download_collection_data(self, project_id, file_type):
         try:
-            path = os.path.join(os.path.join('src', 'data'), f"{project_id}.csv")
+            path = os.path.join(os.path.join('src', 'temp_data_store'), f"{project_id}.{file_type}")
             begin = time.time()
             collection = self.db[project_id]
             df = pd.DataFrame(list(collection.find()))
+            df.drop(columns=df.iloc[:, 0:2].columns, inplace=True)
             end = time.time()
-            df.to_csv(path)
+            if file_type == 'csv':
+                df.to_csv(path)
+            elif file_type == 'tsv':
+                df.to_csv(path, sep='\t')
+            elif file_type == 'json':
+                df.to_json(path)
+            elif file_type == 'xlsx':
+                df.to_excel(path)
             print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
-            return "Successful"
+            download_status = 'Successful'
+            return download_status, path
 
         except Exception as e:
             print(e.__str__())
-            return "Unsuccessful"
+            download_status = "Unsuccessful"
+            return download_status, path
 
     def drop_collection(self, collection_name):
         """[summary]
