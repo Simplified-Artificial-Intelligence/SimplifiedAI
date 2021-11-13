@@ -54,9 +54,11 @@ def feature_engineering(action):
                     
                     logger.info('Redirect To Encoding')
                     ProjectReports.insert_record_fe('Redirect To Encoding')
-                    
+                    # 1 classification
+                    # 2 regression
+                    # 3 clustring
                     """Check If Prohect type is Regression or Calssificaion and target Columns is not Selected"""
-                    if session['project_type']!=3 and  session['target_column'] is None:
+                    if session['project_type'] != 3 and session['target_column'] is None:
                          return redirect(url_for('/target-column'))
                         
                     """ Check Encoding Already Performed or not"""
