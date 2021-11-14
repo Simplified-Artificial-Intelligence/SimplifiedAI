@@ -3,7 +3,12 @@ import yaml
 import hashlib
 from cryptography.fernet import Fernet
 import json
+import os
+from flask import session
+from pickle import dump,load
+from from_root import from_root
 
+from src.constants.model_params import Params_Mappings
 
 def read_config(config):
     with open(config) as config:
@@ -45,3 +50,38 @@ def immutable_multi_dict_to_str(immutable_multi_dict,flat=False):
     input_str = immutable_multi_dict.to_dict(flat)
     input_str = { key: value if len(value)>1 else value[0] for key, value in input_str.items() }
     return json.dumps(input_str)
+
+def save_project_encdoing(encoder):
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+        
+    file_name=os.path.join(path,'encoder.pkl')  
+    dump(encoder, open(file_name, 'wb'))
+    
+
+    
+def save_project_scaler(encoder):
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+        
+    file_name=os.path.join(path,'scaler.pkl')  
+    dump(encoder, open(file_name, 'wb'))
+    
+    
+def get_param_value(obj,value):
+        if obj['dtype']=="boolean":
+            return Params_Mappings[value]
+        elif obj['dtype']=="string":
+            return str(value)
+        elif obj['dtype']=="int":
+             if obj['accept_none'] and value=="":
+                 return None
+             else:
+                 return int(value)
+        elif obj['dtype']=="float":
+            if obj['accept_none'] and value=="":
+                return None
+            else:
+                return float(value)   

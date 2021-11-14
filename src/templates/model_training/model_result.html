@@ -1,0 +1,86 @@
+{% extends 'project_base.html' %}
+{% block content %}
+
+<div class="table2">
+    {% if status=="success" %}
+    <div class="alert alert-success">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Congrats!</strong> Your Model Trained Successfully. Find report below
+      </div>
+    {% endif %}
+    {% if status=="error" %}
+    <div class="alert alert-danger">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Error!</strong> Something went wrong, Coudn't Perform Dimension Reduction
+      </div>
+    {% endif %}
+    <form style="margin-top: 50px;" action="/fe/{{action}}" method="post" id="form">
+        <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-12 col-sm-12">
+                <div class="alert alert-warning">
+                    <strong>Model Info</strong>
+                  </div>
+                <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in reports %}
+                        <tr>
+                            <td>{{data['key']}}</td>
+                            <td>{{data['value']}}</td>
+                          </tr>
+                        {% endfor %}
+                    </tbody>
+                  </table>
+                
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-12 col-sm-12">
+                <div class="alert alert-danger">
+                    <strong>Model Metrice</strong>
+                  </div>
+                <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in scores %}
+                        <tr>
+                            <td>{{data['key']}}</td>
+                            <td>{{data['value']}}</td>
+                          </tr>
+                        {% endfor %}
+                    </tbody>
+                  </table>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Model Params!</strong> Follwoing is the parameters list that used in model training.
+          </div>
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Parameter Name</th>
+                <th>Parameter Value</th>
+              </tr>
+            </thead>
+            <tbody>
+                {% for key, value in model_params.items() %}
+                <tr>
+                    <td>{{key}}</td>
+                    <td>{{value}}</td>
+                  </tr>
+                {% endfor %}
+            </tbody>
+          </table>
+        </form>
+</div>
+
+{% endblock %}

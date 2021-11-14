@@ -52,7 +52,7 @@ def eda(action):
                     pie_graphJSON = PlotlyHelper.pieplot(df, names='Column', values='Missing values',
                                                          title='Missing Values')
 
-                    data = df.drop('Column', axis=1, inplace=True)
+                    data = df.drop('Column', axis=1)
                     data = data.to_html()
                     return render_template('eda/missing_values.html', action=action, data=data, barplot=graphJSON,
                                            pieplot=pie_graphJSON)

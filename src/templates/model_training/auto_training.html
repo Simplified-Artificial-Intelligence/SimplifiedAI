@@ -2,21 +2,29 @@
 {% block content %}
 <div class="table2">
     <div class="jumbotron text-center jumbtron">
-        <h1>Automatic ML Model Training</h1>
-        <p> On this module you can train the spcefied ML types automatically .</p> 
+        <h1>Find Best Model</h1>
+        <p>If you don't have nay idea which model will be best for your data or which model will give the best accurracy.
+            Don't worry we will train multiple models for you and provide the list of models with their accurracy.
+            Using this report you can get a better idea, which model should use for your project
+        </p> 
     </div>
 
    <form action="/model_training/auto_training" method="post">
+    {% if project_type!="3" %}
+    <div class="alert alert-success">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Taret Column &nbsp;&nbsp;</strong> {{target_column}}.
+      </div>
+    {% endif %}
     <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
         <button type="submit" class="btn btn-default">Start Automated Training</button>
     </div>
+    </br>
+    <h3 class="result">Dataset</h3>
+    {{data | safe}}
    </form>
 
 </div>
-
-    </br>
-      <h3 class="result">Result</h3>
-     {{data | safe}}
 </div>
 <script>
     var slider = document.getElementById("range");

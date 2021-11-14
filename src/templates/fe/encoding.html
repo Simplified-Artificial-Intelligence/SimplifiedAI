@@ -11,7 +11,7 @@
     {% if status=="error" %}
     <div class="alert alert-danger">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <strong>Error!</strong> This encdoing can't performed, please select other method.
+        <strong>Error!</strong> {{msg}}
       </div>
     {% endif %}
     <div class="jumbotron text-center">
@@ -43,7 +43,7 @@
                 <input type="number" id="hash" name="hash" value="8" min="8" class="form-control" />
             </div>
         </div>
-        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+        <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
             <div class="form-group">
                 <label for="exampleFormControlSelect1">Select Columns</label>
                 <select class="js-example-basic-multiple form-control" name="columns" id="columns" multiple="multiple">
@@ -52,20 +52,24 @@
                     {% endfor %}
                 </select>
             </div>
-        </div>
-        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+        </div> -->
+        <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
             <div class="form-group">
                 <div class="checkbox" id="">
                     <input type="checkbox" value="" id="selectall"/><label>&nbsp; Select All</label>
                   </div>
                 </div>
-        </div>
+        </div> -->
         </div>
         <div>
         <div class="row">
+            
+            {% if allowed_operation !="not" %}
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
                 <button type="button" class="btn btn-default" id="check_result">Check Result</button>
             </div>
+            {% endif %}
+
         </div>
         <div class="result"><h2>Encoding Result</h2>
             <div class="table"></div>
@@ -128,10 +132,11 @@
 
         })
         $("#check_result").on('click',()=>{
-          if($("#columns :selected").length>0){
+          if(true){
+              debugger;
             var data={
                 'encoding_type':$("#encoding_type").val(),
-                'columns':$("#columns").select2('val')
+                // 'columns':$("#columns").select2('val')
             }
 
             if($("#base").is(':visible')){
@@ -141,6 +146,7 @@
             if($("#hash").is(':visible')){
                 data['hash']=parseFloat($("#hash").val())
             }
+            $("div.load-wrapper").css('display', 'block');
             $.ajax({
                 type: "POST",
                 url: `${window.location.origin}/api/encoding`,
@@ -157,17 +163,21 @@
                         "sScrollX": "100%",
                         "bScrollCollapse": true,
                     });
+                }else{
+                    alert(data?.error)
                 }
      
         })
         .fail(function(err) {
-            // do stuff here
+            alert(err)
         })
         .always(function(info) {
             // do stuff here
+            $("div.load-wrapper").css('display', 'none');
         });
           }else{
               alert('Please select column for encoding')
+              $("div.load-wrapper").css('display', 'none');
           }
         })
     });

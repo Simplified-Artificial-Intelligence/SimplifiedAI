@@ -1,4 +1,6 @@
 # Using This File for dropdown menu
+from enum import Enum
+
 TWO_D_GRAPH_TYPES = ["Bar Graph", "Histogram", "Scatter Plot", "Pie Chart", "Line Chart"]
 THREE_D_GRAPH_TYPES = ["3D Axes", "3D Scatter Plot", "3D Surface Plot", "3D Bubble Charts"]
 encoding_list = ["Label/Ordinal Encoder", "One Hot Encoder", "Hash Encoder", "Target Encoder"]
@@ -22,3 +24,15 @@ PROJECT_TYPES = [
     {"id": 2, "name": "Classification"},
     {"id": 3, "name": "Clustering"}
 ]
+
+class ProjectActions(Enum):
+    DELETE_COLUMN=1
+    CHANGE_DATA_TYPE=2
+    COLUMN_NAME_CHANGE=3
+    ENCODING=4
+    SCALING=5
+    PCA=6
+    
+
+REGRESSION_MODELS=['LinearRegression','Ridge','Lasso','ElasticNet','DecisionTreeRegressor','RandomForestRegressor','SVR','AdaBoostRegressor','GradientBoostingRegressor']
+

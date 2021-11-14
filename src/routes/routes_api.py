@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify,session
+from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params
 from src.utils.common.data_helper import load_data
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.utils.common.plotly_helper import PlotlyHelper
@@ -9,6 +10,11 @@ import numpy as np
 app_api = Blueprint('api', __name__)
 
 
+"""[summary]
+Api for feature engeenring
+Returns:
+    [type]: [description]
+"""
 @app_api.route('/api/feature_selection', methods=['POST'])
 def fe_feature_selection():
     try:
@@ -144,25 +150,29 @@ def fe_encoding():
     try:
         df = load_data()
         encoding_type = request.json['encoding_type']
-        columns = request.json['columns']
+        columns = df.columns
+        
+        if session['target_column'] is not None:
+            columns = list(df.columns[df.columns != session['target_column']])
+                            
         d = {'success': True}
         df = df.loc[:, columns]
         if encoding_type == "Base N Encoder":
-            df = FeatureEngineering.encodings(df, columns, encoding_type, base=request.json['base'])
+            df,_ = FeatureEngineering.encodings(df, columns, encoding_type, base=request.json['base'])
         elif encoding_type == "Target Encoder":
-            df = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['target'])
+            df,_ = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['target'])
         elif encoding_type == "Hash Encoder":
             """This is remaining to handle"""
-            df = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['hash'])
+            df,_ = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['hash'])
         else:
-            df = FeatureEngineering.encodings(df, columns, encoding_type)
+            df,_ = FeatureEngineering.encodings(df, columns, encoding_type)
         data = df.head(200).to_html()
         d['data'] = data
         return jsonify(d)
 
     except Exception as e:
         print(e)
-        return jsonify({'success': False})
+        return jsonify({'success': False,'error':str(e)})
 
 
 @app_api.route('/api/pca', methods=['POST'])
@@ -188,3 +198,19 @@ def fe_pca():
     except Exception as e:
         print(e)
         return jsonify({'success': False})
+    
+    
+@app_api.route('/api/get_params', methods=['POST'])
+def get_params():
+    try:
+        model_name = request.json['model']
+        d = {'success': True}
+        if model_name=="LinearRegression":
+            d['params']=LinearRegression_Params
+        elif model_name=="DecisionTreeRegressor":
+            d['params']=DecisionTreeRegressor_Params
+        return jsonify(d)
+
+    except Exception as e:
+        print(e)
+        return jsonify({'success': False})    
