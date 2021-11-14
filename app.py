@@ -456,7 +456,7 @@ def exportFile(id):
                 return Response(
                     content,
                     mimetype="text/csv",
-                    headers={"Content-disposition": "attachment; filename=test.csv"})
+                    headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
                 filename = filename.rsplit('.', 1)[0]
@@ -471,7 +471,7 @@ def exportFile(id):
                 return Response(
                     content,
                     mimetype="text/csv",
-                    headers={"Content-disposition": "attachment; filename=test.tsv"})
+                    headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
             elif fileType == 'excel':
                 wb = csv_to_excel()
@@ -486,14 +486,14 @@ def exportFile(id):
                 else:
                     print(filename + '.xlsx file doesnt exist')
 
-                return send_file(file_stream, attachment_filename="test.xlsx", as_attachment=True)
+                return send_file(file_stream, attachment_filename=f"{project_name}.xlsx", as_attachment=True)
 
             elif fileType == 'json':
                 content = csv_to_json(filename)
                 return Response(
                     content,
                     mimetype="text/json",
-                    headers={"Content-disposition": "attachment; filename=test.json"})
+                    headers={"Content-disposition": f"attachment; filename={project_name}.json"})
 
         else:
             return redirect(url_for('login'))

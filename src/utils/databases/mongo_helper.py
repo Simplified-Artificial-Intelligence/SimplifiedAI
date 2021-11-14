@@ -2,6 +2,7 @@ import pymongo
 import pandas as pd
 import time
 from src.utils.common.common_helper import read_config
+from src.utils.common.common_helper import check_file_presence
 import os
 from loguru import logger
 
@@ -90,11 +91,22 @@ class MongoHelper:
     def download_collection_data(self, project_id, file_type):
         try:
             path = os.path.join(os.path.join('src', 'temp_data_store'), f"{project_id}.{file_type}")
-            begin = time.time()
-            collection = self.db[project_id]
-            df = pd.DataFrame(list(collection.find()))
-            df.drop(columns=['_id'], inplace=True)
-            end = time.time()
+            if check_file_presence(project_id)[0]:
+                print("File Exist!!")
+                df = check_file_presence(project_id)[1]
+                try:
+                    df.drop(columns=['_id'], inplace=True)
+                except Exception as e:
+                    pass
+
+            else:
+                begin = time.time()
+                collection = self.db[project_id]
+                df = pd.DataFrame(list(collection.find()))
+                end = time.time()
+                df.drop(columns=['_id'], inplace=True)
+                print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
+
             if file_type == 'csv':
                 df.to_csv(path)
             elif file_type == 'tsv':
@@ -102,8 +114,8 @@ class MongoHelper:
             elif file_type == 'json':
                 df.to_json(path)
             elif file_type == 'xlsx':
+                print("excel")
                 df.to_excel(path)
-            print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
             download_status = 'Successful'
             return download_status, path
 
