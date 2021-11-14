@@ -28,6 +28,7 @@ from src.utils.common.cloud_helper import azure_data_helper
 from src.utils.common.database_helper import mysql_data_helper, mongo_data_helper
 from src.utils.common.database_helper import cassandra_connector
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
+from src.utils.common.project_report_helper import ProjectReports
 from src.routes.routes_api import app_api
 from loguru import logger
 from src.routes.routes_eda import app_eda
@@ -675,6 +676,14 @@ def exportCloudDatabaseFile(project_name, project_id):
         logger.info(e)
         return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
 
+@app.route('/projectReport/<id>/<moduleId>', methods=['GET', 'POST'])
+def projectReport(id, moduleId):
+    if 'loggedin' in session:
+        logger.info('Redirect To Project Report Page')
+        records, projectStatus = ProjectReports.get_record_by_pid(id, moduleId)
+        return render_template('projectReport.html', data={"id": id, "moduleId": moduleId}, records=records.to_html(), projectStatus=projectStatus)
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/deletePage/<id>', methods=['GET'])
 def renderDeleteProject(id):
