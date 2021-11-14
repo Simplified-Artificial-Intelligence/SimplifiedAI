@@ -61,9 +61,10 @@ class FeatureEngineering:
         except Exception as e:
             logger.error(f"{e} occurred in Change Datatype!")
 
-    def train_test_Split(self, cleanedData, label, test_size, random_state):
+    @staticmethod
+    def train_test_Split(cleanedData, label, train_size, random_state):
         try:
-            X_train, X_test, y_train, y_test = train_test_split(cleanedData, label, test_size=test_size,
+            X_train, X_test, y_train, y_test = train_test_split(cleanedData, label, train_size=train_size,
                                                                 random_state=random_state)
             logger.info("Train Test Split implemented!")
             return X_train, X_test, y_train, y_test
@@ -77,7 +78,7 @@ class FeatureEngineering:
                 scaler = MinMaxScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("MinMax Scaler implemented!")
-                return scaled_data
+                return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Min Max Scaler!")
         try:
@@ -85,7 +86,7 @@ class FeatureEngineering:
                 scaler = StandardScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Standard Scaler implemented!")
-                return scaled_data
+                return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Standard Scaler!")
         try:
@@ -93,7 +94,7 @@ class FeatureEngineering:
                 scaler = RobustScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Robust Scaler implemented!")
-                return scaled_data
+                return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Robust Scaler")
         try:
@@ -101,7 +102,7 @@ class FeatureEngineering:
                 scaler = PowerTransformer(method='yeo-johnson')
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Power Transformer Scaler implemented!")
-                return scaled_data
+                return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Power Transformer Scaler!")
         try:
@@ -109,7 +110,7 @@ class FeatureEngineering:
                 scaler = MaxAbsScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Max Abs Scaler implemented!")
-                return scaled_data
+                return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Max Abs Scaler!")
 
@@ -121,7 +122,7 @@ class FeatureEngineering:
                 label = ce.OrdinalEncoder(cols=cols, **kwargs)
                 label_df = label.fit_transform(df)
                 logger.info("Label/Ordinal Encoder implemented!")
-                return label_df
+                return (label_df,label)
         except Exception as e:
             logger.error(f"{e} occurred in Label/Ordinal Encoder!")
         try:
@@ -129,7 +130,7 @@ class FeatureEngineering:
                 onehot = ce.OneHotEncoder(cols=cols)
                 onehot_df = onehot.fit_transform(df)
                 logger.info("One Hot Encoder implemented!")
-                return onehot_df
+                return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in One Hot Encoder!")
         try:
@@ -137,7 +138,7 @@ class FeatureEngineering:
                 onehot = ce.BinaryEncoder(cols=cols, **kwargs)
                 onehot_df = onehot.fit_transform(df)
                 logger.info("Binary Encoder implemented!")
-                return onehot_df
+                return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in Binary Encoder!")
 
@@ -146,7 +147,7 @@ class FeatureEngineering:
                 onehot = ce.BaseNEncoder(cols=cols)
                 onehot_df = onehot.fit_transform(df)
                 logger.info("Base N Encoder implemented !")
-                return onehot_df
+                return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in Base N Encoder!")
         try:
@@ -154,7 +155,7 @@ class FeatureEngineering:
                 hash_ = ce.HashingEncoder(cols=cols, **kwargs)
                 hash_df = hash_.fit_transform(df)
                 logger.info("Hash Encoder implemented!")
-                return hash_df
+                return (hash_df,hash_)
         except Exception as e:
             logger.error(f"{e} occurred in Hash Encoder!")
         try:
@@ -162,7 +163,7 @@ class FeatureEngineering:
                 target = ce.TargetEncoder(cols=cols)
                 target_df = target.fit_transform(df, **kwargs)
                 logger.info("Target Encoder implemented!")
-                return target_df
+                return (target_df,target)
         except Exception as e:
             logger.error(f"{e} occurred in Target Encoder!")
 

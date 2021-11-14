@@ -51,9 +51,11 @@
         </div> -->
     </div>
         <div class="row">
+            {% if allowed_operation !="not" %}
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-                <button type="button" class="btn btn-default" id="btn-submit"  data-target="#exampleModal">Perform Scaler</button>
+                <button type="button" class="btn btn-default" id="btn-submit"  data-target="#exampleModal" data-toggle="modal">Perform Scaler</button>
             </div>
+            {% endif %}
         </div>
         <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -62,7 +64,7 @@
                   <h5 class="modal-title" id="exampleModalLabel">Are you sure??</h5>
                 </div>
                 <div class="modal-body">
-                    <p>Please make sure,because you can't revert this operation
+                    <p>Please make sure to make selected scaling,because you can't revert this operation
                     </p>
                 </div>
                 <div class="modal-footer">
@@ -84,7 +86,7 @@
             }
         })
 
-        $('.js-example-basic-multiple').select2();
+        // $('.js-example-basic-multiple').select2();
 
         $("#columns").on('change',()=>{
                if($("#columns").val()){
@@ -94,11 +96,11 @@
                }
         })
 
-        $("#btn-submit").on('click',()=>{
-                if(!$("#column_name").val().trim()){
-                    alert('Please insert column name !!!')
-                }
-            })
+        // $("#btn-submit").on('click',()=>{
+        //         if(!$("#column_name").val().trim()){
+        //             alert('Please insert column name !!!')
+        //         }
+        //     })
     });
 
 </script>

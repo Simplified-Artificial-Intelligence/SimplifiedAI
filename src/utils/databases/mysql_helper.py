@@ -149,7 +149,6 @@ class MySqlHelper:
             logger.error("Error: {}".format(error))
 
         finally:
-            conn.commit()
             self.close(conn, cursor)
             logger.info("MySQL connection is closed")
 

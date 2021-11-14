@@ -30,5 +30,9 @@ class ProjectActions(Enum):
     CHANGE_DATA_TYPE=2
     COLUMN_NAME_CHANGE=3
     ENCODING=4
+    SCALING=5
+    PCA=6
     
-    
+
+REGRESSION_MODELS=['LinearRegression','Ridge','Lasso','ElasticNet','DecisionTreeRegressor','RandomForestRegressor','SVR','AdaBoostRegressor','GradientBoostingRegressor']
+

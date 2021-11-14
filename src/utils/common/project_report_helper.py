@@ -18,11 +18,11 @@ class ProjectReports:
 
             query = f"""INSERT INTO 
             tblProjectReports(`Projectid`, `ModuleId`, `ActionName`, `Input`, `IsSuccessed`, `Output`, `ErrorMessage`)
-             VALUES ('{session.get('id')}','2','{actionName}','{input}', {isSuccessed},'{output}','{errorMessage}')"""
+             VALUES ('{session.get('pid')}','2','{actionName}','{input}', {isSuccessed},'{output}','{errorMessage}')"""
             logger.info(f"{session.get('id')} details uploaded successfully for EDA!")
             rowcount = mysql.insert_record(query)
         except Exception as e:
-            logger.error(f"{session.get('id')} details upload failed for EDA!")
+            logger.error(f"{session.get('pid')} details upload failed for EDA!")
 
     @staticmethod
     def insert_record_dp(actionName, input='', output='', isSuccessed=1, errorMessage=''):
@@ -31,11 +31,11 @@ class ProjectReports:
 
             query = f"""INSERT INTO 
             tblProjectReports(`Projectid`, `ModuleId`, `ActionName`, `Input`, `IsSuccessed`, `Output`, `ErrorMessage`)
-            VALUES ('{session.get('id')}','3','{actionName}','{input}',{isSuccessed},'{output}','{errorMessage}')"""
-            logger.info(f"{session.get('id')} details uploaded successfully for Data Preprocessing!")
+            VALUES ('{session.get('pid')}','3','{actionName}','{input}',{isSuccessed},'{output}','{errorMessage}')"""
+            logger.info(f"{session.get('pid')} details uploaded successfully for Data Preprocessing!")
             rowcount = mysql.insert_record(query)
         except Exception as e:
-            logger.error(f"{session.get('id')} details upload failed for Data Preprocessing!")
+            logger.error(f"{session.get('pid')} details upload failed for Data Preprocessing!")
 
     @staticmethod
     def insert_record_fe(actionName, input='', output='', isSuccessed=1, errorMessage=''):
@@ -44,11 +44,11 @@ class ProjectReports:
 
             query = f"""INSERT INTO 
             tblProjectReports(`Projectid`, `ModuleId`, `ActionName`, `Input`, `IsSuccessed`, `Output`, `ErrorMessage`)
-            VALUES ('{session.get('id')}','4','{actionName}','{input}',{isSuccessed},'{output}','{errorMessage}')"""
-            logger.info(f"{session.get('id')} details uploaded successfully for Feature Engineering!")
+            VALUES ('{session.get('pid')}','4','{actionName}','{input}',{isSuccessed},'{output}','{errorMessage}')"""
+            logger.info(f"{session.get('pid')} details uploaded successfully for Feature Engineering!")
             rowcount = mysql.insert_record(query)
         except Exception as e:
-            logger.error(f"{session.get('id')} details upload failed for Feature Engineering!")
+            logger.error(f"{session.get('pid')} details upload failed for Feature Engineering!")
     
     
     @staticmethod
@@ -58,11 +58,11 @@ class ProjectReports:
 
             query = f"""INSERT INTO 
             tblProjectReports(`Projectid`, `ModuleId`, `ActionName`, `Input`, `IsSuccessed`, `Output`, `ErrorMessage`)
-            VALUES ('{session.get('id')}','5','{actionName}','{input}',{isSuccessed},'{output}','{errorMessage}')"""
-            logger.info(f"{session.get('id')} details uploaded successfully for Machine Learning!")
+            VALUES ('{session.get('pid')}','5','{actionName}','{input}',{isSuccessed},'{output}','{errorMessage}')"""
+            logger.info(f"{session.get('pid')} details uploaded successfully for Machine Learning!")
             rowcount = mysql.insert_record(query)
         except Exception as e:
-            logger.error(f"{session.get('id')} details upload failed for Machine Learning!")
+            logger.error(f"{session.get('pid')} details upload failed for Machine Learning!")
     
     @staticmethod
     def add_active_module(moduleId):
@@ -84,7 +84,7 @@ class ProjectReports:
 
             query = f"""INSERT INTO 
             tblProject_Actions_Reports(`ProjectId`, `ProjectActionId`, `Input`, `Output`)
-            VALUES ('{session.get('id')}','{projectActionId}','{input}','{output}')"""
+            VALUES ('{session.get('pid')}','{projectActionId}','{input}','{output}')"""
             
             rowcount = mysql.insert_record(query)
         except Exception as e:

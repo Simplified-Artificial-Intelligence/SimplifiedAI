@@ -8,7 +8,7 @@ from src.eda.eda_helper import EDA
 from pandas_profiling import ProfileReport
 from src.utils.databases.mysql_helper import MySqlHelper
 import plotly.figure_factory as ff
-from src.utils.common.common_helper import immutable_multi_dict_to_str
+from src.utils.common.common_helper import immutable_multi_dict_to_str, save_project_encdoing, save_project_scaler
 from src.utils.common.common_helper import read_config
 import os
 from loguru import logger
@@ -19,6 +19,7 @@ from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, ProjectActions, \
     OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
+from pickle import dump,load
 
 mysql = MySqlHelper.get_connection_obj()
 
@@ -46,8 +47,13 @@ def feature_engineering(action):
                     logger.info('Redirect To Handle DatType')
                     ProjectReports.insert_record_fe('Redirect To Handle DatType')
                     
+                    columns=list(df.columns)
+                    
+                    if session['target_column']:
+                        columns=[col for col in columns if col!=session['target_column']]
+                    
                     return render_template('fe/handle_datatype.html', action=action,
-                                           columns=df.dtypes.apply(lambda x: x.name).to_dict(),
+                                           columns=df.loc[:,columns].dtypes.apply(lambda x: x.name).to_dict(),
                                            supported_dtypes=SUPPORTED_DATA_TYPES)
                     
                 elif action == 'encoding':
@@ -60,11 +66,12 @@ def feature_engineering(action):
                          return redirect(url_for('/target-column'))
                         
                     """ Check Encoding Already Performed or not"""
-                    query_=f"Select 1 from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=4"
-                    rows = mysql.fetch_one(query_)
+                    query_=f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=4"
+                    rows = mysql.fetch_all(query_)
                     
-                    if rows is not None:
+                    if len(rows)>0:
                         return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,
+                                               allowed_operation="not",
                                            columns=[],status="error",msg="You Already Performed Encoding. Don't do this again")
                     
                     return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,
@@ -81,13 +88,26 @@ def feature_engineering(action):
                     logger.info('Redirect To Scaling')
                     ProjectReports.insert_record_fe('Redirect To Scaling')
                     
-                    cat_colms=Preprocessing.col_seperator(df,'Categorical_columns')
-                    if len(cat_colms.columns)>0:
+                    """Check If Prohect type is Regression or Calssificaion and target Columns is not Selected"""
+                    if session['project_type']!=3 and  session['target_column'] is None:
+                         return redirect(url_for('/target-column'))
+                        
+                    """ Check Scaling Already Performed or not"""
+                    query_=f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=5"
+                    rows = mysql.fetch_all(query_)
+                    
+                    if len(rows)>0:
+                        return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,
+                                               allowed_operation="not",
+                                           columns=[],status="error",msg="You Already Performed Scaling. Don't do this again")
+                        
+                    if len(df.columns[df.dtypes=='category'])>0 or len(df.columns[df.dtypes=='object'])>0:
                          return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,
-                                           columns=[],status="error",msg="All Columns are not numeric, please perform encoding first")
+                                               allowed_operation="not",
+                                           columns=[],status="error",msg="Scaling can't be performed at this point, data contain categorical data. Please perform encoding first")
                          
                     return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,
-                                           columns=list(df.columns[df.dtypes != 'object']))
+                                           columns=list(df.columns))
                     
                 elif action == 'feature_selection':
                     
@@ -133,6 +153,7 @@ def feature_engineering_post(action):
                         
                         logger.info('Changed Column DataType')
                         ProjectReports.insert_record_fe('Changed Column DataType',selected_column,datatype)
+                        ProjectReports.insert_project_action_report(ProjectActions.CHANGE_DATA_TYPE.value,selected_column,datatype)
                         
                         return render_template('fe/handle_datatype.html', status="success", action=action,
                                                columns=df.dtypes.apply(lambda x: x.name).to_dict(),
@@ -151,6 +172,7 @@ def feature_engineering_post(action):
                         
                         logger.info('Changed Column Name')
                         ProjectReports.insert_record_fe('Changed Column DataType',selected_column,column_name)
+                        ProjectReports.insert_project_action_report(ProjectActions.COLUMN_NAME_CHANGE.value,selected_column,column_name.strip())
                         
                         
                         return render_template('fe/change_column_name.html', status="success", columns=list(df.columns),
@@ -166,38 +188,40 @@ def feature_engineering_post(action):
                     try:
                                              
                         encoding_type = request.form['encoding_type']
-                        columns=df.columns
+                        columns=list(df.columns[df.dtypes == 'object'])
                         
-                        if session['target_column'] is not None:
-                            columns = list(df.columns[df.columns != session['target_column']])
+                        if session['target_column']:
+                            columns=[col for col in columns if session['target_column']]
 
                         df_ = df.loc[:, columns]
+                        encdoer_=None
                             
                         # columns = request.form.getlist('columns')
                         d = {'success': True}
-                        scaling_method = request.form['scaling_method']
                         if encoding_type == "Base N Encoder":
-                            df_ = FeatureEngineering.encodings(df_, columns, encoding_type,
+                            (df_,encdoer_) = FeatureEngineering.encodings(df_, columns, encoding_type,
                                                                base=int(request.form['base']))
                         elif encoding_type == "Target Encoder":
-                            df_ = FeatureEngineering.encodings(df_, columns, encoding_type,
+                            (df_,encdoer_) = FeatureEngineering.encodings(df_, columns, encoding_type,
                                                                n_components=request.form['target'])
                         elif encoding_type == "Hash Encoder":
                             """This is remaining to handle"""
-                            df_ = FeatureEngineering.encodings(df_, columns, encoding_type,
+                            (df_,encdoer_) = FeatureEngineering.encodings(df_, columns, encoding_type,
                                                                n_components=int(request.form['hash']))
                         else:
-                            df_ = FeatureEngineering.encodings(df_, columns, encoding_type)
+                            (df_,encdoer_) = FeatureEngineering.encodings(df_, columns, encoding_type)
 
                         df = Preprocessing.delete_col(df, columns)
                         frames = [df, df_]
-                        df = pd.concat(frames)
-                        # df = update_data(df)
+                        df = pd.concat(frames,axis=1)
+                        df = update_data(df)
                         
-                        ProjectReports.insert_project_action_report(ProjectActions.ENCODING.value)
+                        save_project_encdoing(encdoer_)
+                        
+                        ProjectReports.insert_record_fe('Perform Encoding',encoding_type,'')
+                        ProjectReports.insert_project_action_report(ProjectActions.ENCODING.value,",".join(list(columns)))
                         
                         logger.info(f'Perform Encoding:{encoding_type}')
-                        ProjectReports.insert_record_fe('Perform Encoding',encoding_type,'')
                         
                         return render_template('fe/encoding.html', status="success", encoding_types=ENCODING_TYPES,
                                                columns=list(df.columns[df.dtypes == 'object']), action=action)
@@ -207,17 +231,26 @@ def feature_engineering_post(action):
                         ProjectReports.insert_record_fe('Perform Encoding',encoding_type,str(e),0)
                         
                         return render_template('fe/encoding.html', status="error", encoding_types=ENCODING_TYPES,
+                                               msg="This encdoing can't performed, please select other method.",
                                                columns=list(df.columns[df.dtypes == 'object']), action=action)
 
                 elif action == 'scaling':
                     try:
                         scaling_method = request.form['scaling_method']
-                        columns = request.form.getlist('columns')
+                        columns = df.columns
                         if len(columns) <= 0:
                             raise Exception("Column can not be zero")
+                        
+                        if session['target_column']:
+                            columns=[col for col in columns if col!=session['target_column']]
 
-                        df[columns] = FeatureEngineering.scaler(df[columns], scaling_method)
+                        df[columns],scaler = FeatureEngineering.scaler(df[columns], scaling_method)
                         df = update_data(df)
+                        
+                        save_project_scaler(scaler)
+                        ProjectReports.insert_record_fe('Perform Scaling')
+                        ProjectReports.insert_project_action_report(ProjectActions.SCALING.value)
+                        
                         return render_template('fe/scaling.html', status="success",
                                                scaler_types=SUPPORTED_SCALING_TYPES,
                                                columns=list(df.columns[df.dtypes != 'object']))
