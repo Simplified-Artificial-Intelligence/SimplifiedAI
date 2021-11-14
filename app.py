@@ -440,6 +440,17 @@ def exportFile():
             fileType = request.form['fileType']
             filename = get_filename()
 
+            project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Id={id}')
+            download_status, file_path = mongodb.download_collection_data(project_id, fileType)
+            if download_status != "Successful":
+                render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
+                                msg="OOPS something went wrong!!")
+
+            #we need id data from the route to doenload project_name, project_id
+            ## file_path is te path of of the file,  we can specify filetype in this mongodb.download_collection_data(project_id, fileType) function
+            ## we can give project name as name of the file while downloading
+
+
             if fileType == 'csv':
                 with open(filename) as fp:
                     content = fp.read()
@@ -498,7 +509,7 @@ def exportCloudDatabaseFile(project_name, project_id):
     try:
         global download_status
         if 'loggedin' in session:
-            print(project_name)
+            print(project_name, project_id)
             logger.info('Export File')
             source_type = request.form['source_type']
 
