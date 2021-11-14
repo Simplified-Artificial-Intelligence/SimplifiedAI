@@ -14,7 +14,7 @@ A brief description of what this project does and who it's for
 
 ## Screenshots
 
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
+<img width="956" alt="Screenshot 2021-11-14 152504" src="https://user-images.githubusercontent.com/40850370/141688147-13be4190-ea40-46b5-b34c-ff09803c845a.png">
 
 
 ## Documentation
