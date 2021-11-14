@@ -5,9 +5,7 @@ from src.model.custom.clustering_models import ClusteringModels
 from werkzeug.wrappers import Response
 from io import BytesIO
 import re
-from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, \
-    OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES
+from src.constants.constants import PROJECT_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -15,11 +13,9 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
-from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, csv_to_excel
-from src.eda.eda_helper import EDA
+from src.utils.common.data_helper import load_data, get_filename, csv_to_json, to_tsv, csv_to_excel
 import numpy as np
 import json
-from src.utils.common.plotly_helper import PlotlyHelper
 
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
@@ -34,6 +30,7 @@ from src.routes.routes_dp import app_dp
 from src.routes.routes_fe import app_fe
 from src.routes.routes_training import app_training
 from from_root import from_root
+
 # Yaml Config File
 config_args = read_config("./config.yaml")
 
@@ -107,17 +104,15 @@ def index():
         logger.error(e)
 
 
-
-
 @app.route('/project', methods=['GET', 'POST'])
 def project(df=None, table_name=None):
-    global status, download_status
     try:
         if 'loggedin' in session:
             if request.method == "GET":
                 return render_template('new_project.html', loggedin=True, project_types=PROJECT_TYPES)
             else:
                 source_type = request.form['source_type']
+                f = None
                 if source_type == 'uploadFile':
                     name = request.form['project_name']
                     description = request.form['project_desc']
@@ -127,19 +122,19 @@ def project(df=None, table_name=None):
                         f = request.files['file']
 
                     ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json']
-                    msg = ''
+                    message = ''
                     if not name.strip():
-                        msg = 'Please enter project name'
+                        message = 'Please enter project name'
                     elif not description.strip():
-                        msg = 'Please enter project description'
+                        message = 'Please enter project description'
                     elif f.filename.strip() == '':
-                        msg = 'Please select a file to upload'
+                        message = 'Please select a file to upload'
                     elif f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
-                        msg = 'This file format is not allowed, please select mentioned one'
+                        message = 'This file format is not allowed, please select mentioned one'
 
-                    if msg:
-                        logger.info(msg)
-                        return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                    if message:
+                        logger.info(message)
+                        return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
 
                     filename = secure_filename(f.filename)
                     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -155,9 +150,9 @@ def project(df=None, table_name=None):
                     elif file_path.endswith('.json'):
                         df = pd.read_json(file_path)
                     else:
-                        msg = 'This file format is currently not supported'
-                        logger.info(msg)
-                        return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                        message = 'This file format is currently not supported'
+                        logger.info(message)
+                        return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
 
                     project_id = unique_id_generator()
                     inserted_rows = mongodb.create_new_project(project_id, df)
@@ -173,13 +168,13 @@ def project(df=None, table_name=None):
                         if rowcount > 0:
                             return redirect(url_for('index'))
                         else:
-                            msg = "Error while creating new Project"
-                            logger.info(msg)
-                            return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                            message = "Error while creating new Project"
+                            logger.info(message)
+                            return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
                     else:
-                        msg = "Error while creating new Project"
-                        logger.info(msg)
-                        return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                        message = "Error while creating new Project"
+                        logger.info(message)
+                        return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
 
                 elif source_type == 'uploadResource':
                     name = request.form['project_name']
@@ -187,13 +182,13 @@ def project(df=None, table_name=None):
                     resource_type = request.form['resource_type']
 
                     if not name.strip():
-                        msg = 'Please enter project name'
-                        logger.info(msg)
-                        return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                        message = 'Please enter project name'
+                        logger.info(message)
+                        return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
                     elif not description.strip():
-                        msg = 'Please enter project description'
-                        logger.info(msg)
-                        return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                        message = 'Please enter project description'
+                        logger.info(message)
+                        return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
 
                     if resource_type == "awsS3bucket":
                         region_name = request.form['region_name']
@@ -323,17 +318,17 @@ def project(df=None, table_name=None):
                             if rowcount > 0:
                                 return redirect(url_for('index'))
                             else:
-                                msg = "Error while creating new Project"
-                                logger.info(msg)
-                                return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                                message = "Error while creating new Project"
+                                logger.info(message)
+                                return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
                         else:
-                            msg = "Error while creating new Project"
-                            logger.info(msg)
-                            return render_template('new_project.html', msg=msg)
+                            message = "Error while creating new Project"
+                            logger.info(message)
+                            return render_template('new_project.html', msg=message)
                     else:
-                        msg = "Error while creating new Project"
-                        logger.info(msg)
-                        return render_template('new_project.html', msg=msg, project_types=PROJECT_TYPES)
+                        message = "Error while creating new Project"
+                        logger.info(message)
+                        return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
         else:
             return redirect(url_for('login'))
 
@@ -491,21 +486,22 @@ def renderDeleteProject(id):
 @app.route('/target-column', methods=['GET', 'POST'])
 def setTargetColumn():
     try:
-        if 'loggedin' in session and 'id' in session and session['project_type']!=3 and  session['target_column'] is not None:
-            
+        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session[
+            'target_column'] is not None:
+
             logger.info('Redirect To Target Column Page')
-            
+
             df = load_data()
             columns = list(df.columns)
 
             if request.method == "GET":
-                #log.info(log_type='ACTION', log_message='Redirect To Set Target Column Page')
+                # log.info(log_type='ACTION', log_message='Redirect To Set Target Column Page')
                 return render_template('target_column.html', columns=columns)
             else:
                 status = "error"
                 id = session.get('pid')
                 target_column = request.form['column']
-                #log.info(log_type='Target Column', log_message=f'Selected Target columns Is {target_column}')
+                # log.info(log_type='Target Column', log_message=f'Selected Target columns Is {target_column}')
                 rows_count = mysql.delete_record(f'UPDATE tblProjects SET TargetColumn="{target_column}" WHERE Id={id}')
                 status = "success"
                 return render_template('target_column.html', columns=columns, status=status)
@@ -531,6 +527,7 @@ def deleteProject(id):
         logger.info('Login Needed')
         return redirect(url_for('login'))
 
+
 """[summary]
 Route for logout
 Raises:
@@ -538,6 +535,8 @@ Raises:
 Returns:
     [type]: [description]
 """
+
+
 @app.route('/logout', methods=['POST'])
 def logout():
     session.pop('loggedin', None)
@@ -551,7 +550,6 @@ def logout():
     return redirect(url_for('login'))
 
 
-
 """[summary]
 Entry Point on Any Project when click on project name
 Raises:
@@ -559,6 +557,8 @@ Raises:
 Returns:
     [type]: [description]
 """
+
+
 @app.route('/stream/<pid>')
 def stream(pid):
     try:
@@ -567,13 +567,13 @@ def stream(pid):
             values = data.split("&")
             session['pid'] = values[1]
             session['project_name'] = values[0]
-            query_=f"Select ProjectType, TargetColumn from tblProjects  where id={session['pid']}"
+            query_ = f"Select ProjectType, TargetColumn from tblProjects  where id={session['pid']}"
             info = mysql.fetch_one(query_)
             if info:
-                session['project_type']=info[0]
-                if info[0]!=3:
-                    session['target_column']=info[1]
-                
+                session['project_type'] = info[0]
+                if info[0] != 3:
+                    session['target_column'] = info[1]
+
             mongodb.get_collection_data(values[0])
             return redirect(url_for('module'))
         else:
@@ -593,7 +593,6 @@ def module():
             return redirect(url_for('/'))
     except Exception as e:
         logger.error(e)
-
 
 
 @app.route('/systemlogs/<action>', methods=['GET'])
