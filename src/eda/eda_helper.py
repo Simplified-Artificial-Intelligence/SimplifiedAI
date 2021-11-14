@@ -7,7 +7,13 @@ import os
 from from_root import from_root
 config_args = read_config("./config.yaml")
 
+"""[summary]
+Class for EDA Operations
+Returns:
+    [type]: [description]
+"""
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 

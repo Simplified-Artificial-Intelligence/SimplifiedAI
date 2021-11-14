@@ -83,9 +83,11 @@ class aws_s3_helper:
             logger.error(f'{e} occurred in show files in S3 bucket!')
             return False
 
-    def push_file_to_s3(self, bucket, file):
+    def push_file_to_s3(self, bucket, file, user_project_name):
         try:
-            self.s3.Bucket(bucket).upload_file(Filename=file, Key=file)
+            self.s3.Bucket(bucket).upload_file(Filename=file, Key=user_project_name)
+            print(f"{user_project_name} uploaded successfully to {bucket}")
+            return 'Successful'
         except Exception as e:
             logger.error(f'{e} occurred in push file to S3 bucket!')
         logger.info(f"{file} pushed successfully to {bucket}")
@@ -177,11 +179,12 @@ class gcp_browser_storage:
             bucket = self.storage_client.get_bucket(bucket_name)
             blob = bucket.blob(blob_name)
             blob.upload_from_filename(file_path)
-            logger.info(f"{blob_name} uploaded successfully to {bucket_name}")
-            return blob
+            print(f"{blob_name} was uploaded to {bucket_name}")
+            return 'Successful'
 
         except Exception as e:
-            logger.error(f'{e} occurred in upload to bucket in GCP!')
+            print(f"{blob_name} was not uploaded to {bucket_name}")
+            print(e)
 
     def download_file_from_bucket(self, blob_name, file_path, bucket_name):
 
@@ -210,6 +213,7 @@ class gcp_browser_storage:
         try:
             for bucket in self.storage_client.list_buckets():
                 bucket_list.append(bucket.name)
+            print(bucket_list, bucket_name)
             if bucket_name in bucket_list:
                 for file in self.storage_client.list_blobs(bucket_name):
                     file_list.append(file.name)
@@ -217,7 +221,8 @@ class gcp_browser_storage:
                     logger.info(f"{file_name} found in {bucket_name}!")
                     return 'Successful'
                 else:
-                    logger.info(f'The {file_name} does not exist {bucket_name} bucket!')
+                    # logger.info(f'The {file_name} does not exist {bucket_name} bucket!')
+                    return 'File does not exist!!'
             else:
                 logger.info(f'The {bucket_name} bucket does not exist!')
 
@@ -265,14 +270,14 @@ class azure_data_helper:
                 logger.error('OOPS something went wrong!!')
                 return 'OOPS something went wrong!!'
 
-    def upload_file(self, file, container_name):
+    def upload_file(self, file_path, container_name, user_file_name):
         try:
             blob = BlobClient.from_connection_string(conn_str=self.connection_string, container_name=container_name,
-                                                     blob_name=file)
-            with open(file, "rb") as data:
+                                                     blob_name=user_file_name)
+            with open(file_path, "rb") as data:
                 blob.upload_blob(data)
-            logger.info(f"{file} uploaded successfully to {container_name}")
-            print(f"{file} is uploded to {container_name} container")
+            logger.info(f"{user_file_name} uploaded successfully to {container_name}")
+            print(f"{user_file_name} is uploded to {container_name} container")
             return 'Successful'
 
         except Exception as e:
@@ -350,7 +355,7 @@ class azure_data_helper:
                     return 'Successful'
                 else:
                     logger.info(f"{file_name} does not exist in {container_name}!")
-                    return f"{file_name} does not exist in {container_name} container!!"
+                    return "File does not exist!!"
             else:
                 logger.info(f"{container_name} does not exist in Azure!")
                 return f"{container_name} container does not exist!!"

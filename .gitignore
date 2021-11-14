@@ -30,6 +30,8 @@ MANIFEST
 .idea
 .vscode/
 .vscode
+src/data/
+src/temp_data_store/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

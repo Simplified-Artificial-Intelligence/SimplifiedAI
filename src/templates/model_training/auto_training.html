@@ -16,35 +16,32 @@
         <strong>Taret Column &nbsp;&nbsp;</strong> {{target_column}}.
       </div>
     {% endif %}
-    <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+    <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12" style="margin-bottom: 50px;">
         <button type="submit" class="btn btn-default">Start Automated Training</button>
     </div>
+    {% if status=="success" %}
+    <div class="alert alert-warning">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Congrats!</strong> Auto Model Performed, Please Find List of all trained models. And Select best on for your data.
+      </div>
+    {% endif %}
+    {% if status=="error" %}
+    <div class="alert alert-danger">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Error!</strong> {{msg}}
+      </div>
+    {% endif %}
+    {% if train_done %}
+        {{result | safe}}
+    {% endif %}
     </br>
-    <h3 class="result">Dataset</h3>
-    {{data | safe}}
    </form>
 
 </div>
 </div>
 <script>
-    var slider = document.getElementById("range");
-    var output = document.getElementById("demo");
-    output.innerHTML = slider.value;
-    
-    slider.oninput = function() {
-      output.innerHTML = this.value;
-    }
-    </script>
-    <script>
-        $(document).ready(function() {
-        $('.dataframe').DataTable({
-            "sScrollX": "100%",
-            "bScrollCollapse": true,
-        });
-    } );
-
-    $(document).ready(function() {
-        $('.js-example-basic-multiple').select2();
-    });
-    </script>
+    $(document).ready(()=>{
+        $(".dataframe").attr("class","table table-hover")
+    })
+</script>
 {% endblock %}

@@ -8,7 +8,7 @@ from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, GradientBoostingRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error,r2_score
 from from_root import from_root
 config_args = read_config("./config.yaml")
 
@@ -20,7 +20,7 @@ class ModelTrain_Regression:
     def __init__(self, X_train, X_test, y_train, y_test, start: bool):
         try:
             logger.info("Constructor created in Auto Regression!")
-            self.frame = pd.DataFrame(columns=['Model_Name', 'MAE', 'RMSE'])
+            self.frame = pd.DataFrame(columns=['Model_Name', 'MAE', 'RMSE','R2-Score'])
             self.X_train = X_train
             self.X_test = X_test
             self.y_train = y_train
@@ -51,7 +51,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'LinearRegression', 'MAE': MAE, 'RMSE': RMSE}, ignore_index=True)
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'LinearRegression', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2}, ignore_index=True)
         logger.info(f"Linear Regression - MAE :{MAE} RMSE: {RMSE}")
 
     def ridge_(self):
@@ -60,7 +61,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'Ridge', 'MAE': MAE, 'RMSE': RMSE}, ignore_index=True)
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'Ridge', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2}, ignore_index=True)
         logger.info(f"Ridge Regression - MAE :{MAE} RMSE: {RMSE}")
 
     def Lasso_(self):
@@ -69,7 +71,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'Lasso', 'MAE': MAE, 'RMSE': RMSE}, ignore_index=True)
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'Lasso', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2}, ignore_index=True)
         logger.info(f"Lasso Regression - MAE :{MAE} RMSE: {RMSE}")
 
     def ElasticNet_(self):
@@ -78,7 +81,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'ElasticNet', 'MAE': MAE, 'RMSE': RMSE}, ignore_index=True)
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'ElasticNet', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2}, ignore_index=True)
         logger.info(f"Elastic Net - MAE :{MAE} RMSE: {RMSE}")
 
     def SVR_(self):
@@ -87,7 +91,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'SVR', 'MAE': MAE, 'RMSE': RMSE}, ignore_index=True)
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'SVR', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2}, ignore_index=True)
         logger.info(f"SVR - MAE :{MAE} RMSE: {RMSE}")
 
     def KNeighborsRegressor_(self):
@@ -96,7 +101,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'KNeighborsRegressor', 'MAE': MAE, 'RMSE': RMSE},
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'KNeighborsRegressor', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2},
                                        ignore_index=True)
         logger.info(f"KNN Regressor - MAE :{MAE} RMSE: {RMSE}")
 
@@ -106,7 +112,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'DecisionTreeRegressor', 'MAE': MAE, 'RMSE': RMSE},
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'DecisionTreeRegressor', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2},
                                        ignore_index=True)
         logger.info(f"Decision Tree Regressor - MAE :{MAE} RMSE: {RMSE}")
 
@@ -116,7 +123,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'RandomForestRegressor', 'MAE': MAE, 'RMSE': RMSE},
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'RandomForestRegressor', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2},
                                        ignore_index=True)
         logger.info(f"Random Forest Regressor - MAE :{MAE} RMSE: {RMSE}")
 
@@ -126,7 +134,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'AdaBoostRegressor', 'MAE': MAE, 'RMSE': RMSE}, ignore_index=True)
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'AdaBoostRegressor', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2}, ignore_index=True)
         logger.info(f"ADA Boost Regressor - MAE :{MAE} RMSE: {RMSE}")
 
     def GradientBoostingRegressor_(self):
@@ -135,7 +144,8 @@ class ModelTrain_Regression:
         y_pred = model.predict(self.X_test)
         MAE = mean_absolute_error(self.y_test, y_pred)
         RMSE = np.sqrt(mean_squared_error(self.y_test, y_pred))
-        self.frame = self.frame.append({'Model_Name': 'GradientBoostingRegressor', 'MAE': MAE, 'RMSE': RMSE},
+        R2=r2_score(self.y_test, y_pred)
+        self.frame = self.frame.append({'Model_Name': 'GradientBoostingRegressor', 'MAE': MAE, 'RMSE': RMSE,'R2-Score':R2},
                                        ignore_index=True)
         logger.info(f"Gradient Boost Regressor - MAE :{MAE} RMSE: {RMSE}")
 
