@@ -1,5 +1,5 @@
 from flask import Blueprint, redirect, url_for, render_template, request, session, send_file
-from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Params_Mappings
+from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, GradientBoostRegressor_Params, Params_Mappings
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
@@ -93,24 +93,47 @@ def model_training_post(action):
                                                                                                 label=y,
                                                                                                 train_size=range/100,
                                                                                                 random_state=random_state)
-                        Model_Params=[LinearRegression_Params]
                         model_params={}
                         if model=="LinearRegression":
                             Model_Params=LinearRegression_Params 
-                            train_model_fun=RegressionModels.linear_regression_regressor                           
+                            train_model_fun=RegressionModels.linear_regression_regressor
+                        elif model=="Ridge":
+                            Model_Params=Ridge_Params 
+                            train_model_fun=RegressionModels.ridge_regressor   
+                        elif model=="Lasso":
+                            Model_Params=Lasso_Params 
+                            train_model_fun=RegressionModels.lasso_regressor
+                        elif model=="ElasticNet":
+                            Model_Params=ElasticNet_Params
+                            train_model_fun=RegressionModels.elastic_net_regressor
                         elif model=="DecisionTreeRegressor":
-                            Model_Params=DecisionTreeRegressor_Params
+                            Model_Params=DecisionTreeRegressor_Params 
                             train_model_fun=RegressionModels.decision_tree_regressor
-                            
+                        elif model=="RandomForestRegressor":
+                            Model_Params=RandomForestRegressor_Params 
+                            train_model_fun=RegressionModels.random_forest_regressor
+                        elif model=="SVR":
+                            Model_Params=SVR_params 
+                            train_model_fun=RegressionModels.svr_regressor                          
+                        elif model=="AdaBoostRegressor":
+                            Model_Params=AdabootRegressor_Params
+                            train_model_fun=RegressionModels.ada_boost_regressor
+                        elif model=="GradientBoostingRegressor":
+                            Model_Params=GradientBoostRegressor_Params
+                            train_model_fun=RegressionModels.gradient_boosting_regressor
+                        else:
+                            return 'Non-Implemented Action'
+                        # if Model_Params == []:
+                        #     return 'No model seleccted.'
                         for param in Model_Params:
                             model_params[param['name']]=get_param_value(param,request.form[param['name']])
-                            
+                        print(model_params)
                         trained_model=train_model_fun(X_train,y_train,True,**model_params)
                         
                         reports=[{"key":"Model Name","value":model},
                             {"key":"Data Size","value":len(df)},
                             {"key":"Trained Data Size","value":len(X_train)},
-                                 {"key":"Test Data Size","value":len(X_test)}]
+                            {"key":"Test Data Size","value":len(X_test)}]
                         
                         scores=[]
                         if trained_model is not None:
@@ -119,7 +142,8 @@ def model_training_post(action):
                             scores.append({"key":"mean_absolute_error","value":mean_absolute_error(y_test,y_pred)})
                             scores.append({"key":"mean_squared_error","value":mean_squared_error(y_test,y_pred)})
                         
-                            return render_template('model_training/model_result.html', action=action,status="success",reports=reports,scores=scores,model_params=model_params)
+                            return render_template('model_training/model_result.html', action=action,status="success",
+                                                   reports=reports,scores=scores,model_params=model_params)
                         else:
                             raise Exception("Model Couldn't train, please check parametes")    
                     except Exception as e:

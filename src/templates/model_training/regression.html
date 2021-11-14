@@ -107,9 +107,11 @@
                 contentType:'application/json',
                 cache: false})
             .done(function(data) {
-
+                console.log(data)
                 if(data?.success){
+                  
                   add_params(data.params)
+                  
                   $("#btn-smbt").show()
                 }else{
                     alert(data?.error)

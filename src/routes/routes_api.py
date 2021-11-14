@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify,session
-from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params
+from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, GradientBoostRegressor_Params
 from src.utils.common.data_helper import load_data
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.utils.common.plotly_helper import PlotlyHelper
@@ -209,6 +209,22 @@ def get_params():
             d['params']=LinearRegression_Params
         elif model_name=="DecisionTreeRegressor":
             d['params']=DecisionTreeRegressor_Params
+        elif model_name=="RandomForestRegressor":
+            d['params']=RandomForestRegressor_Params
+        elif model_name=="SVR":
+            d['params']=SVR_params
+        elif model_name=="GradientBoostingRegressor":
+            d['params']=GradientBoostRegressor_Params
+        elif model_name=="AdaBoostRegressor":
+            d['params']=AdabootRegressor_Params
+        elif model_name=="Ridge":
+            d['params']=Ridge_Params
+        elif model_name=="Lasso":
+            d['params']=Lasso_Params
+        elif model_name=="ElasticNet":
+            d['params']=ElasticNet_Params
+        else:
+            d['params']=None
         return jsonify(d)
 
     except Exception as e:

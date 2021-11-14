@@ -63,19 +63,23 @@ def feature_engineering(action):
                     # 1 classification
                     # 2 regression
                     # 3 clustring
+                    print('here')
                     """Check If Prohect type is Regression or Calssificaion and target Columns is not Selected"""
-                    if session['project_type'] != 3 and session['target_column'] is None:
-                         return redirect(url_for('/target-column'))
-                        
+                    try:
+                        if session['project_type'] != 3 and session['target_column'] is None:
+                            return redirect(url_for('/target-column'))
+                    except Exception as e:
+                        logger.error(f'{e}, Target Column is not selected')
+                    print('here1')
                     """ Check Encoding Already Performed or not"""
                     query_=f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=4"
                     rows = mysql.fetch_all(query_)
-                    
+                    print('here2')
                     if len(rows)>0:
                         return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,
                                                allowed_operation="not",
                                            columns=[],status="error",msg="You Already Performed Encoding. Don't do this again")
-                    
+                    print('here3')
                     return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,
                                            columns=list(df.columns[df.dtypes == 'object']), action=action)
                     
@@ -90,7 +94,7 @@ def feature_engineering(action):
                     logger.info('Redirect To Scaling')
                     ProjectReports.insert_record_fe('Redirect To Scaling')
                     
-                    """Check If Prohect type is Regression or Calssificaion and target Columns is not Selected"""
+                    """Check If Prohect type is Regression or Classificaion and target Columns is not Selected"""
                     if session['project_type']!=3 and  session['target_column'] is None:
                          return redirect(url_for('/target-column'))
                         
