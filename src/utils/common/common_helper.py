@@ -1,3 +1,4 @@
+import pickle
 import uuid
 import yaml
 import hashlib
@@ -68,6 +69,23 @@ def save_project_scaler(encoder):
         
     file_name=os.path.join(path,'scaler.pkl')  
     dump(encoder, open(file_name, 'wb'))
+    
+    
+def save_project_model(model):
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+        
+    file_name=os.path.join(path,'model_temp.pkl')  
+    dump(model, open(file_name, 'wb'))
+    
+def load_project_model(model):
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'model_temp.pkl')
+    if os.path.exists(path):
+        model=pickle.load(path)
+        return model
+    else:
+        None
     
     
 def get_param_value(obj,value):

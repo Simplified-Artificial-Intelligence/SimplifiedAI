@@ -65,7 +65,7 @@ def feature_engineering(action):
                     # 3 clustring
                     """Check If Prohect type is Regression or Calssificaion and target Columns is not Selected"""
                     if session['project_type'] != 3 and session['target_column'] is None:
-                         return redirect(url_for('/target-column'))
+                         return redirect('/target-column')
                         
                     """ Check Encoding Already Performed or not"""
                     query_=f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=4"

@@ -426,13 +426,13 @@ def signup():
 @app.route('/exportFile/<id>', methods=['GET'])
 def exportForm(id):
     if 'loggedin' in session:
-        project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Id={id}')
+        project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
         logger.info('Redirect To Export File Page')
         return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id, "id": id})
     else:
         return redirect(url_for('login'))
 
-@app.route('/exportFile/<id>', methods=['GET', 'POST'])
+@app.route('/exportFile/<id>', methods=['POST'])
 def exportFile(id):
     try:
         global download_status
@@ -441,7 +441,7 @@ def exportFile(id):
 
             fileType = request.form['fileType']
 
-            project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Id={id}')
+            project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
             download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
             if download_status != "Successful":
                 render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id, "id": id},
@@ -677,12 +677,12 @@ def exportCloudDatabaseFile(project_name, project_id):
         logger.info(e)
         return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
 
-@app.route('/projectReport/<id>/<moduleId>', methods=['GET', 'POST'])
-def projectReport(id, moduleId):
+@app.route('/projectReport/<id>', methods=['GET', 'POST'])
+def projectReport(id):
     if 'loggedin' in session:
         logger.info('Redirect To Project Report Page')
-        records, projectStatus = ProjectReports.get_record_by_pid(id, moduleId)
-        return render_template('projectReport.html', data={"id": id, "moduleId": moduleId}, records=records.to_html(), projectStatus=projectStatus)
+        records, projectStatus = ProjectReports.get_record_by_pid(id, None)
+        return render_template('projectReport.html', data={"id": id, "moduleId": None}, records=records.to_html(), projectStatus=projectStatus)
     else:
         return redirect(url_for('login'))
 
@@ -698,8 +698,7 @@ def renderDeleteProject(id):
 @app.route('/target-column', methods=['GET', 'POST'])
 def setTargetColumn():
     try:
-        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session[
-            'target_column'] is not None:
+        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session['target_column'] is None:
 
             logger.info('Redirect To Target Column Page')
 
@@ -720,20 +719,18 @@ def setTargetColumn():
 
         else:
             logger.info('Redirect To Home Page')
-            return redirect(url_for('/'))
+            return  redirect('/')
     except Exception as ex:
-        pass
+        logger.info(str(ex))
 
 
 @app.route('/deleteProject/<id>', methods=['GET'])
 def deleteProject(id):
     if 'loggedin' in session:
         if id:
-            mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Id={id}')
+            mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Pid={id}')
             logger.info('Data Successfully Deleted From Database')
-            
-            collection_name = mysql.fetch_one(f'SELECT pid from tblProjects WHERE Id={id}')[0]
-            mongodb.drop_collection(collection_name)
+            mongodb.drop_collection(id)
             # log.info(log_type='INFO', log_message='Data Successfully Deleted From Database')
             return redirect(url_for('index'))
         else:
