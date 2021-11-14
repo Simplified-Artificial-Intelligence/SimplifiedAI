@@ -47,9 +47,9 @@ class PlotlyHelper:
             logger.error(e)
 
     @staticmethod
-    def histogram(df, x, y, bin=20):
+    def histogram(df, x, bin=20):
         try:
-            fig = px.histogram(df, x=x, y=y, nbins=bin)
+            fig = px.histogram(df, x=x, nbins=bin)
             graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             logger.info("Histogram Implemented!")
             return graphJSON

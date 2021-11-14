@@ -23,37 +23,66 @@
                 </div>
               </div>
 
-            <div id="x_y_columns"> </div>
+            <div id="x_y_columns" class="col-lg-4 col-md-4 col-sm-6 col-sm-12"> </div>
+
+            <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+              <div class="form-group">
+                <label for="exampleFormControlSelect1">Select X Column</label>
+                <select class="form-control" name="xcolumn">
+                    {% for col in x_list %}
+                    <option value="{{col}}" {% if x_column=="{col}}" %} selected="selected"{% endif %}>{{col}}</option>
+                  {% endfor %}
+                  </select>
+              </div>
+            </div>
+
+            <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+              <div class="form-group">
+                <label for="exampleFormControlSelect1">Select Y Column</label>
+                <select class="form-control" name="ycolumn">
+                    {% for col in y_list %}
+                    <option value="{{col}}" {% if y_column=="{{col}}" %} selected="selected"{% endif %}>{{col}}</option>
+                  {% endfor %}
+                  </select>
+              </div>
+            </div> -->
 
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
                 <button type="submit" class="btn btn-success margin-top-10">Show Result</button>
             </div>
         </div>
       </form>
+
       <!-- Plotly chart will be drawn inside this DIV -->
-      <div id='myDiv'></div>
+      <div id='myDiv'> </div>
+
 </div>
 
 <script type='text/javascript'>
     var graphs = {{graphJSON | safe}};
     Plotly.newPlot('myDiv',  graphs);
+</script>
 
+<script type='text/javascript'>
     $(document).ready(function(){ 
-      $('#graphId').change(function(e) {   //jQuery Change Function
-          graph_selected = $(this).val();    
-          console.log(graph_selected)
-      
-          $.ajax({
-              type: "GET",
-              url: "/x_y_columns/{{graph_selected}}",
-              data: {jsdata: graph_selected},
-              success: function(response) {
-                $("#x_y_columns").html(response);
-              },
-              error: function(xhr) {
-                //Do Something to handle error
-              }
-          });
+      $('#graphId').change(function(e) {   
+        // event.preventDefault();
+        graph_selected = $(this).val();  
+        console.log(graph_selected) 
+    
+        $.ajax({
+            type: "GET",
+            url: "/x_y_columns",
+            data: {graph_selected: graph_selected},
+            success: function(response) {
+              console.log(response)
+              $("#x_y_columns").html(response);
+            },
+            error: function(xhr) {
+              console.log(xhr)
+              //Do Something to handle error
+            }
+        });
       });
     });
 </script>
