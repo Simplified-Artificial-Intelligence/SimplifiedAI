@@ -71,17 +71,24 @@ def save_project_scaler(encoder):
     
     
 def get_param_value(obj,value):
-        if obj['dtype']=="boolean":
-            return Params_Mappings[value]
-        elif obj['dtype']=="string":
-            return str(value)
-        elif obj['dtype']=="int":
-             if obj['accept_none'] and value=="":
-                 return None
-             else:
-                 return int(value)
-        elif obj['dtype']=="float":
-            if obj['accept_none'] and value=="":
-                return None
-            else:
-                return float(value)   
+    if obj['dtype']=="boolean":
+        return Params_Mappings[value]
+    elif obj['dtype']=="string":
+        return str(value)
+    elif obj['dtype']=="int":
+        if obj['accept_none'] and value=="":
+            return None
+        else:
+            return int(value)
+    elif obj['dtype']=="float":
+        if obj['accept_none'] and value=="":
+            return None
+        else:
+            return float(value)  
+
+def get_numeric_categorical_columns(df):
+    cols = df.columns
+    num_cols = df._get_numeric_data().columns
+    cat_cols = list(set(cols) - set(num_cols))
+    return num_cols, cat_cols
+    

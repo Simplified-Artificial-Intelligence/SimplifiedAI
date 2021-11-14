@@ -1,0 +1,21 @@
+<div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+    <div class="form-group">
+      <label for="exampleFormControlSelect1">Select X Column</label>
+      <select class="form-control" name="xcolumn">
+          {% for col in x_list %}
+          <option value="{{col}}" {% if x_column=="{col}}" %} selected="selected"{% endif %}>{{col}}</option>
+        {% endfor %}
+        </select>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+    <div class="form-group">
+      <label for="exampleFormControlSelect1">Select Y Column</label>
+      <select class="form-control" name="ycolumn">
+          {% for col in y_list %}
+          <option value="{{col}}" {% if y_column=="{{col}}" %} selected="selected"{% endif %}>{{col}}</option>
+        {% endfor %}
+        </select>
+    </div>
+  </div>
