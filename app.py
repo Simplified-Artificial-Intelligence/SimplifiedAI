@@ -426,30 +426,27 @@ def exportForm(id):
     if 'loggedin' in session:
         project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Id={id}')
         logger.info('Redirect To Export File Page')
-        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id})
+        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id, "id": id})
     else:
         return redirect(url_for('login'))
 
-@app.route('/exportFile/<project_name>/<project_id>', methods=['GET', 'POST'])
-def exportFile(project_name, project_id):
+@app.route('/exportFile/<id>', methods=['GET', 'POST'])
+def exportFile(id):
     try:
         global download_status
         if 'loggedin' in session:
             logger.info('Export File')
 
             fileType = request.form['fileType']
-            filename = get_filename()
 
             project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Id={id}')
-            download_status, file_path = mongodb.download_collection_data(project_id, fileType)
+            download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
             if download_status != "Successful":
-                render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
+                render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id, "id": id},
                                 msg="OOPS something went wrong!!")
 
-            #we need id data from the route to doenload project_name, project_id
-            ## file_path is te path of of the file,  we can specify filetype in this mongodb.download_collection_data(project_id, fileType) function
-            ## we can give project name as name of the file while downloading
-
+            # filename = get_filename()
+            filename = file_path
 
             if fileType == 'csv':
                 with open(filename) as fp:
