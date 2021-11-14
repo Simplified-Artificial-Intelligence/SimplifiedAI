@@ -430,8 +430,8 @@ def exportForm(id):
     else:
         return redirect(url_for('login'))
 
-@app.route('/exportFile', methods=['GET', 'POST'])
-def exportFile():
+@app.route('/exportFile/<project_name>/<project_id>', methods=['GET', 'POST'])
+def exportFile(project_name, project_id):
     try:
         global download_status
         if 'loggedin' in session:
