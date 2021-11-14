@@ -270,14 +270,14 @@ class azure_data_helper:
                 logger.error('OOPS something went wrong!!')
                 return 'OOPS something went wrong!!'
 
-    def upload_file(self, file, container_name):
+    def upload_file(self, file_path, container_name, user_file_name):
         try:
             blob = BlobClient.from_connection_string(conn_str=self.connection_string, container_name=container_name,
-                                                     blob_name=file)
-            with open(file, "rb") as data:
+                                                     blob_name=user_file_name)
+            with open(file_path, "rb") as data:
                 blob.upload_blob(data)
-            logger.info(f"{file} uploaded successfully to {container_name}")
-            print(f"{file} is uploded to {container_name} container")
+            logger.info(f"{user_file_name} uploaded successfully to {container_name}")
+            print(f"{user_file_name} is uploded to {container_name} container")
             return 'Successful'
 
         except Exception as e:
@@ -355,7 +355,7 @@ class azure_data_helper:
                     return 'Successful'
                 else:
                     logger.info(f"{file_name} does not exist in {container_name}!")
-                    return f"{file_name} does not exist in {container_name} container!!"
+                    return "File does not exist!!"
             else:
                 logger.info(f"{container_name} does not exist in Azure!")
                 return f"{container_name} container does not exist!!"

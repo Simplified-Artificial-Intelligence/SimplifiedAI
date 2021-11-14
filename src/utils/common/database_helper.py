@@ -91,12 +91,15 @@ class mysql_data_helper:
             try:
                 dataframe.to_sql(con=self.engine, name=table_name, if_exists='replace', chunksize=1000)
                 logger.info(f"Dataframe pushed to {table_name} table!")
+                return "Successful"
 
             except Exception as e:
                 logger.error(f"{e} occurred in pushing dataframe to {table_name} table!")
+                return "Unsuccessful"
 
         except Exception as e:
             logger.error(f"{e} occurred in push_file_to_table!")
+            return "Unsuccessful"
 
     def check_connection(self, table_name):
 
@@ -114,7 +117,8 @@ class mysql_data_helper:
                 return "Successful"
             else:
                 logger.error(f"{table_name} table does not exist!")
-                return f"{table_name} table does not exist in {self.database} database"
+                return "table does not exist!!"
+
 
         except Exception as e:
 
@@ -166,7 +170,7 @@ class cassandra_connector:
             data = dataframe.to_json()
             data = wrap(data, 65000)
 
-            create_query = f'create table {table_name}'
+            create_query = f'create table {table_name}('
             logger.info(f"Query created for creating {table_name} table!")
             column_names = []
 
@@ -191,9 +195,11 @@ class cassandra_connector:
             session.shutdown()
             logger.info(f"Dataframe pushed to {table_name} table!")
             logger.info("Cassandra session closed")
+            return "Successful"
 
         except Exception as e:
             logger.error(f"{e} occurred in pushing dataframe to {table_name} table!")
+            return "Unsuccessful"
 
     def custom_query(self, custom_query):
         try:
@@ -255,10 +261,12 @@ class cassandra_connector:
                 table_list.append(table.table_name)
             if table_name in table_list:
                 logger.info(f"{table_name} table exists in {self.keyspace} keyspace!")
+                session.shutdown()
                 return "Successful"
             else:
+                session.shutdown()
                 logger.error(f"{table_name} table not found in {self.keyspace} keyspace!")
-                return f"{table_name} table in not available in '{self.keyspace}' keyspace"
+                return "table does not exist!!"
 
         except Exception as e:
 
@@ -268,6 +276,9 @@ class cassandra_connector:
             elif 'keyspace' in e.__str__():
                 logger.error(f"Incorrect Cassandra DB keyspace!!")
                 return f"Given {self.keyspace} keyspace does not exist!!"
+            elif 'Unable to connect to any servers' in e.__str__():
+                logger.error(f"Unable to connect to any servers!!")
+                return "Unable to connect to any servers, please try again later!!"
             else:
                 logger.error(f"{e} occurred in check_connection!")
                 return "Provide valid bundel zip file!!"
@@ -358,7 +369,7 @@ class mongo_data_helper:
                     return "Successful"
                 else:
                     self.close_connection(client_cloud)
-                    return f"Given {collection_name} collection does not exits in {database_name} database"
+                    return "collection does not exits!!"
             else:
                 self.close_connection(client_cloud)
                 return f"Given {database_name} database does not exist!!"
