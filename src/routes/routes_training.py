@@ -1,6 +1,7 @@
 from flask import Blueprint, redirect, url_for, render_template, request, session, send_file
 from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, GradientBoostRegressor_Params, Params_Mappings
 from src.constants.model_params import KmeansClustering_Params, DbscanClustering_Params, AgglomerativeClustering_Params
+from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, DecisionTreeClassifier_Params, RandomForestClassifier_Params, GradientBoostingClassifier_Params, AdaBoostClassifier_Params 
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
@@ -8,7 +9,7 @@ from werkzeug.wrappers import Response
 from io import BytesIO
 import re
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import REGRESSION_MODELS
+from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -39,10 +40,11 @@ def model_training(action):
         if 'pid' in session:
             df = load_data()
             if df is not None:
-                """Check If Prohect type is Regression or Calssificaion and target Columns is not Selected"""
+                """Check If Project type is Regression or Classificaion and target Columns is not Selected"""
                 if session['project_type']!=3 and  session['target_column'] is None:
-                        return redirect(url_for('/target-column'))
-                    
+                    return redirect('/target-column')
+                
+                       
                 if action == 'help':
                     return render_template('model_training/help.html')
                 elif action == 'auto_training':
@@ -52,13 +54,17 @@ def model_training(action):
                 elif action == 'custom_training':
                     logger.info('Redirect To Custom Training Page')
                     ProjectReports.insert_record_ml('Redirect To Custom Training Page')
-                    if session['project_type'] == 2:
-                        return render_template('model_training/classification.html', action=action,models=REGRESSION_MODELS)
-                    elif session['project_type'] == 1:
-                        return render_template('model_training/regression.html', action=action,models=REGRESSION_MODELS)
-                    elif session['project_type'] == 3:
-                        return render_template('model_training/clustering.html')
-                    else:
+                    try:    
+                        if session['project_type'] == 2:
+                            return render_template('model_training/classification.html', action=action,models=CLASSIFICATION_MODELS)
+                        elif session['project_type'] == 1:
+                            return render_template('model_training/regression.html', action=action,models=REGRESSION_MODELS)
+                        elif session['project_type'] == 3:
+                            return render_template('model_training/clustering.html', action=action,models=CLUSTERING_MODELS)
+                        else:
+                            return render_template('model_training/custom_training.html')
+                    except Exception as e:
+                        print(e)
                         return render_template('model_training/custom_training.html')
                 else:
                     return 'Non-Implemented Action'
@@ -124,6 +130,27 @@ def model_training_post(action):
                         elif model=="GradientBoostingRegressor":
                             Model_Params=GradientBoostRegressor_Params
                             train_model_fun=RegressionModels.gradient_boosting_regressor
+                        elif model=="LogisticRegression":
+                            Model_Params=LogisticRegression_Params
+                            train_model_fun=ClassificationModels.logistic_regression_classifier
+                        elif model=="SVC":
+                            Model_Params=SVC_Params
+                            train_model_fun=ClassificationModels.support_vector_classifier
+                        elif model=="KNeighborsClassifier":
+                            Model_Params=KNeighborsClassifier_Params
+                            train_model_fun=ClassificationModels.k_neighbors_classifier
+                        elif model=="DecisionTreeClassifier":
+                            Model_Params=DecisionTreeClassifier_Params
+                            train_model_fun=ClassificationModels.decision_tree_classifier
+                        elif model=="RandomForestClassifier":
+                            Model_Params=RandomForestClassifier_Params
+                            train_model_fun=ClassificationModels.random_forest_classifier
+                        elif model=="AdaBoostClassifier":
+                            Model_Params=AdaBoostClassifier_Params
+                            train_model_fun=ClassificationModels.ada_boost_classifier
+                        elif model=="GradientBoostingClassifier":
+                            Model_Params=GradientBoostingClassifier_Params
+                            train_model_fun=ClassificationModels.gradient_boosting_classifier
                         elif model=="KMeans":
                             Model_Params=KmeansClustering_Params
                             train_model_fun=ClusteringModels.kmeans_clustering

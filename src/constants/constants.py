@@ -36,5 +36,5 @@ class ProjectActions(Enum):
     
 
 REGRESSION_MODELS=['LinearRegression','Ridge','Lasso','ElasticNet','DecisionTreeRegressor','RandomForestRegressor','SVR','AdaBoostRegressor','GradientBoostingRegressor']
-CLASSICATION_MODELS=['LogisticRegression', 'SVC', 'KNeighborsClassifier', 'DecisionTreeClassifier', 'RandomForestClassifier', 'GradientBoostClassifier', 'AdaBoostClassifier']
+CLASSIFICATION_MODELS=['LogisticRegression', 'SVC', 'KNeighborsClassifier', 'DecisionTreeClassifier', 'RandomForestClassifier', 'GradientBoostClassifier', 'AdaBoostClassifier']
 CLUSTERING_MODELS=['KMeans', 'DBSCAN', 'AgglomerativeClustering']
