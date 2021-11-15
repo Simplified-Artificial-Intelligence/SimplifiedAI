@@ -164,6 +164,7 @@ def model_training_post(action):
                             return 'Non-Implemented Action'
                         # if Model_Params == []:
                         #     return 'No model seleccted.'
+                        # model_params=[]
                         for param in Model_Params:
                             model_params[param['name']]=get_param_value(param,request.form[param['name']])
                         print(model_params)
