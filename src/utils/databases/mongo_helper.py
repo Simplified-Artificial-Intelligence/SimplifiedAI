@@ -89,6 +89,18 @@ class MongoHelper:
             logger.error(e)
 
     def download_collection_data(self, project_id, file_type):
+        """This function downloads user dataset from mongodb and converts it to required file type, before downloading
+        it checks if file exist locally or not, if it exist it will not download instead takes tht file and converts
+        into required file type
+                    download_collection_data
+                Args:
+                    project_id (str): project_id is the collection name of user dataset
+                    file_type (str): required file type eg:csv, tsv, json, xlsx
+
+                Returns:
+                    download status (str) : Successful or Unsuccessful
+                    path : file path of newly created file
+                """
         try:
             path = os.path.join(os.path.join('src', 'temp_data_store'), f"{project_id}.{file_type}")
             if check_file_presence(project_id)[0]:
