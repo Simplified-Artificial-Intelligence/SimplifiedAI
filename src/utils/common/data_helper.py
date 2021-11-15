@@ -34,7 +34,7 @@ def get_filename():
 def load_data():
     try:
         filename = get_filename()
-        df = pd.read_csv(filename)
+        df = pd.read_csv(filename, index_col=0)
         logger.info(f"DataFrame loaded successfully!")
         return df
 

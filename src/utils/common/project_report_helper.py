@@ -108,7 +108,16 @@ class ProjectReports:
             # if moduleId != 0:
             #     query = query + f""" and tblProjectReports.ModuleId = {moduleId}"""
 
-            query = f"""select tblProjectStatus.Name, tblProjectReports.ActionName, tblProjectReports.Input, tblProjectReports.IsSuccessed, tblProjectReports.Output, tblProjectReports.ErrorMessage, tblProjectReports.CreateDate from tblProjectReports join tblProjectStatus on (tblProjectReports.ModuleId=tblProjectStatus.Id) where tblProjectReports.Projectid = 33 and tblProjectReports.ModuleId = 3"""
+            query = f'''select tblProjectStatus.Name, tblProjectReports.ActionName, tblProjectReports.Input, 
+            tblProjectReports.IsSuccessed, tblProjectReports.Output, tblProjectReports.ErrorMessage,
+            tblProjectReports.CreateDate from tblProjectReports 
+            join tblProjectStatus on (tblProjectReports.ModuleId=tblProjectStatus.Id) 
+            join tblProjects on (tblProjectReports.Projectid=tblProjects.Id) 
+            where tblProjects.Pid = '{pid}' '''
+            
+            if moduleId is not None:
+                query+=" and tblProjectReports.ModuleId ={moduleId}"
+                
             records = mysql.fetch_all(query)
             records = pd.DataFrame(records, columns=columns)
 

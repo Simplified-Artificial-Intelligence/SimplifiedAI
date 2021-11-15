@@ -1,3 +1,4 @@
+import pickle
 import uuid
 import yaml
 import hashlib
@@ -72,22 +73,45 @@ def save_project_scaler(encoder):
     dump(encoder, open(file_name, 'wb'))
     
     
+def save_project_model(model):
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+        
+    file_name=os.path.join(path,'model_temp.pkl')  
+    dump(model, open(file_name, 'wb'))
+    
+def load_project_model(model):
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'model_temp.pkl')
+    if os.path.exists(path):
+        model=pickle.load(path)
+        return model
+    else:
+        None
+    
+    
 def get_param_value(obj,value):
-        if obj['dtype']=="boolean":
-            return Params_Mappings[value]
-        elif obj['dtype']=="string":
-            return str(value)
-        elif obj['dtype']=="int":
-             if obj['accept_none'] and value=="":
-                 return None
-             else:
-                 return int(value)
-        elif obj['dtype']=="float":
-            if obj['accept_none'] and value=="":
-                return None
-            else:
-                return float(value)   
+    if obj['dtype']=="boolean":
+        return Params_Mappings[value]
+    elif obj['dtype']=="string":
+        return str(value)
+    elif obj['dtype']=="int":
+        if obj['accept_none'] and value=="":
+            return None
+        else:
+            return int(value)
+    elif obj['dtype']=="float":
+        if obj['accept_none'] and value=="":
+            return None
+        else:
+            return float(value)  
 
+def get_numeric_categorical_columns(df):
+    cols = df.columns
+    num_cols = df._get_numeric_data().columns
+    cat_cols = list(set(cols) - set(num_cols))
+    return num_cols, cat_cols
+    
 def check_file_presence(project_id):
     try:
         path1 = os.path.join('src', 'data')

@@ -10,7 +10,7 @@ from src.constants.constants import TWO_D_GRAPH_TYPES
 import plotly.figure_factory as ff
 import json
 import plotly
-from src.utils.common.common_helper import immutable_multi_dict_to_str
+from src.utils.common.common_helper import immutable_multi_dict_to_str, get_numeric_categorical_columns
 import os
 from from_root import from_root
 
@@ -80,7 +80,8 @@ def eda(action):
 
                 elif action == "plots":
                     ProjectReports.insert_record_eda('Plots')
-                    return render_template('eda/plots.html', columns=list(df.columns),
+                    num_cols, cat_cols = get_numeric_categorical_columns(df)
+                    return render_template('eda/plots.html', columns=list(df.columns), x_list=list(df.columns), y_list=num_cols, 
                                            graphs_2d=TWO_D_GRAPH_TYPES, action=action, x_column="", y_column="")
                 else:
                     return render_template('eda/help.html')
@@ -195,20 +196,20 @@ def eda_post(action):
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
 
                     elif selected_graph_type == "Pie Chart":
-                        graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
+                        graphJSON = PlotlyHelper.pieplot(df, names=x_column, values=y_column, title='Pie Chart')
 
                     elif selected_graph_type == "Bar Graph":
                         graphJSON = PlotlyHelper.barplot(df, x=x_column, y=y_column)
 
                     elif selected_graph_type == "Histogram":
-                        graphJSON = PlotlyHelper.histogram(df, x=x_column, y=y_column)
+                        graphJSON = PlotlyHelper.histogram(df, x=x_column)
 
                     elif selected_graph_type == "Line Chart":
                         graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
 
                     return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
                                            columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
-                                           action=action, graphJSON=graphJSON, x_column=x_column, y_column=y_column)
+                                           action=action, graphJSON=graphJSON)
 
                 else:
                     return render_template('eda/help.html')
@@ -216,6 +217,35 @@ def eda_post(action):
                 """Manage This"""
                 pass
 
+        else:
+            return redirect(url_for('/'))
+    except Exception as e:
+        ProjectReports.insert_record_eda(e)
+
+
+@app_eda.route('/x_y_columns', methods=['GET', 'POST'])
+def x_y_columns():
+    try:
+        if 'pid' in session:
+            graph_selected = request.args.get('graph_selected')
+            df = load_data()
+            if df is not None:
+                num_cols, cat_cols = get_numeric_categorical_columns(df)
+                if graph_selected == "Bar Graph":
+                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols))
+                elif graph_selected == "Histogram":
+                    return render_template('eda/x_y_columns.html', x_list=list(df.columns), y_list=[])
+                elif graph_selected == "Scatter Plot":
+                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols))
+                elif graph_selected == "Pie Chart":
+                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols))
+                elif graph_selected == "Line Chart":
+                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols))
+                else:
+                    return redirect(url_for('/eda/help'))
+            else:
+                """Manage This"""
+                pass
         else:
             return redirect(url_for('/'))
     except Exception as e:
