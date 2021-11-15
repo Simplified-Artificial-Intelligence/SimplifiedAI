@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify,session
 from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, GradientBoostRegressor_Params
+from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, DecisionTreeClassifier_Params, RandomForestClassifier_Params, AdaBoostClassifier_Params, GradientBoostingClassifier_Params
+from src.constants.model_params import KmeansClustering_Params, DbscanClustering_Params, AgglomerativeClustering_Params
 from src.utils.common.data_helper import load_data
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.utils.common.plotly_helper import PlotlyHelper
@@ -223,6 +225,26 @@ def get_params():
             d['params']=Lasso_Params
         elif model_name=="ElasticNet":
             d['params']=ElasticNet_Params
+        elif model_name == "LogisticRegression":
+            d['params']=LogisticRegression_Params
+        elif model_name == "SVC":
+            d['params']=SVC_Params
+        elif model_name== "KNeighborsClassifier":
+            d['params']=KNeighborsClassifier_Params
+        elif model_name == "DecisionTreeClassifier":
+            d['params']=DecisionTreeClassifier_Params
+        elif model_name=="RandomForestClassifier":
+            d['params']=RandomForestClassifier_Params
+        elif model_name=="AdaBoostClassifier":
+            d['params']=AdaBoostClassifier_Params
+        elif model_name=="GradientBoostingClassifier":
+            d['params']=GradientBoostingClassifier_Params
+        elif model_name=="KMeans":
+            d['params']=KmeansClustering_Params
+        elif model_name=="DBSCAN":
+            d['params']=DbscanClustering_Params
+        elif model_name=="AgglomerativeClustering":
+            d['params']=AgglomerativeClustering_Params
         else:
             d['params']=None
         return jsonify(d)
