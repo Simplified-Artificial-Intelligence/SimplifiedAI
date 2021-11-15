@@ -457,20 +457,20 @@ def exportFile(id):
                 return Response(content.to_csv(sep='\t'), mimetype="text/tsv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
-            elif fileType == 'excel':
-                wb = csv_to_excel(file_path)
-
-                file_stream = BytesIO()
-                wb.save(file_stream)
-                file_stream.seek(0)
-
-                filename = filename.rsplit('.', 1)[0]
-                if os.path.isfile(filename + '.xlsx'):
-                    os.remove(filename + '.xlsx')
-                else:
-                    print(filename + '.xlsx file doesnt exist')
-
-                return send_file(file_stream, attachment_filename=f"{project_name}.xlsx", as_attachment=True)
+            # elif fileType == 'excel':
+            #     wb = csv_to_excel(file_path)
+            #
+            #     file_stream = BytesIO()
+            #     wb.save(file_stream)
+            #     file_stream.seek(0)
+            #
+            #     filename = filename.rsplit('.', 1)[0]
+            #     if os.path.isfile(filename + '.xlsx'):
+            #         os.remove(filename + '.xlsx')
+            #     else:
+            #         print(filename + '.xlsx file doesnt exist')
+            #
+            #     return send_file(file_stream, attachment_filename=f"{project_name}.xlsx", as_attachment=True)
 
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
@@ -552,7 +552,6 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                msg=upload_status)
                     print(f"{project_name}_{timestamp}.{file_type} pushed to {container_name} container")
                     return redirect(url_for('index'))
-
 
                 elif cloudType == 'gcpStorage':
                     credentials_file = request.files['GCP_credentials_file']
