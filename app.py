@@ -486,15 +486,15 @@ def renderDeleteProject(id):
 @app.route('/target-column', methods=['GET', 'POST'])
 def setTargetColumn():
     try:
-        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session[
-            'target_column'] is not None:
+        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session['target_column'] is None:
 
             logger.info('Redirect To Target Column Page')
 
             df = load_data()
             columns = list(df.columns)
-
+            print('above req')
             if request.method == "GET":
+                print('inside req')
                 # log.info(log_type='ACTION', log_message='Redirect To Set Target Column Page')
                 return render_template('target_column.html', columns=columns)
             else:
@@ -508,10 +508,10 @@ def setTargetColumn():
 
         else:
             logger.info('Redirect To Home Page')
-            return redirect(url_for('/'))
-    except Exception as ex:
-        pass
-
+            return redirect('/')
+    except Exception as e:
+        logger.error(f'{e}, Occur occurred in target-columns.')
+        return redirect('/')
 
 @app.route('/deleteProject/<id>', methods=['GET'])
 def deleteProject(id):

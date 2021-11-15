@@ -1,5 +1,6 @@
 from flask import Blueprint, redirect, url_for, render_template, request, session, send_file
 from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, GradientBoostRegressor_Params, Params_Mappings
+from src.constants.model_params import KmeansClustering_Params, DbscanClustering_Params, AgglomerativeClustering_Params
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
@@ -114,13 +115,22 @@ def model_training_post(action):
                             train_model_fun=RegressionModels.random_forest_regressor
                         elif model=="SVR":
                             Model_Params=SVR_params 
-                            train_model_fun=RegressionModels.svr_regressor                          
+                            train_model_fun=RegressionModels.support_vector_regressor                          
                         elif model=="AdaBoostRegressor":
                             Model_Params=AdabootRegressor_Params
                             train_model_fun=RegressionModels.ada_boost_regressor
                         elif model=="GradientBoostingRegressor":
                             Model_Params=GradientBoostRegressor_Params
                             train_model_fun=RegressionModels.gradient_boosting_regressor
+                        elif model=="KMeans":
+                            Model_Params=KmeansClustering_Params
+                            train_model_fun=ClusteringModels.kmeans_clustering
+                        elif model=="DBSCAN":
+                            Model_Params=DbscanClustering_Params
+                            train_model_fun=ClusteringModels.dbscan_clustering
+                        elif model=="AgglomerativeClustering":
+                            Model_Params=AgglomerativeClustering_Params
+                            train_model_fun=ClusteringModels.agglomerative_clustering
                         else:
                             return 'Non-Implemented Action'
                         # if Model_Params == []:
