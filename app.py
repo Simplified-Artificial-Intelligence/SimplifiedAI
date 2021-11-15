@@ -447,31 +447,15 @@ def exportFile(id):
                 render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id, "id": id},
                                 msg="OOPS something went wrong!!")
 
-            # filename = get_filename()
-            filename = file_path
-
             if fileType == 'csv':
-                with open(filename) as fp:
-                    content = fp.read()
-                return Response(
-                    content,
-                    mimetype="text/csv",
-                    headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
+                content = pd.read_csv(file_path)
+                return Response(content, mimetype="text/csv",
+                                headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
-                filename = filename.rsplit('.', 1)[0]
-                to_tsv()
-                with open(filename + '.tsv') as fp:
-                    content = fp.read()
-
-                if os.path.isfile(filename + '.tsv'):
-                    os.remove(filename + '.tsv')
-                else:
-                    print(filename + '.tsv file doesnt exist')
-                return Response(
-                    content,
-                    mimetype="text/csv",
-                    headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
+                content = pd.read_csv(file_path)
+                return Response(content.to_csv(sep='\t'), mimetype="text/tsv",
+                                headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
             elif fileType == 'excel':
                 wb = csv_to_excel()
@@ -489,11 +473,9 @@ def exportFile(id):
                 return send_file(file_stream, attachment_filename=f"{project_name}.xlsx", as_attachment=True)
 
             elif fileType == 'json':
-                content = csv_to_json(filename)
-                return Response(
-                    content,
-                    mimetype="text/json",
-                    headers={"Content-disposition": f"attachment; filename={project_name}.json"})
+                content = pd.read_csv(file_path)
+                return Response(content.to_json(), mimetype="text/json",
+                                headers={"Content-disposition": f"attachment; filename={project_name}.json"})
 
         else:
             return redirect(url_for('login'))
