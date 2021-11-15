@@ -7,14 +7,7 @@
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
         <strong>Congrats!</strong> Your Model Trained Successfully. Find report below
       </div>
-    {% endif %}
-    {% if status=="error" %}
-    <div class="alert alert-danger">
-        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <strong>Error!</strong> Something went wrong, Coudn't Perform Dimension Reduction
-      </div>
-    {% endif %}
-    <form style="margin-top: 50px;" action="/fe/{{action}}" method="post" id="form">
+      <form style="margin-top: 50px;" action="/train_model" method="post" id="form">
         <div class="row">
             <div class="col-lg-6 col-md-6 col-sm-12 col-sm-12">
                 <div class="alert alert-warning">
@@ -80,7 +73,23 @@
                 {% endfor %}
             </tbody>
           </table>
+          <h5>If you are ok with this result then train model on complete data</h5>
+         <div class="row">
+             <div class="col-md-4 col-lg-4 col-sm-12">
+                <button type="submit" name="load_parameters" id="load_parameters" class="add-field btn btn-warning px-2">
+                    Train and Save this Model
+                  </button>
+             </div>
+         </div>
         </form>
+
+    {% endif %}
+    {% if status=="error" %}
+    <div class="alert alert-danger">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Error!</strong> {{msg}}
+      </div>
+    {% endif %}
 </div>
 
 {% endblock %}

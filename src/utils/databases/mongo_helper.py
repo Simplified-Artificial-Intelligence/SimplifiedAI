@@ -86,3 +86,44 @@ class MongoHelper:
 
         except Exception as e:
             logger.error(e)
+
+    def download_collection_data(self, project_id, file_type):
+        try:
+            path = os.path.join(os.path.join('src', 'temp_data_store'), f"{project_id}.{file_type}")
+            begin = time.time()
+            collection = self.db[project_id]
+            df = pd.DataFrame(list(collection.find()))
+            df.drop(columns=['_id'], inplace=True)
+            end = time.time()
+            if file_type == 'csv':
+                df.to_csv(path)
+            elif file_type == 'tsv':
+                df.to_csv(path, sep='\t')
+            elif file_type == 'json':
+                df.to_json(path)
+            elif file_type == 'xlsx':
+                df.to_excel(path)
+            print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
+            download_status = 'Successful'
+            return download_status, path
+
+        except Exception as e:
+            print(e.__str__())
+            download_status = "Unsuccessful"
+            return download_status, path
+
+    def drop_collection(self, collection_name):
+        """[summary]
+        Delete Collection from mongo
+        Args:
+            collection_name ([type]): [description]
+        """
+        try:
+            begin = time.time()
+            collection = self.db[collection_name]
+            collection.drop()
+            end = time.time()
+            print(f"Dropped {collection_name} collection from database. Total time taken: {end - begin} seconds.")
+        except Exception as e:
+            print(e)
+

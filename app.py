@@ -1,7 +1,4 @@
 from flask import Flask, redirect, url_for, render_template, request, session, send_file
-from src.model.custom.classification_models import ClassificationModels
-from src.model.custom.regression_models import RegressionModels
-from src.model.custom.clustering_models import ClusteringModels
 from werkzeug.wrappers import Response
 from io import BytesIO
 import re
@@ -13,16 +10,15 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
-from src.utils.common.data_helper import load_data, get_filename, csv_to_json, to_tsv, csv_to_excel
-import numpy as np
-import json
+
+from src.utils.common.data_helper import load_data, csv_to_json, to_tsv, csv_to_excel
 
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
 from src.utils.common.cloud_helper import azure_data_helper
 from src.utils.common.database_helper import mysql_data_helper, mongo_data_helper
 from src.utils.common.database_helper import cassandra_connector
-from src.feature_engineering.feature_engineering_helper import FeatureEngineering
+from src.utils.common.project_report_helper import ProjectReports
 from src.routes.routes_api import app_api
 from loguru import logger
 from src.routes.routes_eda import app_eda
@@ -105,9 +101,12 @@ def index():
 
 
 @app.route('/project', methods=['GET', 'POST'])
-def project(df=None, table_name=None):
+def project():
+    # df = None, table_name = None
     try:
         if 'loggedin' in session:
+            download_status = None
+            file_path = None
             if request.method == "GET":
                 return render_template('new_project.html', loggedin=True, project_types=PROJECT_TYPES)
             else:
@@ -302,6 +301,24 @@ def project(df=None, table_name=None):
 
                         download_status = azure_helper.download_file(container_name, file_name, file_path)
                         print(download_status)
+                    else:
+                        # Implement something here
+                        pass
+
+                    if download_status == 'Successful':
+                        timestamp = round(time.time() * 1000)
+                        name = name.replace(" ", "_")
+                        table_name = f"{name}_{timestamp}"
+
+                        if file_path.endswith('.csv'):
+                            df = pd.read_csv(file_path)
+                        elif file_path.endswith('.tsv'):
+                            df = pd.read_csv(file_path, sep='\t')
+                        elif file_path.endswith('.json'):
+                            df = pd.read_json(file_path)
+                        else:
+                            msg = 'This file format is currently not supported'
+                            return render_template('new_project.html', msg=msg)
 
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
@@ -408,19 +425,32 @@ def signup():
 @app.route('/exportFile/<id>', methods=['GET'])
 def exportForm(id):
     if 'loggedin' in session:
+        project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
         logger.info('Redirect To Export File Page')
-        return render_template('exportFile.html', data={"id": id})
+        return render_template('exportFile.html',
+                               data={"project_name": project_name, "project_id": project_id, "id": id})
     else:
         return redirect(url_for('login'))
 
 
-@app.route('/exportFile', methods=['POST'])
-def exportFile():
+@app.route('/exportFile/<id>', methods=['POST'])
+def exportFile(id):
+    project_name = None
     try:
         if 'loggedin' in session:
             logger.info('Export File')
+
             fileType = request.form['fileType']
-            filename = get_filename()
+
+            project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
+            download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
+            if download_status != "Successful":
+                render_template('exportFile.html',
+                                data={"project_name": project_name, "project_id": project_id, "id": id},
+                                msg="OOPS something went wrong!!")
+
+            # filename = get_filename()
+            filename = file_path
 
             if fileType == 'csv':
                 with open(filename) as fp:
@@ -458,7 +488,7 @@ def exportFile():
                 else:
                     print(filename + '.xlsx file doesnt exist')
 
-                return send_file(file_stream, attachment_filename="tdd-excel.xlsx", as_attachment=True)
+                return send_file(file_stream, attachment_filename="test.xlsx", as_attachment=True)
 
             elif fileType == 'json':
                 content = csv_to_json(filename)
@@ -471,7 +501,216 @@ def exportFile():
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', msg=e.__str__())
+        return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
+
+
+@app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
+def exportCloudDatabaseFile(project_name, project_id):
+    try:
+        global download_status
+        if 'loggedin' in session:
+            print(project_name, project_id)
+            logger.info('Export File')
+            source_type = request.form['source_type']
+
+            if source_type == 'uploadCloud':
+                cloudType = request.form['cloudType']
+
+                if cloudType == 'awsS3bucket':
+                    region_name = request.form['region_name']
+                    aws_access_key_id = request.form['aws_access_key_id']
+                    aws_secret_access_key = request.form['aws_secret_access_key']
+                    bucket_name = request.form['aws_bucket_name']
+                    file_type = request.form['fileTypeAws']
+
+                    aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
+                    conn_msg = aws_s3.check_connection(bucket_name, 'none')
+
+                    if conn_msg != 'File does not exist!!':
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+                    download_status, file_path = mongodb.download_collection_data(project_id, file_type)
+                    if download_status != "Successful":
+                        render_template('exportFile.html',
+                                        data={"project_name": project_name, "project_id": project_id},
+                                        msg="OOPS something went wrong!!")
+                    timestamp = round(time.time() * 1000)
+                    upload_status = aws_s3.push_file_to_s3(bucket_name, file_path,
+                                                           f'{project_name}_{timestamp}.{file_type}')
+                    if upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+                    print(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
+                    return redirect(url_for('index'))
+
+
+                elif cloudType == 'azureStorage':
+                    azure_connection_string = request.form['azure_connection_string']
+                    container_name = request.form['container_name']
+                    file_type = request.form['fileTypeAzure']
+                    azure_helper = azure_data_helper(azure_connection_string)
+                    conn_msg = azure_helper.check_connection(container_name, 'none')
+
+                    if conn_msg != 'File does not exist!!':
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+                    download_status, file_path = mongodb.download_collection_data(project_id, file_type)
+                    if download_status != "Successful":
+                        render_template('exportFile.html',
+                                        data={"project_name": project_name, "project_id": project_id},
+                                        msg="OOPS something went wrong!!")
+                    timestamp = round(time.time() * 1000)
+                    upload_status = azure_helper.upload_file(file_path, container_name,
+                                                             f'{project_name}_{timestamp}.{file_type}')
+                    if upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+                    print(f"{project_name}_{timestamp}.{file_type} pushed to {container_name} container")
+                    return redirect(url_for('index'))
+
+
+                elif cloudType == 'gcpStorage':
+                    credentials_file = request.files['GCP_credentials_file']
+                    bucket_name = request.form['gcp_bucket_name']
+                    file_type = request.form['fileTypeGcp']
+                    credentials_filename = secure_filename(credentials_file.filename)
+                    credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
+                    credentials_file.save(credentials_file_path)
+                    gcp = gcp_browser_storage(credentials_file_path)
+                    conn_msg = gcp.check_connection(bucket_name, 'none')
+                    if conn_msg != 'File does not exist!!':
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+                    download_status, file_path = mongodb.download_collection_data(project_id, file_type)
+                    if download_status != "Successful":
+                        render_template('exportFile.html',
+                                        data={"project_name": project_name, "project_id": project_id},
+                                        msg="OOPS something went wrong!!")
+                    timestamp = round(time.time() * 1000)
+                    upload_status = gcp.upload_to_bucket(f'{project_name}_{timestamp}.{file_type}', file_path,
+                                                         bucket_name)
+
+                    if upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+                    print(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
+                    return redirect(url_for('index'))
+
+            elif source_type == 'uploadDatabase':
+                databaseType = request.form['databaseType']
+
+                if databaseType == 'mySql':
+                    host = request.form['host']
+                    port = request.form['port']
+                    user = request.form['user']
+                    password = request.form['password']
+                    database = request.form['database']
+
+                    mysql_data = mysql_data_helper(host, port, user, password, database)
+                    conn_msg = mysql_data.check_connection('none')
+
+                    if conn_msg != "table does not exist!!":
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+                    download_status, file_path = mongodb.download_collection_data(project_id, "csv")
+                    if download_status != "Successful":
+                        render_template('exportFile.html',
+                                        data={"project_name": project_name, "project_id": project_id},
+                                        msg="OOPS something went wrong!!")
+                    timestamp = round(time.time() * 1000)
+                    upload_status = mysql_data.push_file_to_table(file_path, f'{project_name}_{timestamp}')
+                    if download_status != 'Successful' or upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+                    print(f'{project_name}_{timestamp} table created in {database} database')
+                    return redirect(url_for('index'))
+
+                elif databaseType == 'cassandra':
+                    secure_connect_bundle = request.files['secure_connect_bundle']
+                    client_id = request.form['client_id']
+                    client_secret = request.form['client_secret']
+                    keyspace = request.form['keyspace']
+                    secure_connect_bundle_filename = secure_filename(secure_connect_bundle.filename)
+                    secure_connect_bundle_file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                                                   secure_connect_bundle_filename)
+                    secure_connect_bundle.save(secure_connect_bundle_file_path)
+
+                    cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret,
+                                                       keyspace)
+                    conn_msg = cassandra_db.check_connection('none')
+                    if conn_msg != 'table does not exist!!':
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+                    download_status, file_path = mongodb.download_collection_data(project_id, "csv")
+
+                    if download_status != "Successful":
+                        render_template('exportFile.html',
+                                        data={"project_name": project_name, "project_id": project_id},
+                                        msg="OOPS something went wrong!!")
+                    timestamp = round(time.time() * 1000)
+                    upload_status = cassandra_db.push_dataframe_to_table(pd.read_csv(file_path),
+                                                                         f'{project_name}_{timestamp}')
+                    if download_status != 'Successful' or upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+                    print(f'{project_name}_{timestamp} table created in {keyspace} keyspace')
+                    return redirect(url_for('index'))
+
+                elif databaseType == 'mongodb':
+                    mongo_db_url = request.form['mongo_db_url']
+                    mongo_database = request.form['mongo_database']
+                    mongo_helper = mongo_data_helper(mongo_db_url)
+                    conn_msg = mongo_helper.check_connection(mongo_database, 'none')
+                    if conn_msg != "collection does not exits!!":
+                        logger.info(conn_msg)
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=conn_msg)
+                    download_status, file_path = mongodb.download_collection_data(project_id, "csv")
+                    if download_status != "Successful":
+                        render_template('exportFile.html',
+                                        data={"project_name": project_name, "project_id": project_id},
+                                        msg="OOPS something went wrong!!")
+                    timestamp = round(time.time() * 1000)
+                    upload_status = mongo_helper.push_dataset(mongo_database, f'{project_name}_{timestamp}', file_path)
+                    if download_status != 'Successful' or upload_status != 'Successful':
+                        return render_template('exportFile.html',
+                                               data={"project_name": project_name, "project_id": project_id},
+                                               msg=upload_status)
+                    print(f'{project_name}_{timestamp} collection created in {mongo_database} database')
+                    return redirect(url_for('index'))
+
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.info(e)
+        return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
+
+
+@app.route('/projectReport/<id>', methods=['GET', 'POST'])
+def projectReport(id):
+    if 'loggedin' in session:
+        logger.info('Redirect To Project Report Page')
+        records, projectStatus = ProjectReports.get_record_by_pid(id, None)
+        return render_template('projectReport.html', data={"id": id, "moduleId": None}, records=records.to_html(),
+                               projectStatus=projectStatus)
+    else:
+        return redirect(url_for('login'))
 
 
 @app.route('/deletePage/<id>', methods=['GET'])
@@ -487,9 +726,7 @@ def renderDeleteProject(id):
 def setTargetColumn():
     try:
         if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session['target_column'] is None:
-
             logger.info('Redirect To Target Column Page')
-
             df = load_data()
             columns = list(df.columns)
             print('above req')
@@ -501,7 +738,6 @@ def setTargetColumn():
                 status = "error"
                 id = session.get('pid')
                 target_column = request.form['column']
-                # log.info(log_type='Target Column', log_message=f'Selected Target columns Is {target_column}')
                 rows_count = mysql.delete_record(f'UPDATE tblProjects SET TargetColumn="{target_column}" WHERE Id={id}')
                 status = "success"
                 return render_template('target_column.html', columns=columns, status=status)
@@ -517,8 +753,9 @@ def setTargetColumn():
 def deleteProject(id):
     if 'loggedin' in session:
         if id:
-            mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Id={id}')
+            mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Pid={id}')
             logger.info('Data Successfully Deleted From Database')
+            mongodb.drop_collection(id)
             return redirect(url_for('index'))
         else:
             logger.info('Redirect to index invalid id')
@@ -603,13 +840,12 @@ def systemlogs(action):
             with open(r"logger\logs\logs.log") as file_in:
                 for line in file_in:
                     lines.append(line)
-            print(lines)
             file_in.close()
             return render_template('systemlogs/terminal.html', logs=lines)
         else:
             return 'Not Visible'
     except Exception as e:
-        print(e)
+        logger.error(f"{e} In System Logs API")
 
 
 @app.route('/Machine/<action>', methods=['GET'])

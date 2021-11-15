@@ -5,7 +5,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, Po
 from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold, mutual_info_classif
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.decomposition import PCA
-from sklearn.feature_selection import SequentialFeatureSelector
+#from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.tree import DecisionTreeClassifier
 from src.utils.common.common_helper import read_config
 from loguru import logger

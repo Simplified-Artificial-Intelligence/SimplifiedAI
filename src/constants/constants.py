@@ -3,6 +3,7 @@ from enum import Enum
 
 TWO_D_GRAPH_TYPES = ["Bar Graph", "Histogram", "Scatter Plot", "Pie Chart", "Line Chart"]
 THREE_D_GRAPH_TYPES = ["3D Axes", "3D Scatter Plot", "3D Surface Plot", "3D Bubble Charts"]
+
 encoding_list = ["Label/Ordinal Encoder", "One Hot Encoder", "Hash Encoder", "Target Encoder"]
 scaling_list = ["Standard Scaler", "Min Max Scaler", "Max Abs Scaler", "Robust Scaler"]
 FEATURE_SELECTION_METHODS_CLASSIFICATION = ["Find Constant Features", "Mutual Info Classification",
