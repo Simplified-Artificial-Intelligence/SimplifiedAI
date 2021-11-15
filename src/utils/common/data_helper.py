@@ -132,7 +132,7 @@ def csv_to_json(csvFilePath, jsonFilePath=None):
 
 def csv_to_excel(csv_file=None, excel_file=None):
     try:
-        csv_file = get_filename()
+        csv_file = csv_file
         excel_file = csv_file.rsplit('.', 1)[0]
 
         csv_data = []

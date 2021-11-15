@@ -14,7 +14,7 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 
-from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, to_excel, to_json, check_file_presence, csv_to_excel
+from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, to_excel, to_json, csv_to_excel
 from src.eda.eda_helper import EDA
 import numpy as np
 import json
@@ -458,7 +458,7 @@ def exportFile(id):
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
             elif fileType == 'excel':
-                wb = csv_to_excel()
+                wb = csv_to_excel(file_path)
 
                 file_stream = BytesIO()
                 wb.save(file_stream)
@@ -476,12 +476,11 @@ def exportFile(id):
                 content = pd.read_csv(file_path)
                 return Response(content.to_json(), mimetype="text/json",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.json"})
-
         else:
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
+        return render_template('exportFile.html', data={"id": id}, msg=e.__str__())
 
 
 

@@ -95,7 +95,7 @@ class MongoHelper:
                     download_collection_data
                 Args:
                     project_id (str): project_id is the collection name of user dataset
-                    file_type (str): required file type eg:csv, tsv, json, xlsx
+                    file_type (str): required output file type eg:csv, tsv, json, xlsx
 
                 Returns:
                     download status (str) : Successful or Unsuccessful
