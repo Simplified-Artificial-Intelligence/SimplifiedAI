@@ -420,36 +420,35 @@ def signup():
             return render_template('signup.html', msg=msg)
 
 
-@app.route('/exportFile/<id>', methods=['GET'])
-def exportForm(id):
+@app.route('/exportFile/<pid>/<project_name>', methods=['GET'])
+def exportForm(pid, project_name):
     if 'loggedin' in session:
-        project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
         logger.info('Redirect To Export File Page')
         return render_template('exportFile.html',
-                               data={"project_name": project_name, "project_id": project_id, "id": id})
+                               data={"project_name": project_name, "project_id": pid, "id": 1})
     else:
         return redirect(url_for('login'))
 
 
-@app.route('/exportFile/<id>', methods=['POST'])
-def exportFile(id):
-    project_name = None
+@app.route('/exportAsFile/<project_id>/<project_name>', methods=['GET', 'POST'])
+def exportFile(project_id, project_name):
     try:
         if 'loggedin' in session:
             logger.info('Export File')
 
             fileType = request.form['fileType']
+            print(project_id, project_name)
 
-            project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
+            #project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
             download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
             if download_status != "Successful":
                 render_template('exportFile.html',
-                                data={"project_name": project_name, "project_id": project_id, "id": id},
+                                data={"project_name": project_name, "project_id": project_id},
                                 msg="OOPS something went wrong!!")
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
-                return Response(content, mimetype="text/csv",
+                return Response(content.to_csv(), mimetype="text/csv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
@@ -480,7 +479,7 @@ def exportFile(id):
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', data={"id": id}, msg=e.__str__())
+        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg=e.__str__())
 
 
 @app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
@@ -852,4 +851,4 @@ if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
-        app.run(host="127.0.0.1", port=5000, debug=True)
+        app.run(host="127.0.0.1", port=5000, debug=False)
