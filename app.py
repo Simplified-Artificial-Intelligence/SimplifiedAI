@@ -98,8 +98,8 @@ def index():
         logger.error(e)
 
 
-@app.route('/project', methods=['GET', 'POST'])
-def project():
+@app.route('/project/<mode>', methods=['GET', 'POST'])
+def project(mode):
     # df = None, table_name = None
     try:
         if 'loggedin' in session:
@@ -350,6 +350,19 @@ def project():
     except Exception as e:
         logger.error(e)
         return render_template('new_project.html', msg=e.__str__())
+
+
+@app.route('/edit-project/<pid>', methods=['GET', 'POST'])
+def edit_project(pid):
+    query = f'''select tp.Name,tp.Description,tp.TargetColumn,tpy.Name from tblProjects as tp
+            join tblProjectType as tpy on tpy.Id=tp.ProjecTtype
+            where tp.Pid='{pid}';'''
+    print(pid)
+    data = mysql.fetch_one(query)
+
+    project_data = {'project_name':data[0], 'project_desp':data[1],
+                    'project_type':data[3], 'target_col':data[2]}
+    return render_template('edit_project.html', project_types=PROJECT_TYPES, data=project_data )
 
 
 @app.route('/login', methods=['GET', 'POST'])
