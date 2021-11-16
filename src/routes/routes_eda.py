@@ -187,39 +187,48 @@ def eda_post(action):
                 elif action == "plots":
                     """All Polots for all kind of features????"""
                     selected_graph_type = request.form['graph']
-                    x_column = request.form['xcolumn']
+
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Plot', input=input_str)
+
                     if selected_graph_type == "Scatter Plot":
+                        x_column = request.form['xcolumn']
                         y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
 
                     elif selected_graph_type == "Pie Chart":
+                        x_column = request.form['xcolumn']
                         y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.pieplot(df, names=x_column, values=y_column, title='Pie Chart')
 
                     elif selected_graph_type == "Bar Graph":
+                        x_column = request.form['xcolumn']
                         y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.barplot(df, x=x_column, y=y_column)
 
                     elif selected_graph_type == "Histogram":
+                        x_column = request.form['xcolumn']
                         graphJSON = PlotlyHelper.histogram(df, x=x_column)
-                        print(graphJSON)
 
                     elif selected_graph_type == "Line Chart":
+                        x_column = request.form['xcolumn']
                         y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
 
                     elif selected_graph_type == "Box Chart":
+                        x_column = request.form['xcolumn']
                         y_column = request.form['ycolumn']
-                        graphJSON = PlotlyHelper.boxplot(df, x=x_column, y=y_column)  
+                        graphJSON = PlotlyHelper.boxplot(df, x=x_column, y=y_column)
 
                     elif selected_graph_type == "Dist Chart":
+                        x_column = request.form['xcolumn']
                         y_column = request.form['ycolumn']
-                        graphJSON = PlotlyHelper.distplot(df, y=y_column)
+                        # Target column
+                        z_column = "species"
+                        graphJSON = PlotlyHelper.distplot(df, x=x_column, y=y_column, color=z_column)
 
                     elif selected_graph_type == "Heat Map":
-                        graphJSON = PlotlyHelper.heatmap(df)                      
+                        graphJSON = PlotlyHelper.heatmap(df)
 
                     return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
                                            columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,

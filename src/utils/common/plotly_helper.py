@@ -2,7 +2,6 @@ import json
 import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
-import numpy as np
 from src.eda.eda_helper import EDA
 from loguru import logger
 import os
@@ -77,11 +76,9 @@ class PlotlyHelper:
             logger.error(e)
 
     @staticmethod
-    def distplot(x, y):
+    def distplot(df, x, y, color):
         try:
-            hist_data = [x]
-            group_labels = [y]  # name of the dataset
-            fig = ff.create_distplot(hist_data, group_labels)
+            fig = px.histogram(df, x=x, y=y, color=color, marginal='violin', hover_data=df.columns)
             graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             logger.info("DistPlot Implemented!")
             return graphJSON
@@ -92,9 +89,7 @@ class PlotlyHelper:
     def heatmap(df):
         try:
             pearson_corr = EDA.correlation_report(df, 'pearson')
-            persion_data = list(np.around(np.array(pearson_corr.values), 2))
-            fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
-                                              y=list(pearson_corr.columns), colorscale='Viridis')
+            fig = px.imshow(pearson_corr)
             graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             logger.info("Heatmap Implemented!")
             return graphJSON

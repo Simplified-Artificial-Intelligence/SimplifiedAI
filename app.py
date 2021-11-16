@@ -835,9 +835,15 @@ def systemlogs(action):
         logger.error(f"{e} In System Logs API")
 
 
-@app.route('/Machine/<action>', methods=['GET'])
-def machine(action):
-    return render_template('Machine/system.html')
+@app.route('/history/actions', methods=['GET'])
+def history():
+    if request.method == 'GET':
+        my_collection = mysql.fetch_all(f''' Select ProjectId, Name, Input,Output,ActionDate 
+        from tblProject_Actions_Reports 
+        Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
+        where ProjectId ="{session['pid']}"''')
+        print(my_collection)
+        return render_template('history/actions.html', my_collection=my_collection)
 
 
 @app.route('/scheduler/<action>', methods=['GET'])
