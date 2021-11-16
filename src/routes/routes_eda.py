@@ -190,12 +190,12 @@ def eda_post(action):
 
                     if selected_graph_type == "Heat Map":
                         x_columns = request.form.getlist('xcolumn')
-                    else:
-                        x_column = request.form['xcolumn'] if request.form['xcolumn'] else ''
-                        y_column = request.form['ycolumn'] if request.form['ycolumn'] else ''
-                    
+
+                    x_column = request.form['xcolumn']
+
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Plot', input=input_str)
+                    
                     if selected_graph_type == "Scatter Plot":
                         y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
@@ -210,17 +210,18 @@ def eda_post(action):
 
                     elif selected_graph_type == "Histogram":
                         graphJSON = PlotlyHelper.histogram(df, x=x_column)
-                        print(graphJSON)
 
                     elif selected_graph_type == "Line Chart":
                         y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
 
                     elif selected_graph_type == "Box Plot":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.boxplot(df, x=x_column, y=y_column)  
 
                     elif selected_graph_type == "Dist Plot":
-                        graphJSON = PlotlyHelper.distplot(df, x=x_column, y=y_column)
+                        y_column = request.form['ycolumn']
+                        graphJSON = PlotlyHelper.distplot(df, y=y_column)
 
                     elif selected_graph_type == "Heat Map":
                         graphJSON = PlotlyHelper.heatmap(df, x=x_columns)                      
