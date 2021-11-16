@@ -27,7 +27,6 @@ def delete_data_from_mongo(projectId=None):
         else:
             return 'Deleted', dataBase
 
-
 def upload_checkpoint(projectId=None, data_path=None):
     data = pd.read_csv(data_path)
     check, dataBase = delete_data_from_mongo(projectId)

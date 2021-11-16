@@ -7,7 +7,7 @@
     </div>
 
 	<div>
-<!--		<form method="post" action="?">-->
+		<form method="post" action="/scheduler/{{action}}">
 			<div>
 				<label for="datetimepicker">Date</label>
 				<input type="text" name="filter-date" id="datetimepicker"/>
@@ -16,7 +16,7 @@
 			<div>
 				<input type="submit" value="Submit"/>
 			</div>
-<!--		</form>-->
+</form>
 	</div>
 
 </div>
@@ -32,7 +32,7 @@
 $(document).ready(function() {
 	$('#datetimepicker').datetimepicker({
 		format:'d/m/Y H:i',
-		inline: false, 
+		inline: false,
 		theme:'dark',
 		onSelectDate:function(ct,$i){
 			alert(ct.dateFormat('d/m/Y H:i'))

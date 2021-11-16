@@ -196,20 +196,24 @@ def eda_post(action):
                     
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Plot', input=input_str)
-
                     if selected_graph_type == "Scatter Plot":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
 
                     elif selected_graph_type == "Pie Chart":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.pieplot(df, names=x_column, values=y_column, title='Pie Chart')
 
                     elif selected_graph_type == "Bar Graph":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.barplot(df, x=x_column, y=y_column)
 
                     elif selected_graph_type == "Histogram":
                         graphJSON = PlotlyHelper.histogram(df, x=x_column)
+                        print(graphJSON)
 
                     elif selected_graph_type == "Line Chart":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
 
                     elif selected_graph_type == "Box Plot":
@@ -224,7 +228,6 @@ def eda_post(action):
                     return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
                                            columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
                                            action=action, graphJSON=graphJSON)
-
                 else:
                     return render_template('eda/help.html')
             else:

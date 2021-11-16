@@ -141,7 +141,7 @@ class FeatureEngineering:
                 return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in Binary Encoder!")
-
+            
         try:
             if kind == 'Base N Encoder':
                 onehot = ce.BaseNEncoder(cols=cols)

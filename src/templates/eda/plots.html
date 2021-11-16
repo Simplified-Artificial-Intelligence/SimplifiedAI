@@ -4,8 +4,7 @@
 <div class="table2">
     <div class="jumbotron text-center">
         <h1>Graphs Visualization</h1>
-        <p>As a Data scientist, data is our biggest asset. Using data we assist in the process of decision
-            making which could benefit the business. But data always comes in huge quantities and looking
+        <p>As a Data scientist, data is our biggest asset. Using data we assist in the process of decision-making which could benefit the business. But data always comes in huge quantities and looking
             at raw data becomes hard for even a veteran Data scientist to draw meaningful inferences 
             let alone a nontechnical person. For this, we often resort to visualizing data by using various
             plots which can explain the data.</p> 
@@ -14,7 +13,7 @@
         <div class="row">
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
                 <div class="form-group">
-                  <label for="exampleFormControlSelect1">Select Type Of Graph</label>
+                  <label class="exampleFormControlSelect1">Select Type Of Graph</label>
                   <select class="form-control" name="graph" id=graphId>
                     {% for col in graphs_2d %}
                         <option value="{{col}}" {% if selected_graph_type=="value" %} selected="selected"{% endif %}>{{col}}</option>

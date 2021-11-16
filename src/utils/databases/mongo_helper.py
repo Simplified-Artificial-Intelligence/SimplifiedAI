@@ -2,11 +2,14 @@ import pymongo
 import pandas as pd
 import time
 from src.utils.common.common_helper import read_config
+from src.utils.common.common_helper import check_file_presence
 import os
 from loguru import logger
+from from_root import from_root
 
 config_args = read_config("config.yaml")
-log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+logger.remove()
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
@@ -88,13 +91,36 @@ class MongoHelper:
             logger.error(e)
 
     def download_collection_data(self, project_id, file_type):
+        """This function downloads user dataset from mongodb and converts it to required file type, before downloading
+        it checks if file exist locally or not, if it exist it will not download instead takes tht file and converts
+        into required file type
+                    download_collection_data
+                Args:
+                    project_id (str): project_id is the collection name of user dataset
+                    file_type (str): required output file type eg:csv, tsv, json, xlsx
+
+                Returns:
+                    download status (str) : Successful or Unsuccessful
+                    path : file path of newly created file
+                """
         try:
             path = os.path.join(os.path.join('src', 'temp_data_store'), f"{project_id}.{file_type}")
-            begin = time.time()
-            collection = self.db[project_id]
-            df = pd.DataFrame(list(collection.find()))
-            df.drop(columns=['_id'], inplace=True)
-            end = time.time()
+            if check_file_presence(project_id)[0]:
+                print("File Exist!!")
+                df = check_file_presence(project_id)[1]
+                try:
+                    df.drop(columns=['_id'], inplace=True)
+                except Exception as e:
+                    pass
+
+            else:
+                begin = time.time()
+                collection = self.db[project_id]
+                df = pd.DataFrame(list(collection.find()))
+                end = time.time()
+                df.drop(columns=['_id'], inplace=True)
+                print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
+
             if file_type == 'csv':
                 df.to_csv(path)
             elif file_type == 'tsv':
@@ -102,8 +128,8 @@ class MongoHelper:
             elif file_type == 'json':
                 df.to_json(path)
             elif file_type == 'xlsx':
+                print("excel")
                 df.to_excel(path)
-            print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
             download_status = 'Successful'
             return download_status, path
 

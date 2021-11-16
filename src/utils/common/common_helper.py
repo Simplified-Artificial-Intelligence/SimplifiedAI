@@ -5,6 +5,8 @@ import hashlib
 from cryptography.fernet import Fernet
 import json
 import os
+import re
+import pandas as pd
 from flask import session
 from pickle import dump,load
 from from_root import from_root
@@ -110,3 +112,32 @@ def get_numeric_categorical_columns(df):
     cat_cols = list(set(cols) - set(num_cols))
     return num_cols, cat_cols
     
+def check_file_presence(project_id):
+    try:
+        path1 = os.path.join('src', 'data')
+        path2 = os.path.join('src', 'temp_data_store')
+        if f"{project_id}.csv" in os.listdir(path1):
+            df = pd.read_csv(os.path.join(path1, f'{project_id}.csv'))
+            return True, df
+        elif re.findall(f"{project_id}.\w+", ",".join(os.listdir(path2))):
+            file = (re.findall(f"{project_id}.\w+", ",".join(os.listdir(path2)))[0])
+            print(file)
+            print(os.path.join(path2, file))
+            if file.endswith('csv'):
+                print(os.path.join(path2, file))
+                df = pd.read_csv(os.path.join(path2, file))
+            elif file.endswith('tsv'):
+                df = pd.read_csv(os.path.join(path2, file))
+            elif file.endswith('json'):
+                df = pd.read_json(os.path.join(path2, file))
+            elif file.endswith('xlsx'):
+                df = pd.read_excel(os.path.join(path2, file))
+            else:
+                df = False, None
+            return True, df
+        else:
+            return False, None
+
+    except Exception as e:
+        print(e.__str__())
+        return False, None
