@@ -1,7 +1,6 @@
 import json
 import plotly
 import plotly.express as px
-import plotly.figure_factory as ff
 from src.eda.eda_helper import EDA
 from loguru import logger
 import os

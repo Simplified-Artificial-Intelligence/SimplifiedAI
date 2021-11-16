@@ -254,21 +254,21 @@ def x_y_columns():
             if df is not None:
                 num_cols, cat_cols = get_numeric_categorical_columns(df)
                 if graph_selected == "Bar Graph":
-                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols))
+                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols), graph_selected=graph_selected)
                 elif graph_selected == "Histogram":
-                    return render_template('eda/x_y_columns.html', x_list=list(df.columns), y_list=[])
+                    return render_template('eda/x_y_columns.html', x_list=list(df.columns), y_list=[], graph_selected=graph_selected)
                 elif graph_selected == "Scatter Plot":
-                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols))
+                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols), graph_selected=graph_selected)
                 elif graph_selected == "Pie Chart":
-                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols))
+                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols), graph_selected=graph_selected)
                 elif graph_selected == "Line Chart":
-                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols))
-                elif graph_selected == "Box Graph":
-                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols))
-                elif graph_selected == "Dist Graph":
-                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(cat_cols))
+                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols), graph_selected=graph_selected)
+                elif graph_selected == "Box Plot":
+                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols), graph_selected=graph_selected)
+                elif graph_selected == "Dist Plot":
+                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(cat_cols), graph_selected=graph_selected)
                 elif graph_selected == "Heat Map":
-                    return render_template('eda/x_y_columns.html', x_list=list([]), y_list=list([]))
+                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), graph_selected=graph_selected)
                 else:
                     return redirect(url_for('/eda/help'))
             else:
