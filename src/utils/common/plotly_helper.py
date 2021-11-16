@@ -67,9 +67,9 @@ class PlotlyHelper:
             logger.error(e)
 
     @staticmethod
-    def boxplot(df, y):
+    def boxplot(df, x, y):
         try:
-            fig = px.box(df, y=y)
+            fig = px.box(df, x=x, y=y)
             graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             logger.info("BoxPlot Implemented!")
             return graphJSON

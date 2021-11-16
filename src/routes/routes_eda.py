@@ -209,8 +209,17 @@ def eda_post(action):
                     elif selected_graph_type == "Line Chart":
                         y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
-                    else:
-                        pass
+
+                    elif selected_graph_type == "Box Chart":
+                        y_column = request.form['ycolumn']
+                        graphJSON = PlotlyHelper.boxplot(df, x=x_column, y=y_column)  
+
+                    elif selected_graph_type == "Dist Chart":
+                        y_column = request.form['ycolumn']
+                        graphJSON = PlotlyHelper.distplot(df, y=y_column)
+
+                    elif selected_graph_type == "Heat Map":
+                        graphJSON = PlotlyHelper.heatmap(df)                      
 
                     return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
                                            columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
@@ -245,6 +254,12 @@ def x_y_columns():
                     return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols))
                 elif graph_selected == "Line Chart":
                     return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols))
+                elif graph_selected == "Box Graph":
+                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols))
+                elif graph_selected == "Dist Graph":
+                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(cat_cols))
+                elif graph_selected == "Heat Map":
+                    return render_template('eda/x_y_columns.html', x_list=list([]), y_list=list([]))
                 else:
                     return redirect(url_for('/eda/help'))
             else:
