@@ -221,7 +221,7 @@ def model_training_post(action):
                         X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(cleanedData=X,
                                                                                                label=y,
                                                                                                train_size=0.75,
-                                                                                               random_state=45)
+                                                                                               random_state=101)
                         if session['project_type'] == 1:
                             trainer = ModelTrain_Regression(X_train, X_test, y_train, y_test, True)
                             result = trainer.results()
@@ -230,9 +230,15 @@ def model_training_post(action):
                                                    project_type=session['project_type'],
                                                    target_column=session['target_column'], train_done=True,
                                                    result=result)
+
                         elif session['project_type'] == 2:
                             trainer = ModelTrain_Classification(X_train, X_test, y_train, y_test, True)
                             result = trainer.results()
+                            result = result.to_html()
+                            return render_template('model_training/auto_training.html', status="success",
+                                                   project_type=session['project_type'],
+                                                   target_column=session['target_column'], train_done=True,
+                                                   result=result)
                     except Exception as ex:
                         return render_template('model_training/auto_training.html', status="error",
                                                project_type=session['project_type'],

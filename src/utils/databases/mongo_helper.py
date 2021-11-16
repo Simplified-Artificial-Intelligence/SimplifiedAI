@@ -71,21 +71,31 @@ class MongoHelper:
         Returns:
             [type]: [description]
         """
+
         try:
             path = os.path.join(os.path.join('src', 'data'), f"{project_name}.csv")
             backup_path = os.path.join(os.path.join('src', 'data'), f"{project_name}_backup.csv")
             if os.path.exists(path):
                 df = pd.read_csv(path)
-                return df
             else:
                 begin = time.time()
                 collection = self.db[project_name]
                 df = pd.DataFrame(list(collection.find()))
                 end = time.time()
                 logger.info(f"All records deleted. Total time taken: {end - begin} seconds.")
-                df.to_csv(path)
-                df.to_csv(backup_path)
-                return df
+                if '_id' in df.columns:
+                    df = df.drop('_id', axis=1)
+
+                if 'Unnamed: 0' in df.columns:
+                    df = df.drop('Unnamed: 0', axis=1)
+
+                if 'index' in df.columns:
+                    df = df.drop('index', axis=1)
+
+                df.to_csv(path, index=False)
+                df.to_csv(backup_path, index=False)
+
+            return df
 
         except Exception as e:
             logger.error(e)

@@ -24,10 +24,7 @@ class ModelTrain_Classification:
             self.X_test = X_test
             self.y_train = y_train
             self.y_test = y_test
-        except Exception as e:
-            logger.error(f"{e} please check! and Retry again!")
 
-        try:
             if start:
                 logger.info("Auto Classification Training Started!")
                 self.LogisticRegression_()
@@ -38,6 +35,7 @@ class ModelTrain_Classification:
                 self.GradientBoostingClassifier_()
                 self.AdaBoostClassifier_()
                 logger.info("Auto Classification Training Completed!")
+
         except Exception as e:
             logger.error(f"{e} please check! and Retry again!")
 
@@ -46,9 +44,9 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred)
-        recall = recall_score(self.y_test, y_pred)
-        f1_score_ = f1_score(self.y_test, y_pred)
+        precision = precision_score(self.y_test, y_pred, average=None)
+        recall = recall_score(self.y_test, y_pred, average=None)
+        f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
             {'Model_Name': 'LogisticRegression', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
@@ -59,9 +57,9 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred)
-        recall = recall_score(self.y_test, y_pred)
-        f1_score_ = f1_score(self.y_test, y_pred)
+        precision = precision_score(self.y_test, y_pred, average=None)
+        recall = recall_score(self.y_test, y_pred, average=None)
+        f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
             {'Model_Name': 'SVC', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
@@ -72,9 +70,9 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred)
-        recall = recall_score(self.y_test, y_pred)
-        f1_score_ = f1_score(self.y_test, y_pred)
+        precision = precision_score(self.y_test, y_pred, average=None)
+        recall = recall_score(self.y_test, y_pred, average=None)
+        f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
             {'Model_Name': 'KNeighborsClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
@@ -85,9 +83,9 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred)
-        recall = recall_score(self.y_test, y_pred)
-        f1_score_ = f1_score(self.y_test, y_pred)
+        precision = precision_score(self.y_test, y_pred, average=None)
+        recall = recall_score(self.y_test, y_pred, average=None)
+        f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
             {'Model_Name': 'DecisionTreeClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
@@ -98,9 +96,9 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred)
-        recall = recall_score(self.y_test, y_pred)
-        f1_score_ = f1_score(self.y_test, y_pred)
+        precision = precision_score(self.y_test, y_pred, average=None)
+        recall = recall_score(self.y_test, y_pred, average=None)
+        f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
             {'Model_Name': 'RandomForestClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
@@ -111,9 +109,9 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred)
-        recall = recall_score(self.y_test, y_pred)
-        f1_score_ = f1_score(self.y_test, y_pred)
+        precision = precision_score(self.y_test, y_pred, average=None)
+        recall = recall_score(self.y_test, y_pred, average=None)
+        f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
             {'Model_Name': 'GradientBoostingClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
@@ -124,9 +122,9 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred)
-        recall = recall_score(self.y_test, y_pred)
-        f1_score_ = f1_score(self.y_test, y_pred)
+        precision = precision_score(self.y_test, y_pred, average=None)
+        recall = recall_score(self.y_test, y_pred, average=None)
+        f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
             {'Model_Name': 'AdaBoostClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
