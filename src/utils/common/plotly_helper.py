@@ -91,7 +91,6 @@ class PlotlyHelper:
     @staticmethod
     def heatmap(df, x):
         try:
-            print(x)
             print(df[x])
             pearson_corr = EDA.correlation_report(df[x], 'pearson')
             persion_data = list(np.around(np.array(pearson_corr.values), 2))

@@ -264,7 +264,7 @@ def x_y_columns():
                 elif graph_selected == "Dist Plot":
                     return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(cat_cols), graph_selected=graph_selected)
                 elif graph_selected == "Heat Map":
-                    return render_template('eda/x_y_columns.html', x_list=list(df.columns), y_list=list(df.columns), graph_selected=graph_selected)
+                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), graph_selected=graph_selected)
                 else:
                     return redirect(url_for('/eda/help'))
             else:
