@@ -5,7 +5,7 @@ from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
 import numpy as np
 from src.eda.eda_helper import EDA
-# from pandas_profiling import ProfileReport
+from pandas_profiling import ProfileReport
 from src.constants.constants import TWO_D_GRAPH_TYPES
 import plotly.figure_factory as ff
 import json
@@ -30,9 +30,9 @@ def eda(action):
                     dtypes = EDA.data_dtype_info(df)
                     return render_template('eda/5point.html', data=data, dtypes=dtypes.to_html(), count=len(df),
                                            column_count=df.shape[1])
-                # elif action == "profiler":
-                #     ProjectReports.insert_record_eda('Redirect To Profile Report')
-                #     return render_template('eda/profiler.html', action=action)
+                elif action == "profiler":
+                    ProjectReports.insert_record_eda('Redirect To Profile Report')
+                    return render_template('eda/profiler.html', action=action)
 
                 elif action == "show":
                     ProjectReports.insert_record_eda('Redirect To Show Dataset')
@@ -120,21 +120,21 @@ def eda_post(action):
                     return render_template('eda/showdataset.html', data=data, length=len(df),
                                            bottomSelected=bottomSelected, topselected=topselected, action=action,
                                            selectedCount=range, columns=columns_for_list)
-                # elif action == "profiler":
-                #     ProjectReports.insert_record_eda('Download  Profile Report')
+                elif action == "profiler":
+                    ProjectReports.insert_record_eda('Download  Profile Report')
 
-                #     pr = ProfileReport(df, explorative=True, minimal=True,
-                #                        correlations={"cramers": {"calculate": False}})
+                    pr = ProfileReport(df, explorative=True, minimal=True,
+                                       correlations={"cramers": {"calculate": False}})
 
-                #     report_path = os.path.join(from_root(), "artifacts", f"{session.get('id')}_report.html")
-                #     pr.to_file(report_path)
-                #     with open(report_path) as fp:
-                #         content = fp.read()
+                    report_path = os.path.join(from_root(), "artifacts", f"{session.get('id')}_report.html")
+                    pr.to_file(report_path)
+                    with open(report_path) as fp:
+                        content = fp.read()
 
-                #     return Response(
-                #         content,
-                #         mimetype="text/csv",
-                #         headers={"Content-disposition": "attachment; filename=report.html"})
+                    return Response(
+                        content,
+                        mimetype="text/csv",
+                        headers={"Content-disposition": "attachment; filename=report.html"})
 
                 elif action == "correlation":
                     method = request.form['method']
@@ -188,29 +188,33 @@ def eda_post(action):
                     """All Polots for all kind of features????"""
                     selected_graph_type = request.form['graph']
                     x_column = request.form['xcolumn']
-                    y_column = request.form['ycolumn']
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Plot', input=input_str)
-
                     if selected_graph_type == "Scatter Plot":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
 
                     elif selected_graph_type == "Pie Chart":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.pieplot(df, names=x_column, values=y_column, title='Pie Chart')
 
                     elif selected_graph_type == "Bar Graph":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.barplot(df, x=x_column, y=y_column)
 
                     elif selected_graph_type == "Histogram":
                         graphJSON = PlotlyHelper.histogram(df, x=x_column)
+                        print(graphJSON)
 
                     elif selected_graph_type == "Line Chart":
+                        y_column = request.form['ycolumn']
                         graphJSON = PlotlyHelper.line(df, x=x_column, y=y_column)
+                    else:
+                        pass
 
                     return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
                                            columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
                                            action=action, graphJSON=graphJSON)
-
                 else:
                     return render_template('eda/help.html')
             else:

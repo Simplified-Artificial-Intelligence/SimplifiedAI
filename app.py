@@ -10,6 +10,7 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
+from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, ALL_MODELS
 from src.utils.common.data_helper import load_data, csv_to_json, to_tsv, csv_to_excel
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
@@ -82,9 +83,10 @@ def index():
             join tblProjectStatus as ts
                 on ts.Id=tp.Status
             where tp.UserId={session.get('id')} and tp.IsActive=1
-            order by 1 desc;'''
+            order by 1 desc'''
 
             projects = mysql.fetch_all(query)
+            print(projects)
             project_lists = []
 
             for project in projects:
@@ -525,7 +527,6 @@ def exportCloudDatabaseFile(project_name, project_id):
                     print(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
                     return redirect(url_for('index'))
 
-
                 elif cloudType == 'azureStorage':
                     azure_connection_string = request.form['azure_connection_string']
                     container_name = request.form['container_name']
@@ -707,10 +708,7 @@ def setTargetColumn():
             logger.info('Redirect To Target Column Page')
             df = load_data()
             columns = list(df.columns)
-            print('above req')
             if request.method == "GET":
-                print('inside req')
-                # log.info(log_type='ACTION', log_message='Redirect To Set Target Column Page')
                 return render_template('target_column.html', columns=columns)
             else:
                 status = "error"
@@ -718,7 +716,11 @@ def setTargetColumn():
                 target_column = request.form['column']
                 rows_count = mysql.delete_record(f'UPDATE tblProjects SET TargetColumn="{target_column}" WHERE Id={id}')
                 status = "success"
-                return render_template('target_column.html', columns=columns, status=status)
+                # add buttom here
+                if status == "success":
+                    return render_template('target_column.html', columns=columns)
+                else:
+                    return redirect('/module')
 
         else:
             logger.info('Redirect To Home Page')
@@ -727,17 +729,21 @@ def setTargetColumn():
         logger.error(f'{e}, Occur occurred in target-columns.')
         return redirect('/')
 
+
 @app.route('/deleteProject/<id>', methods=['GET'])
 def deleteProject(id):
     if 'loggedin' in session:
-        if id:
-            mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Pid={id}')
-            logger.info('Data Successfully Deleted From Database')
-            mongodb.drop_collection(id)
-            return redirect(url_for('index'))
-        else:
-            logger.info('Redirect to index invalid id')
-            return redirect(url_for('index'))
+        try:
+            if id:
+                mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Pid="{id}"')
+                logger.info('Data Successfully Deleted From Database')
+                mongodb.drop_collection(id)
+                return redirect(url_for('index'))
+            else:
+                logger.info('Redirect to index invalid id')
+                return redirect(url_for('index'))
+        except Exception as ex:
+            logger.info(str(ex))
     else:
         logger.info('Login Needed')
         return redirect(url_for('login'))
@@ -783,6 +789,9 @@ def stream(pid):
             session['pid'] = values[1]
             session['project_name'] = values[0]
             query_ = f"Select ProjectType, TargetColumn from tblProjects  where id={session['pid']}"
+            project_logger = logger.add(sink=f"./logger/projectlogs/{values[0]}.log",
+                                        format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}",
+                                        level="INFO")
             info = mysql.fetch_one(query_)
             if info:
                 session['project_type'] = info[0]
@@ -801,7 +810,7 @@ def stream(pid):
 def module():
     try:
         if 'pid' in session:
-            logger.info('Redirected to help page')
+            logger.info(f'Inside {session["project_name"]}')
             return render_template('help.html')
         else:
             logger.info('Redirected to login')
@@ -846,11 +855,18 @@ def scheduler_post(action):
         return render_template('scheduler/help.html')
 
     if action == 'Training_scheduler':
-        return render_template('scheduler/Training_scheduler.html')
+        respone = request.form['filter-date']
+        date = respone.split(" ")[0]
+        time = respone.split(" ")[1]
+        project_id = session['project_name']
+        mode_names = ALL_MODELS
+        target_col_name = None
+        email_send = None
+        return render_template('scheduler/Information.html')
 
 
 if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
-        app.run(host="127.0.0.1", port=5000, debug=True)
+        app.run(host="127.0.0.1", port=8000, debug=True)

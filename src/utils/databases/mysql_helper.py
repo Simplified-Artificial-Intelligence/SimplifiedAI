@@ -3,9 +3,10 @@ import mysql.connector.pooling
 from src.utils.common.common_helper import read_config
 import os
 from loguru import logger
+from from_root import from_root
 
 config_args = read_config("config.yaml")
-log_path = os.path.join(".", config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
 
@@ -168,14 +169,14 @@ class MySqlHelper:
             cursor = conn.cursor()
             cursor.execute(query)
             rowcount = cursor.rowcount
+            conn.commit()
+            self.close(conn, cursor)
             return rowcount
 
         except connector.Error as error:
             logger.error("Error: {}".format(error))
 
         finally:
-            conn.commit()
-            self.close(conn, cursor)
             logger.info("MySQL connection is closed")
 
     def insert_record(self, query):

@@ -26,15 +26,24 @@ PROJECT_TYPES = [
     {"id": 3, "name": "Clustering"}
 ]
 
-class ProjectActions(Enum):
-    DELETE_COLUMN=1
-    CHANGE_DATA_TYPE=2
-    COLUMN_NAME_CHANGE=3
-    ENCODING=4
-    SCALING=5
-    PCA=6
-    
 
-REGRESSION_MODELS=['LinearRegression','Ridge','Lasso','ElasticNet','DecisionTreeRegressor','RandomForestRegressor','SVR','AdaBoostRegressor','GradientBoostingRegressor']
-CLASSIFICATION_MODELS=['LogisticRegression', 'SVC', 'KNeighborsClassifier', 'DecisionTreeClassifier', 'RandomForestClassifier', 'GradientBoostClassifier', 'AdaBoostClassifier']
-CLUSTERING_MODELS=['KMeans', 'DBSCAN', 'AgglomerativeClustering']
+class ProjectActions(Enum):
+    DELETE_COLUMN = 1
+    CHANGE_DATA_TYPE = 2
+    COLUMN_NAME_CHANGE = 3
+    ENCODING = 4
+    SCALING = 5
+    PCA = 6
+
+
+REGRESSION_MODELS = ['LinearRegression', 'Ridge', 'Lasso', 'ElasticNet', 'DecisionTreeRegressor',
+                     'RandomForestRegressor', 'SVR', 'AdaBoostRegressor', 'GradientBoostingRegressor']
+CLASSIFICATION_MODELS = ['LogisticRegression', 'SVC', 'KNeighborsClassifier', 'DecisionTreeClassifier',
+                         'RandomForestClassifier', 'GradientBoostClassifier', 'AdaBoostClassifier']
+CLUSTERING_MODELS = ['KMeans', 'DBSCAN', 'AgglomerativeClustering']
+
+ALL_MODELS = ['LinearRegression', 'Ridge', 'Lasso', 'ElasticNet', 'DecisionTreeRegressor',
+              'RandomForestRegressor', 'SVR', 'AdaBoostRegressor', 'GradientBoostingRegressor', 'LogisticRegression',
+              'SVC', 'KNeighborsClassifier', 'DecisionTreeClassifier',
+              'RandomForestClassifier', 'GradientBoostClassifier', 'AdaBoostClassifier', 'KMeans', 'DBSCAN',
+              'AgglomerativeClustering']
