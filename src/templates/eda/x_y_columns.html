@@ -1,4 +1,5 @@
 
+{% if graph_selected != "Heat Map" %}
 <div class="">
     <div class="form-group">
       <label for="exampleFormControlSelect1">Select X Column</label>
@@ -20,3 +21,24 @@
     </div>
     {% endif %}
 </div>
+{% endif %}
+
+{% if graph_selected == "Heat Map" %}
+<div class="">
+  <div class="form-group">
+    <label for="exampleFormControlSelect1">Select X Column</label>
+    <select class="js-example-basic-multiple form-control" name="xcolumn" multiple="multiple">
+        {% for col in x_list %}
+          <!-- <option value="{{col}}" {% if x_column=="{{col}}" %} selected="selected"{% endif %}>{{col}}</option> -->
+          <option value="{{col}}">{{col}}</option>
+        {% endfor %}
+      </select>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  $(document).ready(function() {
+      $('.js-example-basic-multiple').select2();
+  });
+</script>

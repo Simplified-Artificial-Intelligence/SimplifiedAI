@@ -75,7 +75,6 @@
             url: "/x_y_columns",
             data: {graph_selected: graph_selected},
             success: function(response) {
-              console.log(response)
               $("#x_y_columns").html(response);
             },
             error: function(xhr) {

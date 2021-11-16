@@ -89,12 +89,17 @@ class PlotlyHelper:
             logger.error(e)
 
     @staticmethod
-    def heatmap(df):
+    def heatmap(df, x):
         try:
-            pearson_corr = EDA.correlation_report(df, 'pearson')
+            print(x)
+            print(df[x])
+            pearson_corr = EDA.correlation_report(df[x], 'pearson')
             persion_data = list(np.around(np.array(pearson_corr.values), 2))
+            print(pearson_corr)
             fig = ff.create_annotated_heatmap(persion_data, x=list(pearson_corr.columns),
                                               y=list(pearson_corr.columns), colorscale='Viridis')
+            # fig = ff.create_annotated_heatmap(persion_data, x=list(x),
+            #                                   y=list(y), colorscale='Viridis')
             graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             logger.info("Heatmap Implemented!")
             return graphJSON
