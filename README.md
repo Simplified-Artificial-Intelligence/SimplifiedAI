@@ -1,25 +1,41 @@
 
-# Project Title
+<p align="center">
+<img src="https://user-images.githubusercontent.com/40850370/142188982-c2158824-5d21-4618-9837-c3a4baffc17f.png" alt="Paris" align="center">
+  </p>
 
-A brief description of what this project does and who it's for
-
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
+# Simplify Ai
 
 
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
+
+## Badges
+[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/ketangangal/Projectathon/blob/main/LICENSE)
+<img alt="Bitbucket open issues" src="https://img.shields.io/bitbucket/issues-raw/ketangangal/Projectathon?logoColor=blue">
+<a href="https://github.com/ketangangal/Projectathon/network"><img alt="GitHub forks" src="https://img.shields.io/github/forks/ketangangal/Projectathon"></a>
+<a href="https://github.com/ketangangal/Projectathon/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ketangangal/Projectathon"></a>
+
+## Features
+
+- Light/dark mode toggle
+- Live previews
+- Fullscreen mode
+- Cross platform
 
 
-## Screenshots
+## Tech Stack
 
-<img width="956" alt="Screenshot 2021-11-14 152504" src="https://user-images.githubusercontent.com/40850370/141688147-13be4190-ea40-46b5-b34c-ff09803c845a.png">
+**Client:** React, Redux, TailwindCSS
+
+**Server:** Node, Express
 
 
 ## Documentation
 
 [Documentation](https://linktodocumentation)
+
+
+## Authors
+
+- [@katherinepeterson](https://www.github.com/octokatherine)
 
 
 ## Usage/Examples
@@ -33,37 +49,15 @@ function App() {
 ```
 
 
-## Authors
+## Used By
 
-- [@katherinepeterson](https://www.github.com/octokatherine)
+This project is used by the following companies:
 
-## Color Reference
-
-| Color             | Hex                                                                |
-| ----------------- | ------------------------------------------------------------------ |
-| Example Color | ![#0a192f](https://via.placeholder.com/10/0a192f?text=+) #0a192f |
-| Example Color | ![#f8f8f8](https://via.placeholder.com/10/f8f8f8?text=+) #f8f8f8 |
-| Example Color | ![#00b48a](https://via.placeholder.com/10/00b48a?text=+) #00b48a |
-| Example Color | ![#00d1a0](https://via.placeholder.com/10/00b48a?text=+) #00d1a0 |
-
-
-## Deployment
-
-To deploy this project run
-
-```bash
-  npm run deploy
-```
+- Company 1
+- Company 2
 
 
 ## Support
 
 For support, email fake@fake.com or join our Slack channel.
-
-
-## Roadmap
-
-- Additional browser support
-
-- Add more integrations
 
