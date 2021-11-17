@@ -838,13 +838,19 @@ def systemlogs(action):
 
 @app.route('/history/actions', methods=['GET'])
 def history():
-    if request.method == 'GET':
-        my_collection = mysql.fetch_all(f''' Select ProjectId, Name, Input,Output,ActionDate 
-        from tblProject_Actions_Reports 
-        Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
-        where ProjectId ="{session['pid']}"''')
-        print(my_collection)
-        return render_template('history/actions.html', my_collection=my_collection)
+    try:
+        if 'loggedin' in session:
+            if request.method == 'GET':
+                my_collection = mysql.fetch_all(f''' Select ProjectId, Name, Input,Output,ActionDate 
+                from tblProject_Actions_Reports 
+                Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
+                where ProjectId ="{session['pid']}"''')
+                print(my_collection)
+                return render_template('history/actions.html', my_collection=my_collection)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In history")
 
 
 @app.route('/scheduler/<action>', methods=['GET'])
