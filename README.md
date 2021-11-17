@@ -59,7 +59,6 @@ Industrial:
 ```
 ## Interface
 ![image](https://user-images.githubusercontent.com/40850370/142195610-651cffda-494a-47a0-a9d0-6eb2e4150d97.png)
-![image](https://user-images.githubusercontent.com/40850370/142196066-f58bd7a8-a9dd-4618-8c0d-efee0a414a44.png)
 ![image](https://user-images.githubusercontent.com/40850370/142195760-80a1903f-f8f6-47a1-bfdf-8e818381ee47.png)
 
 ## Documentation
@@ -70,6 +69,7 @@ Industrial:
 ## Contributers
 
 - [@katherinepeterson](https://www.github.com/octokatherine)
+
 
 ## Support
 Nothing can be perfect, So if find any bug please let us know!
