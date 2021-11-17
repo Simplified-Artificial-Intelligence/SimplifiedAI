@@ -44,6 +44,7 @@ class ModelTrain_Regression:
             logger.info("Auto Regression training completed!")
         except Exception as e:
             logger.error(f"{e} occurred in Auto Regression model training!")
+            raise Exception(e)
 
     def linear_regression_(self):
         model = LinearRegression()

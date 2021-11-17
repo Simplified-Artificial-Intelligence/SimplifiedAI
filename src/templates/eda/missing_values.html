@@ -9,9 +9,16 @@
             mode with respective to each column available in dataset.
             and also graphical presentation of missing values.</p> 
       </div>
-      {{data | safe}}
-      <div id='myDiv'><!-- Plotly chart will be drawn inside this DIV --></div>
-      <div id='pieplot'><!-- Plotly chart will be drawn inside this DIV --></div>
+      {% if not contain_missing %}
+      <div class="alert alert-success">
+        <strong>Congrats!</strong> Data Doesn't contain any missing values
+      </div>
+      {% endif %}
+      {% if  contain_missing %}
+        {{data | safe}}
+        <div id='myDiv'><!-- Plotly chart will be drawn inside this DIV --></div>
+        <div id='pieplot'><!-- Plotly chart will be drawn inside this DIV --></div>
+      {% endif %}
 </div>
 <script>
     $(document).ready(function() {

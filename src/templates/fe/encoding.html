@@ -3,10 +3,10 @@
 
 <div class="table2">
     {% if status=="success" %}
-    <div class="alert alert-success">
-        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <strong>Success!</strong> Encoding Performed Successfully.
-      </div>
+    <div class="jumbotron text-center">
+        <h1>Make Predictions</h1>
+        <p>This Function helps you to Encode your data into Numerical Data for future training!</p>
+    </div>
     {% endif %}
     {% if status=="error" %}
     <div class="alert alert-danger">
@@ -14,10 +14,6 @@
         <strong>Error!</strong> {{msg}}
       </div>
     {% endif %}
-    <div class="jumbotron text-center">
-        <h1>Feature Encoding</h1>
-        <p>This Function helps you to Encode your data into Numerical Data for future training!</p>
-    </div>
 </div>
 <form action="/fe/encoding" method="post">
     <div class="row">

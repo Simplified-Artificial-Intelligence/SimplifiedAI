@@ -47,15 +47,19 @@ def eda(action):
                 elif action == "missing":
                     ProjectReports.insert_record_eda('Redirect To Missing Value')
                     df = EDA.missing_cells_table(df)
+                    
+                    if df is not None:
 
-                    graphJSON = PlotlyHelper.barplot(df, x='Column', y='Missing values')
-                    pie_graphJSON = PlotlyHelper.pieplot(df, names='Column', values='Missing values',
-                                                         title='Missing Values')
+                        graphJSON = PlotlyHelper.barplot(df, x='Column', y='Missing values')
+                        pie_graphJSON = PlotlyHelper.pieplot(df, names='Column', values='Missing values',
+                                                            title='Missing Values')
 
-                    data = df.drop('Column', axis=1)
-                    data = data.to_html()
-                    return render_template('eda/missing_values.html', action=action, data=data, barplot=graphJSON,
-                                           pieplot=pie_graphJSON)
+                        data = df.drop('Column', axis=1)
+                        data = data.to_html()
+                        return render_template('eda/missing_values.html', action=action, data=data, barplot=graphJSON,
+                                            pieplot=pie_graphJSON,contain_missing=True)
+                    else:
+                        return render_template('eda/missing_values.html', action=action,contain_missing=False)
 
                 elif action == "outlier":
                     ProjectReports.insert_record_eda('Redirect To Outlier')

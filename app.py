@@ -738,6 +738,7 @@ def deleteProject(id):
                 mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Pid="{id}"')
                 logger.info('Data Successfully Deleted From Database')
                 mongodb.drop_collection(id)
+                # log.info(log_type='INFO', log_message='Data Successfully Deleted From Database')
                 return redirect(url_for('index'))
             else:
                 logger.info('Redirect to index invalid id')
