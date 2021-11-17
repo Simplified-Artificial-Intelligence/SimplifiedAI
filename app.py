@@ -849,31 +849,81 @@ def history():
 
 @app.route('/scheduler/<action>', methods=['GET'])
 def scheduler_get(action):
-    if action == 'help':
-        return render_template('scheduler/help.html')
+    try:
+        if 'loggedin' in session:
+            if action == 'help':
+                return render_template('scheduler/help.html')
 
-    if action == 'Training_scheduler':
-        return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
+            if action == 'Training_scheduler':
+                responseData = [{
+                    "project_id" : session['project_name'],
+                    "mode_names" : "Regression",
+                    "target_col_name" : 'Target Column Name',
+                    "status" : "completed",
+                    # "date" : respone.split(" ")[0],
+                    # "time" : respone.split(" ")[1],
+                    "date" : '12/11/2021',
+                    "time" : '00:21',
+                    "email_send" : 'tester@gmail.com',
+                }, {
+                    "project_id" : session['project_name'],
+                    "mode_names" : "Regression",
+                    "target_col_name" : 'Target Column Name',
+                    "status" : "completed",
+                    "date" : '12/11/2021',
+                    "time" : '00:21',
+                    "email_send" : 'tester@gmail.com',
+                }, {
+                    "project_id" : session['project_name'],
+                    "mode_names" : "Classification",
+                    "target_col_name" : 'Target Column Name',
+                    "status" : "completed",
+                    "date" : '12/11/2021',
+                    "time" : '00:21',
+                    "email_send" : 'tester@gmail.com',
+                }, {
+                    "project_id" : session['project_name'],
+                    "mode_names" : "Clustering",
+                    "target_col_name" : 'Target Column Name',
+                    "status" : "completed",
+                    "date" : '12/11/2021',
+                    "time" : '00:21',
+                    "email_send" : 'tester@gmail.com',
+                }]
+                return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
 
-    if action == "add_scheduler":
-        return render_template('scheduler/add_new_scheduler.html', action=action, localdate=None)
+            if action == "add_scheduler":
+                return render_template('scheduler/add_new_scheduler.html', action=action, localdate=None)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In scheduler")
 
 
 
 @app.route('/scheduler/<action>', methods=['POST'])
 def scheduler_post(action):
-    if action == 'help':
-        return render_template('scheduler/help.html')
+    try:
+        if 'loggedin' in session:
+            if action == 'help':
+                return render_template('scheduler/help.html')
 
-    if action == 'Training_scheduler':
-        respone = request.form['filter-date']
-        date = respone.split(" ")[0]
-        time = respone.split(" ")[1]
-        project_id = session['project_name']
-        mode_names = ALL_MODELS
-        target_col_name = None
-        email_send = None
-        return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
+            if action == 'Training_scheduler':
+                respone = request.form['filter-date']
+                responseData = [{
+                    "project_id" : session['project_name'],
+                    "mode_names" : "Regression",
+                    "target_col_name" : 'Target Column Name',
+                    "status" : "completed",
+                    "date" : respone.split(" ")[0],
+                    "time" : respone.split(" ")[1],
+                    "email_send" : 'tester@gmail.com',
+                }]
+                return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In scheduler")
 
 
 if __name__ == '__main__':
