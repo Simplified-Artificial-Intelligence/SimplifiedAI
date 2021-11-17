@@ -738,6 +738,7 @@ def deleteProject(id):
                 mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Pid="{id}"')
                 logger.info('Data Successfully Deleted From Database')
                 mongodb.drop_collection(id)
+                # log.info(log_type='INFO', log_message='Data Successfully Deleted From Database')
                 return redirect(url_for('index'))
             else:
                 logger.info('Redirect to index invalid id')
@@ -854,6 +855,10 @@ def scheduler_get(action):
     if action == 'Training_scheduler':
         return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
 
+    if action == "add_scheduler":
+        return render_template('scheduler/add_new_scheduler.html', action=action, localdate=None)
+
+
 
 @app.route('/scheduler/<action>', methods=['POST'])
 def scheduler_post(action):
@@ -868,7 +873,7 @@ def scheduler_post(action):
         mode_names = ALL_MODELS
         target_col_name = None
         email_send = None
-        return render_template('scheduler/Information.html')
+        return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
 
 
 if __name__ == '__main__':

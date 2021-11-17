@@ -10,6 +10,7 @@ import os
 from src.utils.common.common_helper import read_config
 from loguru import logger
 from from_root import from_root
+
 config_args = read_config("./config.yaml")
 
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
@@ -17,6 +18,7 @@ logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {m
 
 updated_time = None
 mongodb = MongoHelper()
+
 
 def get_filename():
     try:
@@ -34,14 +36,12 @@ def get_filename():
 def load_data():
     try:
         filename = get_filename()
-        df = pd.read_csv(filename, index_col=0)
+        df = pd.read_csv(filename)
         logger.info(f"DataFrame loaded successfully!")
         return df
 
     except Exception as e:
         logger.error(f"{e} occurred in Load Data of Data Helper!")
-    finally:
-        pass
 
 
 def update_data(df):
@@ -162,10 +162,9 @@ def check_file_presence(project_id):
         elif f'{project_id}.csv' in os.listdir(os.path.join(os.getcwd(), 'src\data')):
             download_status = 'Successful'
             file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
-        return  file_path, download_status
+        return file_path, download_status
 
     except Exception as e:
         print(e.__str__())
         download_status = "Unsuccessful"
         return file_path, download_status
-

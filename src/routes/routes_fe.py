@@ -70,7 +70,7 @@ def feature_engineering(action):
                     # except Exception as e:
                     #     logger.error(f'{e}, Target Column is not selected for Encoding!')
                     """ Check Encoding Already Performed or not"""
-                    query_=f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=4"
+                    query_=f"Select * from tblProject_Actions_Reports  where ProjectId={session.get('pid')} and ProjectActionId=4"
                     rows = mysql.fetch_all(query_)
                     if len(rows)>0:
                         return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,

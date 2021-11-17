@@ -106,7 +106,8 @@ class EDA:
     def find_mode(df3):
         try:
             for i in df3.columns:
-                yield str(df3[i].mode()[0])
+                mode=df3[i].mode()
+                yield mode[0] if len(mode)>0 else '-'
             logger.info("Find Mode Implemented!")
         except Exception as e:
             logger.error(f"{e} occurred in Find Mode!")

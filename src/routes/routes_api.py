@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify,session
 from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, GradientBoostRegressor_Params
 from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, DecisionTreeClassifier_Params, RandomForestClassifier_Params, AdaBoostClassifier_Params, GradientBoostingClassifier_Params
 from src.constants.model_params import KmeansClustering_Params, DbscanClustering_Params, AgglomerativeClustering_Params
+from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params
+from src.utils.common.common_helper import load_prediction_result
 from src.utils.common.data_helper import load_data
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from src.utils.common.plotly_helper import PlotlyHelper
@@ -248,6 +250,16 @@ def get_params():
         else:
             d['params']=None
         return jsonify(d)
+
+    except Exception as e:
+        print(e)
+        return jsonify({'success': False}) 
+    
+    
+@app_api.route('/api/download_prediction', methods=['POST'])
+def download_prediction():
+    try:
+        return load_prediction_result()
 
     except Exception as e:
         print(e)

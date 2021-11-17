@@ -1,3 +1,4 @@
+from io import RawIOBase
 import pandas as pd
 import numpy as np
 import category_encoders as ce
@@ -54,7 +55,7 @@ class Preprocessing:
             if i in df.columns:
                 temp_list.append(i)
             else:
-                return 'Column Not Found'
+                raise Exception('Column Not Found')
 
         try:
             df = df.drop(temp_list, axis=1)
@@ -62,6 +63,7 @@ class Preprocessing:
             return df
         except Exception as e:
             logger.info(e)
+            raise e
 
     @staticmethod
     def missing_values(df):

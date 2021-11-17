@@ -178,6 +178,32 @@ class MySqlHelper:
 
         finally:
             logger.info("MySQL connection is closed")
+            
+    def update_record(self, query):
+        """
+        [summary]: Function to delete record from table single or multiple
+        Args:
+            query ([type]): [Query to execute]
+
+        Returns:
+            [type]: [No of row effected]
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.pool.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(query)
+            rowcount = cursor.rowcount
+            return rowcount
+
+        except connector.Error as error:
+            logger.error("Error: {}".format(error))
+
+        finally:
+            conn.commit()
+            self.close(conn, cursor)
+            logger.info("MySQL connection is closed")
 
     def insert_record(self, query):
         """
