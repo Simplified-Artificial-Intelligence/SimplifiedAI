@@ -459,21 +459,6 @@ def exportFile(id):
                 return Response(content.to_csv(sep='\t'), mimetype="text/tsv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
-            # elif fileType == 'excel':
-            #     wb = csv_to_excel(file_path)
-            #
-            #     file_stream = BytesIO()
-            #     wb.save(file_stream)
-            #     file_stream.seek(0)
-            #
-            #     filename = filename.rsplit('.', 1)[0]
-            #     if os.path.isfile(filename + '.xlsx'):
-            #         os.remove(filename + '.xlsx')
-            #     else:
-            #         print(filename + '.xlsx file doesnt exist')
-            #
-            #     return send_file(file_stream, attachment_filename=f"{project_name}.xlsx", as_attachment=True)
-
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
                 return Response(content.to_json(), mimetype="text/json",
@@ -842,7 +827,6 @@ def history():
         from tblProject_Actions_Reports 
         Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
         where ProjectId ="{session['pid']}"''')
-        print(my_collection)
         return render_template('history/actions.html', my_collection=my_collection)
 
 
@@ -856,7 +840,6 @@ def scheduler_get(action):
 
     if action == "add_scheduler":
         return render_template('scheduler/add_new_scheduler.html', action=action, localdate=None)
-
 
 
 @app.route('/scheduler/<action>', methods=['POST'])

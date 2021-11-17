@@ -234,6 +234,7 @@ def model_training_post(action):
                         elif session['project_type'] == 2:
                             trainer = ModelTrain_Classification(X_train, X_test, y_train, y_test, True)
                             result = trainer.results()
+
                             result = result.to_html()
                             return render_template('model_training/auto_training.html', status="success",
                                                    project_type=session['project_type'],
