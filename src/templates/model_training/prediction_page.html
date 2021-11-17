@@ -1,7 +1,6 @@
-{% extends 'base.html' %}
-
+{% extends 'project_base.html' %}
 {% block content %}
-  <form id="project_form" class="project-form" enctype = "multipart/form-data">
+ <form id="project_form" class="project-form" enctype = "multipart/form-data">
 
     <div class="container col-lg-6 col-sm-6">
       {% if msg %}
@@ -12,30 +11,19 @@
       </div>
       {% endif %}
 
-    <h3 class="header">Add New project</h3>
-    <div class="row margin-bottom-20">
-     <div class="col-sm-12 sol-md-12 col-lg-12">
-      <label for="name"><b>Select Projcect Type:</b></label>
-      <select class="js-example-basic-multiple form-control" name="project_type" id="project_type">
-        {% for item in project_types %}
-        <option value="{{item['id']}}">{{item['name']}}</option>
-      {% endfor %}
-      </select>
-     </div>
-    </div>
-      <label for="name"><b>Name:</b></label>
-      <input type="text" placeholder="Add your project name" name="project_name" id="project_name" required>
+<!--    <h3 class="header">Add Prediction File</h3>-->
+<!--    <div class="row margin-bottom-20">-->
+<!--     <div class="col-sm-12 sol-md-12 col-lg-12">-->
+<!--     </div>-->
+<!--    </div>-->
 
-      <label for="description"><b>Description</b></label>
-      <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="project_desc" id="project_desc" required >
-      </textarea>
-
+      <h3 class="header">Add Prediction File</h3>
       <!-- Upload File -->
       <input class="" type="radio" name="uploadFile" id="uploadFile">
       <label for="uploadFile" class="label1"><b>Upload Your File:</b></label>
       <input type="file" id="file" name="file">
-      <p>allowed file *.csv, .tsv, .xml, .json</p>
-      
+      <p>allowed file *.csv, .tsv, .json</p>
+
 
       <!-- Other Resources -->
       <input class="" type="radio" name="uploadResource" id="uploadResource">
@@ -48,21 +36,21 @@
         <option value="cassandra"> Cassandra </option>
         <option value="mongodb"> Mongo DB </option>
         <option value="azureStorage"> Azure Data Storage </option>
-      </select>  
-      
+      </select>
+
       <div id="awsS3bucket" class="upload-other-resource">
         <label for="region_name" class="col-form-label"><b> Region Name </b></label>
         <input type="text" class="form-control awsS3bucket" id="region_name" name="region_name" placeholder="" required>
-        
+
         <label for="aws_access_key_id" class="col-form-label"><b> AWS Access Key Id </b></label>
         <input type="text" class="form-control awsS3bucket" id="aws_access_key_id" name="aws_access_key_id" placeholder="" required>
-        
+
         <label for="aws_secret_access_key" class="col-form-label"><b> AWS Secret Access Key </b></label>
         <input type="text" class="form-control awsS3bucket" id="aws_secret_access_key" name="aws_secret_access_key" placeholder="" required>
-        
+
         <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
         <input type="text" class="form-control awsS3bucket" id="bucket_name" name="bucket_name" placeholder="" required>
-        
+
         <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
         <input type="text" class="form-control awsS3bucket" id="file_name" name="file_name" placeholder="" required>
 
@@ -72,10 +60,10 @@
         <label for="GCP_credentials_file" class="col-form-label"><b> GCP Credentials file </b></label>
         <input type="file" class="form-control gcpStorage" id="GCP_credentials_file" name="GCP_credentials_file">
         <p>allowed file *.json</p>
-        
+
         <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
         <input type="text" class="form-control gcpStorage" id="bucket_name" name="bucket_name" placeholder="" required>
-        
+
         <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
         <input type="text" class="form-control gcpStorage" id="file_name" name="file_name" placeholder="" required>
 
@@ -85,10 +73,10 @@
         <label for="secure_connect_bundle" class="col-form-label"><b> Secure Connect Bundle </b></label>
         <input type="file" accept=".zip,.rar,.7zip" class="form-control cassandra" id="secure_connect_bundle" name="secure_connect_bundle">
         <p>allowed file *.zip</p>
-        
+
         <label for="client_id" class="col-form-label"><b> Client Id </b></label>
         <input type="text" class="form-control cassandra" id="client_id" name="client_id" placeholder="" required>
-        
+
         <label for="client_secret" class="col-form-label"><b> Client Secret </b></b></label>
         <input type="text" class="form-control cassandra" id="client_secret" name="client_secret" placeholder="" required>
 
@@ -108,16 +96,16 @@
       <div id="mySql" class="upload-other-resource">
         <label for="host" class="col-form-label"><b> Host </b></label>
         <input type="text" class="form-control mySql" id="host" name="host" placeholder="" required>
-        
+
         <label for="port" class="col-form-label"><b> Port </b></label>
         <input type="text" class="form-control mySql" id="port" name="port" placeholder="" required>
-        
+
         <label for="user" class="col-form-label"><b> User </b></label>
         <input type="text" class="form-control mySql" id="user" name="user" placeholder="" required>
-        
+
         <label for="password" class="col-form-label"><b> Password </b></label>
         <input type="password" class="form-control mySql" id="password" name="password" placeholder="" required>
-        
+
         <label for="database" class="col-form-label"><b> Database </b></b></label>
         <input type="text" class="form-control mySql" id="database" name="database" placeholder="" required>
 
@@ -151,7 +139,7 @@
       </div>
 
 
-      <button class="btn btn-success" type="button" id="addProject">Add Project</button>
+      <button class="btn btn-success" type="button" id="addProject">Add File</button>
       <a href="/">
         <button type="button" class="btn btn-danger back">Back</button>
       </a>
@@ -206,14 +194,14 @@
             <button type="submit" class="btn btn-primary" id="submitModal">Submit</button>
           </div>
         </form>
-          
+
       </div>
     </div>
   </div> -->
 
   <script>
     $(document).ready(function(){               //Make script DOM ready
-      var opval = "" 
+      var opval = ""
 
       function hideUploadOtherResource() {
         $('.upload-other-resource').each(function(i, obj) {
@@ -261,7 +249,7 @@
         $("label[for='uploadResource']").addClass('disabled-label');
         $('#resourceFile').addClass('disabled-input');
         $('#resourceFile').prop('disabled', true);
-          
+
       })
 
       $("input:radio[name=uploadResource]").click(function(e) {
@@ -295,7 +283,7 @@
       $("#testConnection").click(function (event) {
           //stop submit the form, we will post it manually.
           event.preventDefault();
-    
+
           var formData = {
             region_name: $("#region_name").val(),
             aws_access_key_id: $("#aws_access_key_id").val(),
@@ -309,11 +297,11 @@
           // var object = {};
           // data.forEach((value, key) => object[key] = value);
           // console.log(JSON.stringify(object))
-    
+
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/project/create",
+              url: "/prediction",
               data: JSON.stringify(formData),
               processData: false,
               contentType: false,
@@ -347,10 +335,10 @@
               });
             }
           });
-         
-          // FormData object 
+
+          // FormData object
           var data = new FormData(form);
-    
+
           // If you want to add an extra field for the FormData
           data.append("resource_type", opval);
           data.append("source_type", selectedRadio);
@@ -359,7 +347,7 @@
           if (opval === "cassandra" ) {
             data.append("data_in_tabular", tabularData);
           }
-    
+
           // disabled the submit button
           // $("#btnSubmit").prop("disabled", true);
 
@@ -367,11 +355,11 @@
           // var object = {};
           // data.forEach((value, key) => object[key] = value);
           // console.log(JSON.stringify(object))
-    
+
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/project",
+              url: "/prediction_file",
               data: data,
               processData: false,
               contentType: false,
@@ -398,6 +386,27 @@
     });
   </script>
 
+<div class="table2">
+    {% if status=="success" %}
+    <div class="jumbotron text-center">
+        <h1>Make Predictions</h1>
+        <p>Now your model is trained so you can make predictions now, but please make sure that uploaded file is in same format</p>
+    </div>
+    {% endif %}
+    {% if status=="error" %}
+    <div class="alert alert-danger">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Error!</strong> {{msg}}
+      </div>
+    {% endif %}
+    <form action="/prediction" method="post">
+        <div class="col-4" style="padding-top: 20px;">
+            <button type="submit" class="btn btn-default">Make Prediction</button>
+        </div>
+    </form>
+    </div>
+</div>
+
+
+
 {% endblock %}
-
-

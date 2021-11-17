@@ -29,7 +29,8 @@ from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
 import time
-from src.utils.common.common_helper import decrypt, get_param_value, load_prediction_result, load_project_model, read_config, save_prediction_result, save_project_model, unique_id_generator, Hashing, encrypt
+from src.utils.common.common_helper import decrypt, get_param_value, load_prediction_result, load_project_model, \
+    read_config, save_prediction_result, save_project_model, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, csv_to_excel
@@ -69,8 +70,9 @@ def model_training(action):
                     return render_template('model_training/auto_training.html', project_type=session['project_type'],
                                            target_column=session['target_column'])
                 elif action == 'custom_training':
-                    return render_template('model_training/auto_training.html',project_type=session['project_type'],target_column=session['target_column'])
-                elif action == 'custom_training' or action=='final_train_model':
+                    return render_template('model_training/auto_training.html', project_type=session['project_type'],
+                                           target_column=session['target_column'])
+                elif action == 'custom_training' or action == 'final_train_model':
                     logger.info('Redirect To Custom Training Page')
                     ProjectReports.insert_record_ml('Redirect To Custom Training Page')
                     try:
@@ -268,47 +270,51 @@ def model_training_post(action):
                         return render_template('model_training/auto_training.html', status="error",
                                                project_type=session['project_type'],
                                                target_column=session['target_column'], msg=str(ex))
-                        return render_template('model_training/auto_training.html', status="error",project_type=session['project_type'],target_column=session['target_column'],msg=str(ex))
-                elif action=='final_train_model':
+                        return render_template('model_training/auto_training.html', status="error",
+                                               project_type=session['project_type'],
+                                               target_column=session['target_column'], msg=str(ex))
+                elif action == 'final_train_model':
                     try:
                         logger.info('Final Train Model')
                         ProjectReports.insert_record_ml('Final Train Model')
-                        
+
                         model_name = request.form['model_name']
                         target = session['target_column']
                         X = df.drop(target, axis=1)
                         y = df[target]
-                        model=load_project_model()
-                        
+                        model = load_project_model()
+
                         if model is None:
-                            return render_template('model_training/model_result.html', action=action,status="error",msg="Model is not found, please train model again")
+                            return render_template('model_training/model_result.html', action=action, status="error",
+                                                   msg="Model is not found, please train model again")
                         else:
-                            model_params={}
-                            for key,value in model.get_params().items():
-                                model_params[key]=value
-                            if model_name=="LinearRegression":
-                                train_model_fun=RegressionModels.linear_regression_regressor                           
-                            elif model_name=="DecisionTreeRegressor":
-                                train_model_fun=RegressionModels.decision_tree_regressor
-                        
-                            trained_model=train_model_fun(X,y,True,**model_params)
-                            
+                            model_params = {}
+                            for key, value in model.get_params().items():
+                                model_params[key] = value
+                            if model_name == "LinearRegression":
+                                train_model_fun = RegressionModels.linear_regression_regressor
+                            elif model_name == "DecisionTreeRegressor":
+                                train_model_fun = RegressionModels.decision_tree_regressor
+
+                            trained_model = train_model_fun(X, y, True, **model_params)
+
                             """Save Final Model"""
-                            save_project_model(trained_model,'model.pkl')
-                            
-                            query=f'''Update tblProjects Set Model_Name="{model_name}", Model_Trained=1 Where Id={session.get('pid')}'''
+                            save_project_model(trained_model, 'model.pkl')
+
+                            query = f'''Update tblProjects Set Model_Name="{model_name}", Model_Trained=1 Where Id={session.get('pid')}'''
                             mysql.update_record(query)
-                            
+
                             logger.info('Final Training Done')
                             ProjectReports.insert_record_ml('Final Training Done')
-                            
+
                             return redirect('/congrats')
-                                
+
                     except Exception as e:
                         logger.error('Error in Model Training Submit')
-                        ProjectReports.insert_record_ml('Error in Model Training','','',0,str(e))
-                        render_template('model_training/model_result.html', action=action,status="error",msg="Model is not found, please train model again")
-                        
+                        ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+                        render_template('model_training/model_result.html', action=action, status="error",
+                                        msg="Model is not found, please train model again")
+
                 else:
                     return "Non Implemented Method"
         else:
@@ -317,7 +323,8 @@ def model_training_post(action):
         logger.error('Error in Model Training Submit')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
 
-@app_training.route('/congrats', methods=['GET','POST'])
+
+@app_training.route('/congrats', methods=['GET', 'POST'])
 def congrats():
     try:
         if 'pid' in session:
@@ -337,51 +344,54 @@ def congrats():
             logger.info('Loaded Congrats Page')
             ProjectReports.insert_record_ml('Loaded Congrats Page')
             if request.method == "GET":
-                 return render_template('model_training/congrats.html')
+                return render_template('model_training/congrats.html')
             else:
                 return render_template('model_training/congrats.html')
     except Exception as e:
-       logger.error('Error in Model Training Submit')
-       ProjectReports.insert_record_ml('Error in Model Training','','',0,str(e))
-       
-       
-@app_training.route('/prediction', methods=['GET','POST'])
+        logger.error('Error in Model Training Submit')
+        ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+
+
+@app_training.route('/prediction', methods=['GET', 'POST'])
 def prediction():
     try:
         if 'pid' in session:
             logger.info('Loaded Prediction Page')
             ProjectReports.insert_record_ml('Loaded Prediction Page')
             if request.method == "GET":
-                 is_trained = mysql.fetch_all(f"SELECT * FROM tblProjects WHERE Id ={session.get('pid')} AND Model_Trained=1")
-                 if is_trained is None:
-                     return render_template('model_training/prediction.html',status="error")
-                 else:
-                     return render_template('model_training/prediction.html',status="success")
+                is_trained = mysql.fetch_all(
+                    f"SELECT * FROM tblProjects WHERE Id ={session.get('pid')} AND Model_Trained=1")
+                if is_trained is None:
+                    return render_template('model_training/prediction_page.html', status="error")
+                else:
+                    return render_template('model_training/prediction_page.html', status="success")
             else:
                 try:
-                    df=pd.read_csv("src/data/predict.csv")
-                    prediction=make_prediction(df)
-                    data=prediction.to_html()
-                    if len(data)>0:
+                    df = pd.read_csv("src/data/predict.csv")
+                    prediction = make_prediction(df)
+                    data = prediction.to_html()
+                    if len(data) > 0:
                         save_prediction_result(prediction)
-                        return render_template('model_training/prediction_result.html',status="success",data=data)
+                        return render_template('model_training/prediction_result.html', status="success", data=data)
                     else:
-                        return render_template('model_training/prediction_result.html',status="error",msg="There is some issue, coudn't perform prediction. Please check your data")
+                        return render_template('model_training/prediction_result.html', status="error",
+                                               msg="There is some issue, coudn't perform prediction. Please check your data")
                 except Exception as e:
-                    return render_template('model_training/prediction_result.html',status="error",msg=str(e))
+                    return render_template('model_training/prediction_result.html', status="error", msg=str(e))
         else:
             return redirect('/')
-        
+
     except Exception as e:
-       logger.error('Error in Model Training Submit')
-       ProjectReports.insert_record_ml('Error in Model Training','','',0,str(e))
-       return redirect('/')
-   
-@app_training.route('/download_prediction', methods=['POST']) 
+        logger.error('Error in Model Training Submit')
+        ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+        return redirect('/')
+
+
+@app_training.route('/download_prediction', methods=['POST'])
 def download_prediction():
     try:
         return load_prediction_result()
 
     except Exception as e:
         print(e)
-        return jsonify({'success': False})   
+        return jsonify({'success': False})

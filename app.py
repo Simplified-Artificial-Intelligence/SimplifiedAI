@@ -100,8 +100,8 @@ def index():
         logger.error(e)
 
 
-@app.route('/project', methods=['GET', 'POST'])
-def project():
+@app.route('/project/<mode>', methods=['GET', 'POST'])
+def project(mode):
     # df = None, table_name = None
     try:
         if 'loggedin' in session:
@@ -354,6 +354,207 @@ def project():
         return render_template('new_project.html', msg=e.__str__())
 
 
+@app.route('/edit-project/<pid>', methods=['GET', 'POST'])
+def edit_project(pid):
+    query = f'''select tp.Name,tp.Description,tp.TargetColumn,tpy.Name from tblProjects as tp
+            join tblProjectType as tpy on tpy.Id=tp.ProjecTtype
+            where tp.Pid='{pid}';'''
+    print(pid)
+    data = mysql.fetch_one(query)
+
+    project_data = {'project_name': data[0], 'project_desp': data[1],
+                    'project_type': data[3], 'target_col': data[2]}
+    return render_template('edit_project.html', project_types=PROJECT_TYPES, data=project_data)
+
+
+@app.route('/prediction_file/<action>', methods=['GET', 'POST'])
+def prediction(action):
+    if 'loggedin' in session:
+        try:
+            print(request.method)
+            if request.method == "POST":
+                download_status = None
+                file_path = None
+                source_type = request.form['source_type']
+                print(source_type)
+
+                if source_type == 'uploadFile':
+
+                    ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json', 'xlsx']
+                    # message = ''
+                    # if f.filename.strip() == '':
+                    #     message = 'Please select a file to upload'
+                    # elif f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                    #     message = 'This file format is not allowed, please select mentioned one'
+                    # if message:
+                    #     print(message)
+                    #     return render_template('prediction.html', msg=message)
+
+                    f = request.files['file']
+                    filename = secure_filename(f.filename)
+                    file_path = os.path.join('artifacts', f'{action}', filename)
+                    f.save(file_path)
+                    if file_path.endswith('.csv'):
+                        df = pd.read_csv(file_path)
+                    elif file_path.endswith('.tsv'):
+                        df = pd.read_csv(file_path, sep='\t')
+                    elif file_path.endswith('.json'):
+                        df = pd.read_json(file_path)
+                    elif file_path.endswith('.xlsx'):
+                        df = pd.read_excel(file_path)
+                    else:
+                        msg = 'This file format is currently not supported'
+                        return render_template('prediction.html', msg=msg)
+                    print(df)
+                    return redirect(url_for('index'))
+
+                elif source_type == 'uploadResource':
+                    resource_type = request.form['resource_type']
+
+                    if resource_type == "awsS3bucket":
+                        region_name = request.form['region_name']
+                        aws_access_key_id = request.form['aws_access_key_id']
+                        aws_secret_access_key = request.form['aws_secret_access_key']
+                        bucket_name = request.form['bucket_name']
+                        file_name = request.form['file_name']
+                        file_path = os.path.join('src/temp_data_store', file_name)
+                        aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
+                        conn_msg = aws_s3.check_connection(bucket_name, file_name)
+                        if conn_msg != 'Successful':
+                            logger.info(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
+                        logger.info(resource_type, download_status, file_path)
+
+                    elif resource_type == "gcpStorage":
+                        credentials_file = request.files['GCP_credentials_file']
+                        bucket_name = request.form['bucket_name']
+                        file_name = request.form['file_name']
+                        credentials_filename = secure_filename(credentials_file.filename)
+                        credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
+                        credentials_file.save(credentials_file_path)
+                        file_path = os.path.join('src/temp_data_store', file_name)
+                        logger.info(credentials_file_path, file_path, file_name, bucket_name)
+                        gcp = gcp_browser_storage(credentials_file_path)
+                        conn_msg = gcp.check_connection(bucket_name, file_name)
+                        logger.info(conn_msg)
+                        if conn_msg != 'Successful':
+                            logger.info(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = gcp.download_file_from_bucket(file_name, file_path, bucket_name)
+                        logger.info(download_status)
+
+                    elif resource_type == "mySql":
+                        host = request.form['host']
+                        port = request.form['port']
+                        user = request.form['user']
+                        password = request.form['password']
+                        database = request.form['database']
+                        table_name = request.form['table_name']
+                        file_path = os.path.join('src/temp_data_store', table_name)
+                        logger.info(file_path)
+
+                        mysql_data = mysql_data_helper(host, port, user, password, database)
+                        conn_msg = mysql_data.check_connection(table_name)
+                        logger.info(conn_msg)
+                        if conn_msg != 'Successful':
+                            logger.info(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = mysql_data.retrive_dataset_from_table(table_name, file_path)
+                        logger.info(download_status)
+
+                    elif resource_type == "cassandra":
+                        secure_connect_bundle = request.files['secure_connect_bundle']
+                        client_id = request.form['client_id']
+                        client_secret = request.form['client_secret']
+                        keyspace = request.form['keyspace']
+                        table_name = request.form['table_name']
+                        data_in_tabular = request.form['data_in_tabular']
+                        secure_connect_bundle_filename = secure_filename(secure_connect_bundle.filename)
+                        secure_connect_bundle_file_path = os.path.join(r'src/temp_data_store',
+                                                                       secure_connect_bundle_filename)
+                        secure_connect_bundle.save(secure_connect_bundle_file_path)
+                        file_path = os.path.join('src/temp_data_store', f"{table_name}.csv")
+                        logger.info(secure_connect_bundle_file_path, file_path)
+
+                        cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret,
+                                                           keyspace)
+                        conn_msg = cassandra_db.check_connection(table_name)
+                        logger.info(conn_msg)
+                        if conn_msg != 'Successful':
+                            logger.info(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        if data_in_tabular == 'true':
+                            download_status = cassandra_db.retrive_table(table_name, file_path)
+                            logger.info(download_status)
+                        elif data_in_tabular == 'false':
+                            download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
+                            logger.info(download_status)
+
+                    elif resource_type == "mongodb":
+                        mongo_db_url = request.form['mongo_db_url']
+                        mongo_database = request.form['mongo_database']
+                        collection = request.form['collection']
+                        file_path = os.path.join('src/temp_data_store', f"{collection}.csv")
+                        mongo_helper = mongo_data_helper(mongo_db_url)
+                        conn_msg = mongo_helper.check_connection(mongo_database, collection)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = mongo_helper.retrive_dataset(mongo_database, collection, file_path)
+                        logger.info(download_status)
+
+                    elif resource_type == "azureStorage":
+                        azure_connection_string = request.form['azure_connection_string']
+                        container_name = request.form['container_name']
+                        file_name = request.form['file_name']
+                        file_path = os.path.join('src/temp_data_store', file_name)
+                        azure_helper = azure_data_helper(azure_connection_string)
+                        conn_msg = azure_helper.check_connection(container_name, file_name)
+
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = azure_helper.download_file(container_name, file_name, file_path)
+                        logger.info(download_status)
+                    else:
+                        # Implement something here
+                        pass
+
+                    if download_status == 'Successful':
+
+                        if file_path.endswith('.csv'):
+                            df = pd.read_csv(file_path)
+                        elif file_path.endswith('.tsv'):
+                            df = pd.read_csv(file_path, sep='\t')
+                        elif file_path.endswith('.json'):
+                            df = pd.read_json(file_path)
+                        elif file_path.endswith('.xlsx'):
+                            df = pd.read_excel(file_path)
+                        else:
+                            msg = 'This file format is currently not supported'
+                            return render_template('prediction.html', msg=msg)
+
+                        print(df)
+                        return redirect(url_for('index'))
+                    else:
+                        return render_template('prediction.html', loggedin=True, data={'pid':action} ,msg="Failed to download the file!!")
+            else:
+                return render_template('prediction.html', loggedin=True)
+
+        except Exception as e:
+            return render_template('prediction.html', loggedin=True, msg=e.__str__())
+
+    else:
+        return redirect(url_for('login'))
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     global msg
@@ -422,36 +623,35 @@ def signup():
             return render_template('signup.html', msg=msg)
 
 
-@app.route('/exportFile/<id>', methods=['GET'])
-def exportForm(id):
+@app.route('/exportFile/<pid>/<project_name>', methods=['GET'])
+def exportForm(pid, project_name):
     if 'loggedin' in session:
-        project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
         logger.info('Redirect To Export File Page')
         return render_template('exportFile.html',
-                               data={"project_name": project_name, "project_id": project_id, "id": id})
+                               data={"project_name": project_name, "project_id": pid, "id": 1})
     else:
         return redirect(url_for('login'))
 
 
-@app.route('/exportFile/<id>', methods=['POST'])
-def exportFile(id):
-    project_name = None
+@app.route('/exportAsFile/<project_id>/<project_name>', methods=['GET', 'POST'])
+def exportFile(project_id, project_name):
     try:
         if 'loggedin' in session:
             logger.info('Export File')
 
             fileType = request.form['fileType']
+            print(project_id, project_name)
 
-            project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
+            # project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
             download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
             if download_status != "Successful":
                 render_template('exportFile.html',
-                                data={"project_name": project_name, "project_id": project_id, "id": id},
+                                data={"project_name": project_name, "project_id": project_id},
                                 msg="OOPS something went wrong!!")
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
-                return Response(content, mimetype="text/csv",
+                return Response(content.to_csv(), mimetype="text/csv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
@@ -467,7 +667,8 @@ def exportFile(id):
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', data={"id": id}, msg=e.__str__())
+        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
+                               msg=e.__str__())
 
 
 @app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
@@ -689,7 +890,8 @@ def renderDeleteProject(id):
 @app.route('/target-column', methods=['GET', 'POST'])
 def setTargetColumn():
     try:
-        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session['target_column'] is None:
+        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session[
+            'target_column'] is None:
             logger.info('Redirect To Target Column Page')
             df = load_data()
             columns = list(df.columns)
