@@ -893,7 +893,7 @@ def scheduler_get(action):
                 return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
 
             if action == "add_scheduler":
-                return render_template('scheduler/add_new_scheduler.html', action=action, localdate=None)
+                return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
         else:
             return redirect(url_for('login'))
     except Exception as e:

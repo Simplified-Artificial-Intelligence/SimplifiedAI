@@ -1,61 +1,64 @@
 {% extends 'project_base.html' %}
 {% block content %}
 
-  <form action="/scheduler/Training_scheduler" class="project-form" enctype = "multipart/form-data" method="POST">
+<form action="/scheduler/Training_scheduler" class="project-form" enctype = "multipart/form-data" method="POST">
 
-    <div class="container col-lg-6 col-sm-6" style="margin-top: 25px; height: fit-content;">
-      {% if msg %}
-      <div class="col-lg-12 col-sm-12 col-md-12">
-        <div class="alert alert-danger">
-          <strong>Alert!  </strong>{{msg}}.
-        </div>
+  <div class="container col-lg-6 col-sm-6" style="margin-top: 25px; height: fit-content;">
+    {% if msg %}
+    <div class="col-lg-12 col-sm-12 col-md-12">
+      <div class="alert alert-danger">
+        <strong>Alert!  </strong>{{msg}}.
       </div>
-      {% endif %}
+    </div>
+    {% endif %}
 
     <h3 class="header">Add New project</h3>
+
     <div class="row margin-bottom-20">
-     <div class="col-sm-12 sol-md-12 col-lg-12">
-      <label for="model"><b>Select Model Name:</b></label>
-      <select class="form-control" name="model" id="model">
-        {% for item in project_types %}
-        <option value="{{item['id']}}">{{item['name']}}</option>
-      {% endfor %}
-      </select>
-     </div>
-    </div>
-      <label for="Target"><b>Target:</b></label>
-      <input type="text" name="Target" id="Target" disabled>
-
-		<label for="datetimepicker">Date</label>
-		<input type="text" name="filter-date" id="datetimepicker" autocomplete="off"/>
-
-      <label for="Email"><b>Email:</b></label>
-      <input type="text" placeholder="Add your Email" name="Email" id="Email" required>
-
-      <button class="btn btn-success" type="button" id="addProject">Add Scheduler</button>
-      <a href="/">
-        <button type="button" class="btn btn-danger back">Back</button>
-      </a>
-
+      <div class="col-sm-12 sol-md-12 col-lg-12">
+        <label for="model_name"><b>Select Model Name:</b></label>
+        <select class="form-control" name="model_name" id="model_name">
+          {% for model_name in ALL_MODELS %}
+            <option value={{model_name}}>{{model_name}}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
 
-  </form>
+    <label for="target_col_name"><b>Target Column:</b></label>
+    <input type="text" name="target_col_name" id="target_col_name" disabled>
+
+    <label for="datetimepicker">Date:</label>
+    <input type="text" name="filter-date" id="datetimepicker" autocomplete="off"/>
+
+    <label for="email"><b>Email:</b></label>
+    <input type="text" placeholder="Add your Email" name="email" id="email" required>
+
+    <button class="btn btn-success" type="submit" id="addScheduler">Add Scheduler</button>
+    
+    <a href="/">
+      <button type="button" class="btn btn-danger back">Back</button>
+    </a>
+
+  </div>
+
+</form>
 
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.js"></script>
 
 <script type="text/javascript">
 
-$(document).ready(function() {
-	$('#datetimepicker').datetimepicker({
-		format:'d/m/Y H:i',
-		inline: false,
-		theme:'dark',
-		onSelectDate:function(ct,$i){
-			alert(ct.dateFormat('d/m/Y H:i'))
-		}
-	});
-});
+  $(document).ready(function() {
+    $('#datetimepicker').datetimepicker({
+      format:'d/m/Y H:i',
+      inline: false,
+      theme:'dark',
+      onSelectDate:function(ct, $i){
+        // alert(ct.dateFormat('d/m/Y H:i'))
+      }
+    });
+  });
 
 </script>
 
