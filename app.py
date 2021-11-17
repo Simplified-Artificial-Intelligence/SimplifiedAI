@@ -544,7 +544,8 @@ def prediction(action):
                         print(df)
                         return redirect(url_for('index'))
                     else:
-                        return render_template('prediction.html', loggedin=True, data={'pid':action} ,msg="Failed to download the file!!")
+                        return render_template('prediction.html', loggedin=True, data={'pid': action},
+                                               msg="Failed to download the file!!")
             else:
                 return render_template('prediction.html', loggedin=True)
 
@@ -1025,40 +1026,97 @@ def systemlogs(action):
 
 @app.route('/history/actions', methods=['GET'])
 def history():
-    if request.method == 'GET':
-        my_collection = mysql.fetch_all(f''' Select ProjectId, Name, Input,Output,ActionDate 
-        from tblProject_Actions_Reports 
-        Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
-        where ProjectId ="{session['pid']}"''')
-        return render_template('history/actions.html', my_collection=my_collection)
+    try:
+        if 'loggedin' in session:
+            if request.method == 'GET':
+                my_collection = mysql.fetch_all(f''' Select ProjectId, Name, Input,Output,ActionDate 
+                from tblProject_Actions_Reports 
+                Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
+                where ProjectId ="{session['pid']}"''')
+                print(my_collection)
+                return render_template('history/actions.html', my_collection=my_collection)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In history")
 
 
 @app.route('/scheduler/<action>', methods=['GET'])
 def scheduler_get(action):
-    if action == 'help':
-        return render_template('scheduler/help.html')
+    try:
+        if 'loggedin' in session:
+            if action == 'help':
+                return render_template('scheduler/help.html')
 
-    if action == 'Training_scheduler':
-        return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
+            if action == 'Training_scheduler':
+                responseData = [{
+                    "project_id": session['project_name'],
+                    "mode_names": "Regression",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    # "date" : respone.split(" ")[0],
+                    # "time" : respone.split(" ")[1],
+                    "date": '12/11/2021',
+                    "time": '00:21',
+                    "email_send": 'tester@gmail.com',
+                }, {
+                    "project_id": session['project_name'],
+                    "mode_names": "Regression",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    "date": '12/11/2021',
+                    "time": '00:21',
+                    "email_send": 'tester@gmail.com',
+                }, {
+                    "project_id": session['project_name'],
+                    "mode_names": "Classification",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    "date": '12/11/2021',
+                    "time": '00:21',
+                    "email_send": 'tester@gmail.com',
+                }, {
+                    "project_id": session['project_name'],
+                    "mode_names": "Clustering",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    "date": '12/11/2021',
+                    "time": '00:21',
+                    "email_send": 'tester@gmail.com',
+                }]
+                return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
 
-    if action == "add_scheduler":
-        return render_template('scheduler/add_new_scheduler.html', action=action, localdate=None)
+            if action == "add_scheduler":
+                return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In scheduler")
 
 
 @app.route('/scheduler/<action>', methods=['POST'])
 def scheduler_post(action):
-    if action == 'help':
-        return render_template('scheduler/help.html')
+    try:
+        if 'loggedin' in session:
+            if action == 'help':
+                return render_template('scheduler/help.html')
 
-    if action == 'Training_scheduler':
-        respone = request.form['filter-date']
-        date = respone.split(" ")[0]
-        time = respone.split(" ")[1]
-        project_id = session['project_name']
-        mode_names = ALL_MODELS
-        target_col_name = None
-        email_send = None
-        return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
+            if action == 'Training_scheduler':
+                respone = request.form['filter-date']
+                responseData = [{
+                    "project_id": session['project_name'],
+                    "mode_names": "Regression",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    "date": respone.split(" ")[0],
+                    "time": respone.split(" ")[1],
+                    "email_send": 'tester@gmail.com',
+                }]
+                return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In scheduler")
 
 
 if __name__ == '__main__':

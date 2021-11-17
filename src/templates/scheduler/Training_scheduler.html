@@ -2,46 +2,48 @@
 {% block content %}
 <div class="home">
 
-  <div>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul class=flashes>
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-  </div>
-  <a href="/scheduler/add_scheduler"><button type="button" class="btn btn-success add-button" style="margin-top: 40px;">Add New Scheduler</button></a>
-  <div class="row">
+	<div>
+		{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				<ul class=flashes>
+					{% for message in messages %}
+						<li>{{ message }}</li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+		{% endwith %}
+	</div>
+	
+	<a href="/scheduler/add_scheduler"><button type="button" class="btn btn-success add-button" style="margin-top: 40px;">Add Scheduler</button></a>
+	
+	<div class="row">
 
-    {% for item in [1,2,3,4] %}
+		{% for item in responseData %}
 
-    <div class="col-lg-4 col-sm-6 col-md-4">
-      <div class="card text-white bg-info mb-3" style="max-width: 25rem; min-height:18rem">
-        <div class="card-header">{{"Scheduler_ID_1234"}}</div>
-        <div class="card-body">
-          <p>
-            Model Name:  <b class="badge badge-danger">{{"Regression"}}</b>
-          </p>
-          <p>Target: &nbsp; <b class="badge badge-warning">{{"1234"}}</b></p>
-          <p>Date: &nbsp; <b class="badge badge-success">{{"Date"}}</b></p>
-			<p>Time: &nbsp; <b class="badge badge-success">{{"Time"}}</b></p>
-			<p>Status: &nbsp; <b class="badge badge-success">{{"Completed"}}</b></p>
-          <p class="card-text project-desc" title="{{item[2]}}">{{"Test5"}}</p>
-          <div class="float-right">
-<!--            <a href="/projectReport/{{item[6]}}"><img style="height: 35px; margin-right: 10px;" title="Project Report" src="https://img.icons8.com/external-konkapp-detailed-outline-konkapp/64/000000/external-report-marketing-and-growth-konkapp-detailed-outline-konkapp.png"/></a>-->
-<!--            <a href="/exportFile/{{item[6]}}"><img style="height: 35px;  margin-right: 10px;" title="Export Data" src="https://img.icons8.com/ios/50/000000/database-export.png"/></a>-->
-            <a href="/deletePage/"><img style="height: 35px;  margin-right: 10px;" title="Delete Project" src="https://img.icons8.com/external-wanicon-lineal-wanicon/64/000000/external-delete-user-interface-wanicon-lineal-wanicon.png"/></a>
-<!--            <a href="/edit-project/{{item[6]}}"><img style="height: 35px;  margin-right: 10px;" title="Edit Project" src="https://img.icons8.com/dotty/80/000000/edit.png"/></a>-->
-        </div>
-        </div>
-      </div>
-    </div>
+		<div class="card" style="width: 18rem; margin: auto; box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;">
+			{% if item.mode_names == 'Regression' %}
+				<img class="card-img-top" src="/static/css/Regression.png" alt="Regression" height="150px">
+			{% elif item.mode_names == 'Classification' %}
+				<img class="card-img-top" src="/static/css/Classification.jfif" alt="Classification" height="150px">
+			{% elif item.mode_names == 'Clustering' %}
+				<img class="card-img-top" src="/static/css/Clustering.jpg" alt="Clustering" height="150px">
+			{% endif %}
+			<div class="card-body">
+			  <div class="card-title"> <strong> {{item.project_id}} </strong> </div>
+			  <div class="card-text"> {{item.mode_names}} </div>
+			  <div class="card-text"> {{item.target_col_name}} </div>
+			  <div class="card-text"> {{item.status}} </div>
+			  <div class="card-text"> {{item.date}} </div>
+			  <div class="card-text"> {{item.time}} </div>
+			  <div class="card-text"> {{item.email_send}} </div>
+			  <div style="margin-top: 17px;">
+				<a href="/deletePage/"><img style="height: 35px;  margin-right: 10px;" title="Delete Project" src="https://img.icons8.com/external-wanicon-lineal-wanicon/64/000000/external-delete-user-interface-wanicon-lineal-wanicon.png"/></a>
+			  </div>
+			</div>
+		</div>
 
-    {% endfor %}
+		{% endfor %}
 
-  </div>
+	</div>
 </div>
 {% endblock %}
