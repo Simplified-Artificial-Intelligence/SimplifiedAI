@@ -4,7 +4,7 @@
 
 <div class="project-form">
 
-    <form action="/exportFile/{{data.id}}" method="POST" enctype="multipart/form-data">
+    <form action="/exportAsFile/{{data.project_id}}/{{data.project_name}}" method="POST" enctype="multipart/form-data">
 
         <div class="container col-lg-6 col-sm-6">
             {% if msg %}

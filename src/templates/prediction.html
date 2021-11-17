@@ -12,29 +12,18 @@
       </div>
       {% endif %}
 
-    <h3 class="header">Add New project</h3>
-    <div class="row margin-bottom-20">
-     <div class="col-sm-12 sol-md-12 col-lg-12">
-      <label for="name"><b>Select Projcect Type:</b></label>
-      <select class="js-example-basic-multiple form-control" name="project_type" id="project_type">
-        {% for item in project_types %}
-        <option value="{{item['id']}}">{{item['name']}}</option>
-      {% endfor %}
-      </select>
-     </div>
-    </div>
-      <label for="name"><b>Name:</b></label>
-      <input type="text" placeholder="Add your project name" name="project_name" id="project_name" required>
+<!--    <h3 class="header">Add Prediction File</h3>-->
+<!--    <div class="row margin-bottom-20">-->
+<!--     <div class="col-sm-12 sol-md-12 col-lg-12">-->
+<!--     </div>-->
+<!--    </div>-->
 
-      <label for="description"><b>Description</b></label>
-      <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="project_desc" id="project_desc" required >
-      </textarea>
-
+      <h3 class="header">Add Prediction File</h3>
       <!-- Upload File -->
       <input class="" type="radio" name="uploadFile" id="uploadFile">
       <label for="uploadFile" class="label1"><b>Upload Your File:</b></label>
       <input type="file" id="file" name="file">
-      <p>allowed file *.csv, .tsv, .xml, .json</p>
+      <p>allowed file *.csv, .tsv, .json</p>
       
 
       <!-- Other Resources -->
@@ -151,7 +140,7 @@
       </div>
 
 
-      <button class="btn btn-success" type="button" id="addProject">Add Project</button>
+      <button class="btn btn-success" type="button" id="addProject">Add File</button>
       <a href="/">
         <button type="button" class="btn btn-danger back">Back</button>
       </a>
@@ -313,7 +302,7 @@
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/project/create",
+              url: "/prediction",
               data: JSON.stringify(formData),
               processData: false,
               contentType: false,
@@ -371,7 +360,7 @@
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/project",
+              url: "/prediction_file",
               data: data,
               processData: false,
               contentType: false,

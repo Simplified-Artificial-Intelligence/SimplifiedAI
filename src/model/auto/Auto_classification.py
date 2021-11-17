@@ -4,11 +4,12 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import recall_score, precision_score, accuracy_score, f1_score
 from src.utils.common.common_helper import read_config
 from loguru import logger
 import os
 from from_root import from_root
+
 config_args = read_config("./config.yaml")
 
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
@@ -19,7 +20,7 @@ class ModelTrain_Classification:
     def __init__(self, X_train, X_test, y_train, y_test, start: bool):
         try:
             logger.info("Constructor Created!")
-            self.frame = pd.DataFrame(columns=['Model_Name', 'Accuracy', 'Precision', 'Recall', 'F1_Score'])
+            self.frame = pd.DataFrame(columns=['Model_Name', 'Accuracy', 'Classes', 'Precision', 'Recall', 'F1_Score'])
             self.X_train = X_train
             self.X_test = X_test
             self.y_train = y_train
@@ -37,7 +38,7 @@ class ModelTrain_Classification:
                 logger.info("Auto Classification Training Completed!")
 
         except Exception as e:
-            logger.error(f"{e} please check! and Retry again!")
+            print(e)
 
     def LogisticRegression_(self):
         model = LogisticRegression()
@@ -48,9 +49,9 @@ class ModelTrain_Classification:
         recall = recall_score(self.y_test, y_pred, average=None)
         f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
-            {'Model_Name': 'LogisticRegression', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
+            {'Model_Name': 'LogisticRegression', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
+             'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
-        logger.info(f"LogisticRegression Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def SVC_(self):
         model = SVC()
@@ -61,9 +62,9 @@ class ModelTrain_Classification:
         recall = recall_score(self.y_test, y_pred, average=None)
         f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
-            {'Model_Name': 'SVC', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
+            {'Model_Name': 'SVC', 'Accuracy': accuracy, 'Classes': self.y_test.unique(), 'Precision': precision,
+             'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
-        logger.info(f"SVC Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def KNeighborsClassifier_(self):
         model = KNeighborsClassifier()
@@ -74,9 +75,9 @@ class ModelTrain_Classification:
         recall = recall_score(self.y_test, y_pred, average=None)
         f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
-            {'Model_Name': 'KNeighborsClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
+            {'Model_Name': 'KNeighborsClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
+             'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
-        logger.info(f"KNeighborsClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def DecisionTreeClassifier_(self):
         model = DecisionTreeClassifier()
@@ -87,9 +88,9 @@ class ModelTrain_Classification:
         recall = recall_score(self.y_test, y_pred, average=None)
         f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
-            {'Model_Name': 'DecisionTreeClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
+            {'Model_Name': 'DecisionTreeClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
+             'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
-        logger.info(f"DecisionTreeClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def RandomForestClassifier_(self):
         model = RandomForestClassifier()
@@ -100,9 +101,9 @@ class ModelTrain_Classification:
         recall = recall_score(self.y_test, y_pred, average=None)
         f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
-            {'Model_Name': 'RandomForestClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
+            {'Model_Name': 'RandomForestClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
+             'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
-        logger.info(f"RandomForestClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def GradientBoostingClassifier_(self):
         model = GradientBoostingClassifier()
@@ -113,9 +114,9 @@ class ModelTrain_Classification:
         recall = recall_score(self.y_test, y_pred, average=None)
         f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
-            {'Model_Name': 'GradientBoostingClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
+            {'Model_Name': 'GradientBoostingClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
+             'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
-        logger.info(f"GradientBoostingClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def AdaBoostClassifier_(self):
         model = AdaBoostClassifier()
@@ -126,9 +127,9 @@ class ModelTrain_Classification:
         recall = recall_score(self.y_test, y_pred, average=None)
         f1_score_ = f1_score(self.y_test, y_pred, average=None)
         self.frame = self.frame.append(
-            {'Model_Name': 'AdaBoostClassifier', 'Accuracy': accuracy, 'Precision': precision, 'Recall': recall,
+            {'Model_Name': 'AdaBoostClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
+             'Precision': precision, 'Recall': recall,
              'F1_Score': f1_score_}, ignore_index=True)
-        logger.info(f"AdaBoostClassifier Accuracy :{accuracy} Precision: {precision} Recall: {recall} F1_Score: {f1_score_}")
 
     def results(self):
-        return self.frame.sort_values('F1_Score')
+        return self.frame

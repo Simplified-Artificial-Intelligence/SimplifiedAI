@@ -129,21 +129,21 @@ LogisticRegression_Params = [
     {"name": "penalty", "type": "select", "values": ['l2', 'l1', 'elasticnet', 'None'], "dtype": "string",
      "accept_none": True},
     {"name": "dual", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False},
-    {"name": "tol", "type": "input", "values": "0.0001", "dtype": "float", "accept_none": False},
-    {"name": "C", "type": "input", "values": "1.0", "dtype": "float", "accept_none": False},
+    {"name": "tol", "type": "input", "values": 0.0001, "dtype": "float", "accept_none": False},
+    {"name": "C", "type": "input", "values": 1.0, "dtype": "float", "accept_none": False},
     {"name": "fit_intercept", "type": "select", "values": [True, False], "dtype": "boolean", "accept_none": False},
-    {"name": "intercept_scaling", "type": "input", "values": "1", "dtype": "float", "accept_none": False},
+    {"name": "intercept_scaling", "type": "input", "values": 1.0, "dtype": "float", "accept_none": False},
     {"name": "class_weight", "type": "select", "values": ["", 'balanced'], "dtype": "string", "accept_none": True},
-    {"name": "random_state", "type": "input", "values": "", "dtype": "int", "accept_none": True},
+    {"name": "random_state", "type": "input", "values": 101, "dtype": "int", "accept_none": True},
     {"name": "solver", "type": "select", "values": ["lbfgs", "newton-cg", "liblinear", "sag", "saga"],
      "dtype": "string", "accept_none": False},
-    {"name": "max_iter", "type": "input", "values": "100", "dtype": "int", "accept_none": False},
+    {"name": "max_iter", "type": "input", "values": 100, "dtype": "int", "accept_none": False},
     {"name": "multi_class", "type": "select", "values": ["auto", "ovr", "multinomial"], "dtype": "string",
      "accept_none": False},
-    {"name": "verbose", "type": "input", "values": "0", "dtype": "int", "accept_none": False},
+    {"name": "verbose", "type": "input", "values": 0, "dtype": "int", "accept_none": False},
     {"name": "warm_start", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False},
-    {"name": "n_jobs", "type": "input", "values": "", "dtype": "int", "accept_none": True},
-    {"name": "l1_ratio", "type": "input", "values": "", "dtype": "float", "accept_none": True}]
+    {"name": "n_jobs", "type": "input", "values": -1, "dtype": "int", "accept_none": True},
+    {"name": "l1_ratio", "type": "input", "values": 0.5, "dtype": "float", "accept_none": True}]
 
 SVC_Params = [
     {"name": "C", "type": "input", "values": "1.0", "dtype": "float", "accept_none": False},
@@ -163,9 +163,9 @@ SVC_Params = [
     {"name": "random_state", "type": "input", "values": "", "dtype": "int", "accept_none": True}]
 
 KNeighborsClassifier_Params = [
-    {"name": "n_neighbors", "type": "input", "values": "5", "dtype": "int", "accept_none": False},
+    {"name": "n_neighbors", "type": "input", "values": 5, "dtype": "int", "accept_none": False},
     {"name": "weights", "type": "select", "values": ['uniform', 'distance'], "dtype": "string", "accept_none": False},
-    {"name": "algorithm", "type": "selet", "values": ["auto", "ball_tree", "kd_tree", "brute"], "dtype": "string",
+    {"name": "algorithm", "type": "select", "values": ["auto", "ball_tree", "kd_tree", "brute"], "dtype": "string",
      "accept_none": False},
     {"name": "leaf_size", "type": "input", "values": "30", "dtype": "int", "accept_none": False},
     {"name": "p", "type": "input", "values": "2", "dtype": "int", "accept_none": True},
@@ -178,35 +178,35 @@ DecisionTreeClassifier_Params = [
     {"name": "criterion", "type": "select", "values": ['gini', 'entropy'], "dtype": "string", "accept_none": False},
     {"name": "splitter", "type": "select", "values": ['best', 'random'], "dtype": "string", "accept_none": False},
     {"name": "max_depth", "type": "input", "values": 5, "dtype": "int", "accept_none": False},
-    {"name": "min_samples_split", "type": "input", "values": "2", "dtype": "int", "accept_none": False},
-    {"name": "min_samples_leaf", "type": "input", "values": "1", "dtype": "int", "accept_none": False},
-    {"name": "min_weight_fraction_leaf", "type": "input", "values": "0.0", "dtype": "float", "accept_none": False},
-    {"name": "max_features", "type": "select", "values": ["", "auto", "sqrt", "log2"], "dtype": "string",
-     "accept_none": True},
-    {"name": "random_state", "type": "input", "values": "", "dtype": "int", "accept_none": True},
-    {"name": "max_leaf_nodes", "type": "input", "values": "", "dtype": "int", "accept_none": True},
-    {"name": "min_impurity_decrease", "type": "input", "values": "0.0", "dtype": "float", "accept_none": True},
-    {"name": "class_weight", "type": "select", "values": ["", "balanced"], "dtype": "string", "accept_none": True},
-    {"name": "ccp_alpha", "type": "input", "values": "0.0", "dtype": "float", "accept_none": True}]
-
-RandomForestClassifier_Params = [
-    {"name": "n_estimators", "type": "input", "values": 100, "dtype": "int", "accept_none": False},
-    {"name": "criterion", "type": "select", "values": ["gini", "entropy"], "dtype": "string", "accept_none": False},
-    {"name": "max_depth", "type": "input", "values": "", "dtype": "int", "accept_none": True},
     {"name": "min_samples_split", "type": "input", "values": 2, "dtype": "int", "accept_none": False},
     {"name": "min_samples_leaf", "type": "input", "values": 1, "dtype": "int", "accept_none": False},
     {"name": "min_weight_fraction_leaf", "type": "input", "values": 0.0, "dtype": "float", "accept_none": False},
     {"name": "max_features", "type": "select", "values": ["auto", "sqrt", "log2"], "dtype": "string",
      "accept_none": True},
-    {"name": "max_leaf_nodes", "type": "input", "values": "", "dtype": "int", "accept_none": True},
+    {"name": "random_state", "type": "input", "values": 101, "dtype": "int", "accept_none": True},
+    {"name": "max_leaf_nodes", "type": "input", "values": 5, "dtype": "int", "accept_none": True},
+    {"name": "min_impurity_decrease", "type": "input", "values": 0.0, "dtype": "float", "accept_none": True},
+    {"name": "class_weight", "type": "select", "values": ["balanced"], "dtype": "string", "accept_none": True},
+    {"name": "ccp_alpha", "type": "input", "values": 0.0, "dtype": "float", "accept_none": True}]
+
+RandomForestClassifier_Params = [
+    {"name": "n_estimators", "type": "input", "values": 100, "dtype": "int", "accept_none": False},
+    {"name": "criterion", "type": "select", "values": ["gini", "entropy"], "dtype": "string", "accept_none": False},
+    {"name": "max_depth", "type": "input", "values": 5, "dtype": "int", "accept_none": True},
+    {"name": "min_samples_split", "type": "input", "values": 2, "dtype": "int", "accept_none": False},
+    {"name": "min_samples_leaf", "type": "input", "values": 1, "dtype": "int", "accept_none": False},
+    {"name": "min_weight_fraction_leaf", "type": "input", "values": 0.0, "dtype": "float", "accept_none": False},
+    {"name": "max_features", "type": "select", "values": ["auto", "sqrt", "log2"], "dtype": "string",
+     "accept_none": True},
+    {"name": "max_leaf_nodes", "type": "input", "values": 5, "dtype": "int", "accept_none": True},
     {"name": "min_impurity_decrease", "type": "input", "values": 0.0, "dtype": "float", "accept_none": True},
     {"name": "bootstrap", "type": "select", "values": [True, False], "dtype": "boolean", "accept_none": False},
     {"name": "oob_score", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False},
-    {"name": "n_jobs", "type": "input", "values": "", "dtype": "int", "accept_none": True},
-    {"name": "random_state", "type": "input", "values": "", "dtype": "int", "accept_none": True},
+    {"name": "n_jobs", "type": "input", "values": -1, "dtype": "int", "accept_none": True},
+    {"name": "random_state", "type": "input", "values": 101, "dtype": "int", "accept_none": True},
     {"name": "verbose", "type": "input", "values": 0, "dtype": "int", "accept_none": False},
     {"name": "warm_start", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False},
-    {"name": "class_weight", "type": "select", "values": ["", "balanced", "balanced_subsample"], "dtype": "string",
+    {"name": "class_weight", "type": "select", "values": ["balanced", "balanced_subsample"], "dtype": "string",
      "accept_none": True},
     {"name": "ccp_alpha", "type": "input", "values": 0.0, "dtype": "float", "accept_none": True},
     {"name": "max_samples", "type": "input", "values": "", "dtype": "int", "accept_none": True}]
@@ -236,12 +236,11 @@ GradientBoostingClassifier_Params = [
     {"name": "ccp_alpha", "type": "input", "values": 0.0, "dtype": "float", "accept_none": False}]
 
 AdaBoostClassifier_Params = [
-    {"name": "base_estimator", "type": "select", "values": ["", "DecisionTreeClassifier"], "dtype": "string",
-     "accept_none": True},
+    {"name": "base_estimator", "type": "input", "values": None, "dtype": "object", "accept_none": True},
     {"name": "n_estimators", "type": "input", "values": 50, "dtype": "int", "accept_none": False},
-    {"name": "learning_rate", "type": "float", "values": 1.0, "dtype": "float", "accept_none": False},
+    {"name": "learning_rate", "type": "input", "values": 1.0, "dtype": "float", "accept_none": False},
     {"name": "algorithm", "type": "select", "values": ["SAMME.R", "SAMME"], "dtype": "string", "accept_none": False},
-    {"name": "random_state", "type": "input", "values": "", "dtype": "int", "accept_none": True}]
+    {"name": "random_state", "type": "input", "values": 1, "dtype": "int", "accept_none": True}]
 
 # -----------------------------------------------------------------------------------------------------------
 
