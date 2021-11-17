@@ -68,8 +68,11 @@ Industrial:
 
 ## Contributers
 
-- [@katherinepeterson](https://www.github.com/octokatherine)
-
+- [@Pankajmalhan](https://github.com/Pankajmalhan)
+- [@vishalsingh17](https://github.com/vishalsingh17)
+- [@anshyan](https://github.com/anshyan)
+- [@Supreeth-Shetty](https://github.com/Supreeth-Shetty)
+- [@rajeshk](https://github.com/rajeshk300386)
 
 ## Support
 Nothing can be perfect, So if find any bug please let us know!
