@@ -39,7 +39,7 @@ from src.model.auto.Auto_regression import ModelTrain_Regression
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from loguru import logger
 from from_root import from_root
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, mean_squared_log_error
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, accuracy_score,precision_score,f1_score,recall_score
 from src.utils.common.project_report_helper import ProjectReports
 
 app_training = Blueprint('training', __name__)
@@ -69,9 +69,7 @@ def model_training(action):
                     ProjectReports.insert_record_ml('Redirect To Auto Training Page')
                     return render_template('model_training/auto_training.html', project_type=session['project_type'],
                                            target_column=session['target_column'])
-                elif action == 'custom_training':
-                    return render_template('model_training/auto_training.html', project_type=session['project_type'],
-                                           target_column=session['target_column'])
+
                 elif action == 'custom_training' or action == 'final_train_model':
                     logger.info('Redirect To Custom Training Page')
                     ProjectReports.insert_record_ml('Redirect To Custom Training Page')
@@ -194,7 +192,6 @@ def model_training_post(action):
 
                         for param in Model_Params:
                             model_params[param['name']] = get_param_value(param, request.form[param['name']])
-                        print(model_params)
                         trained_model = train_model_fun(X_train, y_train, True, **model_params)
 
                         """Save Trained Model"""
@@ -206,7 +203,8 @@ def model_training_post(action):
                                    {"key": "Test Data Size", "value": len(X_test)}]
 
                         scores = []
-                        if trained_model is not None:
+                        # Regression
+                        if trained_model is not None and session['project_type'] == 1:
                             y_pred = trained_model.predict(X_test)
                             scores.append({"key": "r2_score", "value": r2_score(y_test, y_pred)})
                             scores.append({"key": "mean_absolute_error", "value": mean_absolute_error(y_test, y_pred)})
@@ -214,6 +212,20 @@ def model_training_post(action):
 
                             return render_template('model_training/model_result.html', action=action, status="success",
                                                    reports=reports, scores=scores, model_params=model_params)
+
+                        # Classification
+                        print('here')
+                        if trained_model is not None and session['project_type'] == 2:
+                            y_pred = trained_model.predict(X_test)
+                            scores.append({"key": "Accuracy", "value": accuracy_score(y_test, y_pred)})
+                            scores.append({"key": "Classes", "value": df[target].unique()})
+                            scores.append({"key": "Precision", "value": precision_score(y_test, y_pred, average=None)})
+                            scores.append({"key": "Recall", "value": recall_score(y_test, y_pred, average=None)})
+                            scores.append({"key": "F1_score", "value": f1_score(y_test, y_pred, average=None)})
+
+                            return render_template('model_training/model_result.html', action=action, status="success",
+                                                   reports=reports, scores=scores, model_params=model_params)
+
                         else:
                             raise Exception("Model Couldn't train, please check parametes")
                     except Exception as e:
@@ -270,9 +282,7 @@ def model_training_post(action):
                         return render_template('model_training/auto_training.html', status="error",
                                                project_type=session['project_type'],
                                                target_column=session['target_column'], msg=str(ex))
-                        return render_template('model_training/auto_training.html', status="error",
-                                               project_type=session['project_type'],
-                                               target_column=session['target_column'], msg=str(ex))
+
                 elif action == 'final_train_model':
                     try:
                         logger.info('Final Train Model')
