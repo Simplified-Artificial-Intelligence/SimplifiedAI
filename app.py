@@ -365,6 +365,196 @@ def edit_project(pid):
     return render_template('edit_project.html', project_types=PROJECT_TYPES, data=project_data )
 
 
+@app.route('/prediction', methods=['GET', 'POST'])
+def prediction():
+    if 'loggedin' in session:
+        try:
+            print(request.method)
+            if request.method == "POST":
+                download_status = None
+                file_path = None
+                source_type = request.form['source_type']
+                print(source_type)
+
+                if source_type == 'uploadFile':
+
+                    ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json', 'xlsx']
+                    # message = ''
+                    # if f.filename.strip() == '':
+                    #     message = 'Please select a file to upload'
+                    # elif f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                    #     message = 'This file format is not allowed, please select mentioned one'
+                    # if message:
+                    #     print(message)
+                    #     return render_template('prediction.html', msg=message)
+
+                    f = request.files['file']
+                    filename = secure_filename(f.filename)
+                    file_path = os.path.join('src/temp_data_store', filename)
+                    f.save(file_path)
+                    if file_path.endswith('.csv'):
+                        df = pd.read_csv(file_path)
+                    elif file_path.endswith('.tsv'):
+                        df = pd.read_csv(file_path, sep='\t')
+                    elif file_path.endswith('.json'):
+                        df = pd.read_json(file_path)
+                    elif file_path.endswith('.xlsx'):
+                        df = pd.read_excel(file_path)
+                    else:
+                        msg = 'This file format is currently not supported'
+                        return render_template('prediction.html', msg=msg)
+                    print(df)
+                    return redirect(url_for('index'))
+
+                elif source_type == 'uploadResource':
+                    resource_type = request.form['resource_type']
+
+                    if resource_type == "awsS3bucket":
+                        region_name = request.form['region_name']
+                        aws_access_key_id = request.form['aws_access_key_id']
+                        aws_secret_access_key = request.form['aws_secret_access_key']
+                        bucket_name = request.form['bucket_name']
+                        file_name = request.form['file_name']
+                        file_path = os.path.join('src/temp_data_store', file_name)
+                        aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
+                        conn_msg = aws_s3.check_connection(bucket_name, file_name)
+                        if conn_msg != 'Successful':
+                            logger.info(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
+                        logger.info(resource_type, download_status, file_path)
+
+                    elif resource_type == "gcpStorage":
+                        credentials_file = request.files['GCP_credentials_file']
+                        bucket_name = request.form['bucket_name']
+                        file_name = request.form['file_name']
+                        credentials_filename = secure_filename(credentials_file.filename)
+                        credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
+                        credentials_file.save(credentials_file_path)
+                        file_path = os.path.join('src/temp_data_store', filename)
+                        logger.info(credentials_file_path, file_path, file_name, bucket_name)
+                        gcp = gcp_browser_storage(credentials_file_path)
+                        conn_msg = gcp.check_connection(bucket_name, file_name)
+                        logger.info(conn_msg)
+                        if conn_msg != 'Successful':
+                            logger.info(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = gcp.download_file_from_bucket(file_name, file_path, bucket_name)
+                        logger.info(download_status)
+
+                    elif resource_type == "mySql":
+                        host = request.form['host']
+                        port = request.form['port']
+                        user = request.form['user']
+                        password = request.form['password']
+                        database = request.form['database']
+                        table_name = request.form['table_name']
+                        file_path = os.path.join('src/temp_data_store', filename)
+                        logger.info(file_path)
+
+                        mysql_data = mysql_data_helper(host, port, user, password, database)
+                        conn_msg = mysql_data.check_connection(table_name)
+                        logger.info(conn_msg)
+                        if conn_msg != 'Successful':
+                            logger.info(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = mysql_data.retrive_dataset_from_table(table_name, file_path)
+                        logger.info(download_status)
+
+                    elif resource_type == "cassandra":
+                        secure_connect_bundle = request.files['secure_connect_bundle']
+                        client_id = request.form['client_id']
+                        client_secret = request.form['client_secret']
+                        keyspace = request.form['keyspace']
+                        table_name = request.form['table_name']
+                        data_in_tabular = request.form['data_in_tabular']
+                        secure_connect_bundle_filename = secure_filename(secure_connect_bundle.filename)
+                        secure_connect_bundle_file_path = os.path.join(src/temp_data_store,
+                                                                       secure_connect_bundle_filename)
+                        secure_connect_bundle.save(secure_connect_bundle_file_path)
+                        file_path = os.path.join('src/temp_data_store', f"{table_name}.csv")
+                        logger.info(secure_connect_bundle_file_path, file_path)
+
+                        cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret,
+                                                           keyspace)
+                        conn_msg = cassandra_db.check_connection(table_name)
+                        logger.info(conn_msg)
+                        if conn_msg != 'Successful':
+                            logger.info(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        if data_in_tabular == 'true':
+                            download_status = cassandra_db.retrive_table(table_name, file_path)
+                            logger.info(download_status)
+                        elif data_in_tabular == 'false':
+                            download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
+                            logger.info(download_status)
+
+                    elif resource_type == "mongodb":
+                        mongo_db_url = request.form['mongo_db_url']
+                        mongo_database = request.form['mongo_database']
+                        collection = request.form['collection']
+                        file_path = os.path.join('src/temp_data_store', f"{table_name}.csv")
+                        mongo_helper = mongo_data_helper(mongo_db_url)
+                        conn_msg = mongo_helper.check_connection(mongo_database, collection)
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = mongo_helper.retrive_dataset(mongo_database, collection, file_path)
+                        logger.info(download_status)
+
+                    elif resource_type == "azureStorage":
+                        azure_connection_string = request.form['azure_connection_string']
+                        container_name = request.form['container_name']
+                        file_name = request.form['file_name']
+                        file_path = os.path.join('src/temp_data_store', file_name)
+                        azure_helper = azure_data_helper(azure_connection_string)
+                        conn_msg = azure_helper.check_connection(container_name, file_name)
+
+                        if conn_msg != 'Successful':
+                            print(conn_msg)
+                            return render_template('prediction.html', msg=conn_msg)
+
+                        download_status = azure_helper.download_file(container_name, file_name, file_path)
+                        logger.info(download_status)
+                    else:
+                        # Implement something here
+                        pass
+
+                    if download_status == 'Successful':
+
+                        if file_path.endswith('.csv'):
+                            df = pd.read_csv(file_path)
+                        elif file_path.endswith('.tsv'):
+                            df = pd.read_csv(file_path, sep='\t')
+                        elif file_path.endswith('.json'):
+                            df = pd.read_json(file_path)
+                        elif file_path.endswith('.xlsx'):
+                            df = pd.read_excel(file_path)
+                        else:
+                            msg = 'This file format is currently not supported'
+                            return render_template('prediction.html', msg=msg)
+
+                        print(df)
+                        return redirect(url_for('index'))
+                    else:
+                        return render_template('prediction.html', loggedin=True, msg="Failed to download the file!!")
+            else:
+                return render_template('prediction.html', loggedin=True)
+
+        except Exception as e:
+            return render_template('prediction.html', loggedin=True, msg=e.__str__())
+
+    else:
+        return redirect(url_for('login'))
+
+
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     global msg
