@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, send_file
+from flask import Flask, redirect, url_for, render_template, request, session, send_file, send_from_directory
 from werkzeug.wrappers import Response
 from io import BytesIO
 import re
@@ -24,6 +24,7 @@ from src.routes.routes_dp import app_dp
 from src.routes.routes_fe import app_fe
 from src.routes.routes_training import app_training
 from from_root import from_root
+from openpyxl import load_workbook
 
 # Yaml Config File
 config_args = read_config("./config.yaml")
@@ -642,7 +643,6 @@ def exportFile(project_id, project_name):
             fileType = request.form['fileType']
             print(project_id, project_name)
 
-            #project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
             download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
             if download_status != "Successful":
                 render_template('exportFile.html',
@@ -651,28 +651,19 @@ def exportFile(project_id, project_name):
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
-                return Response(content.to_csv(), mimetype="text/csv",
+                return Response(content.to_csv(index=False), mimetype="text/csv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
                 content = pd.read_csv(file_path)
-                return Response(content.to_csv(sep='\t'), mimetype="text/tsv",
+                return Response(content.to_csv(sep='\t', index=False), mimetype="text/tsv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
-            elif fileType == 'excel':
-                wb = csv_to_excel(file_path)
-
-                file_stream = BytesIO()
-                wb.save(file_stream)
-                file_stream.seek(0)
-
-                filename = filename.rsplit('.', 1)[0]
-                if os.path.isfile(filename + '.xlsx'):
-                    os.remove(filename + '.xlsx')
-                else:
-                    print(filename + '.xlsx file doesnt exist')
-
-                return send_file(file_stream, attachment_filename=f"{project_name}.xlsx", as_attachment=True)
+            elif fileType == 'xlsx':
+                content = pd.read_csv(file_path)
+                content.to_excel(os.path.join(app.config["UPLOAD_FOLDER"], f'{project_name}.xlsx'), index=False)
+                return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=f'{project_name}.xlsx',
+                                           as_attachment=True)
 
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
@@ -682,7 +673,8 @@ def exportFile(project_id, project_name):
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg=e.__str__())
+        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
+                               msg=e.__str__())
 
 
 @app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
@@ -727,7 +719,6 @@ def exportCloudDatabaseFile(project_name, project_id):
                     print(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
                     return redirect(url_for('index'))
 
-
                 elif cloudType == 'azureStorage':
                     azure_connection_string = request.form['azure_connection_string']
                     container_name = request.form['container_name']
@@ -754,7 +745,6 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                msg=upload_status)
                     print(f"{project_name}_{timestamp}.{file_type} pushed to {container_name} container")
                     return redirect(url_for('index'))
-
 
                 elif cloudType == 'gcpStorage':
                     credentials_file = request.files['GCP_credentials_file']
