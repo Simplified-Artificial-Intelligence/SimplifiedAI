@@ -1102,15 +1102,16 @@ def scheduler_post(action):
                 return render_template('scheduler/help.html')
 
             if action == 'Training_scheduler':
-                respone = request.form['filter-date']
+                date = request.form['date']
+                time = request.form['time']
                 responseData = [{
                     "project_id": session['project_name'],
-                    "mode_names": "Regression",
+                    "mode_names": request.form['model_name'],
                     "target_col_name": 'Target Column Name',
                     "status": "completed",
-                    "date": respone.split(" ")[0],
-                    "time": respone.split(" ")[1],
-                    "email_send": 'tester@gmail.com',
+                    "date": request.form['date'],
+                    "time": time,
+                    "email_send": request.form['email'],
                 }]
                 return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
         else:
