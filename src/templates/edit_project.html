@@ -12,34 +12,39 @@
       </div>
       {% endif %}
 
-    <h3 class="header">Add New project</h3>
+    <h3 class="header">Project Details</h3  >
     <div class="row margin-bottom-20">
      <div class="col-sm-12 sol-md-12 col-lg-12">
-      <label for="name"><b>Select Projcect Type:</b></label>
-      <select class="js-example-basic-multiple form-control" name="project_type" id="project_type">
-        {% for item in project_types %}
-        <option value="{{item['id']}}">{{item['name']}}</option>
-      {% endfor %}
-      </select>
+
      </div>
     </div>
       <label for="name"><b>Name:</b></label>
-      <input type="text" placeholder="Add your project name" name="project_name" id="project_name" required>
+      <input type="text" value={{data.project_name}} name="project_name" id="project_name" required>
 
-      <label for="description"><b>Description</b></label>
-      <textarea rows="4" cols="50" type="text" placeholder="Add some description about your project" name="project_desc" id="project_desc" required >
-      </textarea>
+      <label for="description"><b>Description:  </b></label>
+      <input type="text" value={{data.project_desp}} name="project_desc" id="project_desc" required>
+
+      <label for="target_col"><b>Target Column:</b></label>
+      <input type="text" value={{data.target_col}} name="target_col" id="target_col" required>
+
+      <label for="project_type"><b>Project Type:</b></label>
+      <select class="form-control" name="project_type" id="project_type">
+        <option value={{data.project_type}}> {{data.project_type}} </option>
+        {% for item in project_types %}
+        <option value="{{item['id']}}">{{item['name']}}</option>
+        {% endfor %}
+      </select>
 
       <!-- Upload File -->
       <input class="" type="radio" name="uploadFile" id="uploadFile">
-      <label for="uploadFile" class="label1"><b>Upload Your File:</b></label>
+      <label for="uploadFile" class="label1"><b>Upload New Dataset:</b></label>
       <input type="file" id="file" name="file">
-      <p>allowed file *.csv, .tsv, .xml, .json</p>
-      
+      <p>allowed file *.csv, .tsv, .json</p>
+
 
       <!-- Other Resources -->
       <input class="" type="radio" name="uploadResource" id="uploadResource">
-      <label for="uploadResource" class="resource-file-label"><b>Upload From Various Resource:</b></label>
+      <label for="uploadResource" class="resource-file-label"><b>Upload New Dataset From Various Resource:</b></label>
       <select class="form-control" name="resourceFile" id="resourceFile">
         <option value=""> Select any one </option>
         <option value="awsS3bucket"> AWS S3 Bucket </option>
@@ -48,21 +53,21 @@
         <option value="cassandra"> Cassandra </option>
         <option value="mongodb"> Mongo DB </option>
         <option value="azureStorage"> Azure Data Storage </option>
-      </select>  
-      
+      </select>
+
       <div id="awsS3bucket" class="upload-other-resource">
         <label for="region_name" class="col-form-label"><b> Region Name </b></label>
         <input type="text" class="form-control awsS3bucket" id="region_name" name="region_name" placeholder="" required>
-        
+
         <label for="aws_access_key_id" class="col-form-label"><b> AWS Access Key Id </b></label>
         <input type="text" class="form-control awsS3bucket" id="aws_access_key_id" name="aws_access_key_id" placeholder="" required>
-        
+
         <label for="aws_secret_access_key" class="col-form-label"><b> AWS Secret Access Key </b></label>
         <input type="text" class="form-control awsS3bucket" id="aws_secret_access_key" name="aws_secret_access_key" placeholder="" required>
-        
+
         <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
         <input type="text" class="form-control awsS3bucket" id="bucket_name" name="bucket_name" placeholder="" required>
-        
+
         <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
         <input type="text" class="form-control awsS3bucket" id="file_name" name="file_name" placeholder="" required>
 
@@ -72,10 +77,10 @@
         <label for="GCP_credentials_file" class="col-form-label"><b> GCP Credentials file </b></label>
         <input type="file" class="form-control gcpStorage" id="GCP_credentials_file" name="GCP_credentials_file">
         <p>allowed file *.json</p>
-        
+
         <label for="bucket_name" class="col-form-label"><b> Bucket Name </b></label>
         <input type="text" class="form-control gcpStorage" id="bucket_name" name="bucket_name" placeholder="" required>
-        
+
         <label for="file_name" class="col-form-label"><b> File Name </b></b></label>
         <input type="text" class="form-control gcpStorage" id="file_name" name="file_name" placeholder="" required>
 
@@ -85,10 +90,10 @@
         <label for="secure_connect_bundle" class="col-form-label"><b> Secure Connect Bundle </b></label>
         <input type="file" accept=".zip,.rar,.7zip" class="form-control cassandra" id="secure_connect_bundle" name="secure_connect_bundle">
         <p>allowed file *.zip</p>
-        
+
         <label for="client_id" class="col-form-label"><b> Client Id </b></label>
         <input type="text" class="form-control cassandra" id="client_id" name="client_id" placeholder="" required>
-        
+
         <label for="client_secret" class="col-form-label"><b> Client Secret </b></b></label>
         <input type="text" class="form-control cassandra" id="client_secret" name="client_secret" placeholder="" required>
 
@@ -108,16 +113,16 @@
       <div id="mySql" class="upload-other-resource">
         <label for="host" class="col-form-label"><b> Host </b></label>
         <input type="text" class="form-control mySql" id="host" name="host" placeholder="" required>
-        
+
         <label for="port" class="col-form-label"><b> Port </b></label>
         <input type="text" class="form-control mySql" id="port" name="port" placeholder="" required>
-        
+
         <label for="user" class="col-form-label"><b> User </b></label>
         <input type="text" class="form-control mySql" id="user" name="user" placeholder="" required>
-        
+
         <label for="password" class="col-form-label"><b> Password </b></label>
         <input type="password" class="form-control mySql" id="password" name="password" placeholder="" required>
-        
+
         <label for="database" class="col-form-label"><b> Database </b></b></label>
         <input type="text" class="form-control mySql" id="database" name="database" placeholder="" required>
 
@@ -151,7 +156,7 @@
       </div>
 
 
-      <button class="btn btn-success" type="button" id="addProject">Add Project</button>
+      <button class="btn btn-success" type="button" id="addProject">Update Project</button>
       <a href="/">
         <button type="button" class="btn btn-danger back">Back</button>
       </a>
@@ -206,14 +211,14 @@
             <button type="submit" class="btn btn-primary" id="submitModal">Submit</button>
           </div>
         </form>
-          
+
       </div>
     </div>
   </div> -->
 
   <script>
     $(document).ready(function(){               //Make script DOM ready
-      var opval = "" 
+      var opval = ""
 
       function hideUploadOtherResource() {
         $('.upload-other-resource').each(function(i, obj) {
@@ -261,7 +266,7 @@
         $("label[for='uploadResource']").addClass('disabled-label');
         $('#resourceFile').addClass('disabled-input');
         $('#resourceFile').prop('disabled', true);
-          
+
       })
 
       $("input:radio[name=uploadResource]").click(function(e) {
@@ -295,7 +300,7 @@
       $("#testConnection").click(function (event) {
           //stop submit the form, we will post it manually.
           event.preventDefault();
-    
+
           var formData = {
             region_name: $("#region_name").val(),
             aws_access_key_id: $("#aws_access_key_id").val(),
@@ -309,11 +314,11 @@
           // var object = {};
           // data.forEach((value, key) => object[key] = value);
           // console.log(JSON.stringify(object))
-    
+
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/project/create",
+              url: "/project/edit",
               data: JSON.stringify(formData),
               processData: false,
               contentType: false,
@@ -347,10 +352,10 @@
               });
             }
           });
-         
-          // FormData object 
+
+          // FormData object
           var data = new FormData(form);
-    
+
           // If you want to add an extra field for the FormData
           data.append("resource_type", opval);
           data.append("source_type", selectedRadio);
@@ -359,7 +364,7 @@
           if (opval === "cassandra" ) {
             data.append("data_in_tabular", tabularData);
           }
-    
+
           // disabled the submit button
           // $("#btnSubmit").prop("disabled", true);
 
@@ -367,11 +372,11 @@
           // var object = {};
           // data.forEach((value, key) => object[key] = value);
           // console.log(JSON.stringify(object))
-    
+
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/project",
+              url: "/project/edit",
               data: data,
               processData: false,
               contentType: false,
