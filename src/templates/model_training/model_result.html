@@ -3,11 +3,12 @@
 
 <div class="table2">
     {% if status=="success" %}
+    <input type="hidden" value="{{model_name}}" />
     <div class="alert alert-success">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
         <strong>Congrats!</strong> Your Model Trained Successfully. Find report below
       </div>
-      <form style="margin-top: 50px;" action="/train_model" method="post" id="form">
+      <form style="margin-top: 50px;" action="final_train_model" method="post" id="form">
         <div class="row">
             <div class="col-lg-6 col-md-6 col-sm-12 col-sm-12">
                 <div class="alert alert-warning">
@@ -81,6 +82,7 @@
                   </button>
              </div>
          </div>
+         <input type="hidden" value="{{model_name}}" name="model_name" />
         </form>
 
     {% endif %}

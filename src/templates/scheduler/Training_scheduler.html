@@ -1,45 +1,49 @@
 {% extends 'project_base.html' %}
 {% block content %}
-<div class="table2">
-
-    <div class="jumbotron jumbtron">
-        <h1 class="text-center">Scheduler</h1>
-    </div>
+<div class="home">
 
 	<div>
-		<form method="post" action="/scheduler/{{action}}">
-			<div>
-				<label for="datetimepicker">Date</label>
-				<input type="text" name="filter-date" id="datetimepicker"/>
-			</div>
-
-			<div>
-				<input type="submit" value="Submit"/>
-			</div>
-</form>
+		{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				<ul class=flashes>
+					{% for message in messages %}
+						<li>{{ message }}</li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+		{% endwith %}
 	</div>
+	
+	<a href="/scheduler/add_scheduler"><button type="button" class="btn btn-success add-button" style="margin-top: 40px;">Add Scheduler</button></a>
+	
+	<div class="row">
 
+		{% for item in responseData %}
+
+		<div class="card" style="width: 18rem; margin: 20px 20px; box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;">
+			{% if item.mode_names == 'Regression' %}
+				<img class="card-img-top" src="/static/css/Regression.png" alt="Regression" height="150px">
+			{% elif item.mode_names == 'Classification' %}
+				<img class="card-img-top" src="/static/css/Classification.jfif" alt="Classification" height="150px">
+			{% elif item.mode_names == 'Clustering' %}
+				<img class="card-img-top" src="/static/css/Clustering.jpg" alt="Clustering" height="150px">
+			{% endif %}
+			<div class="card-body">
+			  <div class="card-title"> <strong> {{item.project_id}} </strong> </div>
+			  <div class="card-text"> {{item.mode_names}} </div>
+			  <div class="card-text"> {{item.target_col_name}} </div>
+			  <div class="card-text"> {{item.status}} </div>
+			  <div class="card-text"> {{item.date}} </div>
+			  <div class="card-text"> {{item.time}} </div>
+			  <div class="card-text"> {{item.email_send}} </div>
+			  <div style="margin-top: 17px;">
+				<a href="/deletePage/"><img style="height: 35px;  margin-right: 10px;" title="Delete Project" src="https://img.icons8.com/external-wanicon-lineal-wanicon/64/000000/external-delete-user-interface-wanicon-lineal-wanicon.png"/></a>
+			  </div>
+			</div>
+		</div>
+
+		{% endfor %}
+
+	</div>
 </div>
-
-<!--<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='/css/jquery.datetimepicker.min.css')}}"/>-->
-<!--<script src="{{url_for('static', filename='/js/jquery.datetimepicker.full.js')}}"></script>-->
-
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.js"></script>
-
-<script type="text/javascript">
-
-$(document).ready(function() {
-	$('#datetimepicker').datetimepicker({
-		format:'d/m/Y H:i',
-		inline: false,
-		theme:'dark',
-		onSelectDate:function(ct,$i){
-			alert(ct.dateFormat('d/m/Y H:i'))
-		}
-	});
-});
-</script>
-
 {% endblock %}
-

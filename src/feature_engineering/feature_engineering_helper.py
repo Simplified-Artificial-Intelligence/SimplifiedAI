@@ -41,6 +41,7 @@ class FeatureEngineering:
             return df
         except Exception as e:
             logger.error(f"{e} occurred in Remaining Columns!")
+            raise e
 
     @staticmethod
     def change_data_type(df, column, type_):
@@ -60,6 +61,7 @@ class FeatureEngineering:
             return df
         except Exception as e:
             logger.error(f"{e} occurred in Change Datatype!")
+            raise e
 
     @staticmethod
     def train_test_Split(cleanedData, label, train_size, random_state):

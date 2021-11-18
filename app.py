@@ -10,7 +10,7 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
-from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, ALL_MODELS
+from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, ALL_MODELS, TIMEZONE
 from src.utils.common.data_helper import load_data, csv_to_json, to_tsv, csv_to_excel
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
@@ -362,13 +362,13 @@ def edit_project(pid):
     print(pid)
     data = mysql.fetch_one(query)
 
-    project_data = {'project_name':data[0], 'project_desp':data[1],
-                    'project_type':data[3], 'target_col':data[2]}
-    return render_template('edit_project.html', project_types=PROJECT_TYPES, data=project_data )
+    project_data = {'project_name': data[0], 'project_desp': data[1],
+                    'project_type': data[3], 'target_col': data[2]}
+    return render_template('edit_project.html', project_types=PROJECT_TYPES, data=project_data)
 
 
-@app.route('/prediction', methods=['GET', 'POST'])
-def prediction():
+@app.route('/prediction_file/<action>', methods=['GET', 'POST'])
+def prediction(action):
     if 'loggedin' in session:
         try:
             print(request.method)
@@ -392,7 +392,7 @@ def prediction():
 
                     f = request.files['file']
                     filename = secure_filename(f.filename)
-                    file_path = os.path.join('src/temp_data_store', filename)
+                    file_path = os.path.join('artifacts', f'{action}', filename)
                     f.save(file_path)
                     if file_path.endswith('.csv'):
                         df = pd.read_csv(file_path)
@@ -434,7 +434,7 @@ def prediction():
                         credentials_filename = secure_filename(credentials_file.filename)
                         credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
                         credentials_file.save(credentials_file_path)
-                        file_path = os.path.join('src/temp_data_store', filename)
+                        file_path = os.path.join('src/temp_data_store', file_name)
                         logger.info(credentials_file_path, file_path, file_name, bucket_name)
                         gcp = gcp_browser_storage(credentials_file_path)
                         conn_msg = gcp.check_connection(bucket_name, file_name)
@@ -453,7 +453,7 @@ def prediction():
                         password = request.form['password']
                         database = request.form['database']
                         table_name = request.form['table_name']
-                        file_path = os.path.join('src/temp_data_store', filename)
+                        file_path = os.path.join('src/temp_data_store', table_name)
                         logger.info(file_path)
 
                         mysql_data = mysql_data_helper(host, port, user, password, database)
@@ -474,7 +474,7 @@ def prediction():
                         table_name = request.form['table_name']
                         data_in_tabular = request.form['data_in_tabular']
                         secure_connect_bundle_filename = secure_filename(secure_connect_bundle.filename)
-                        secure_connect_bundle_file_path = os.path.join(src/temp_data_store,
+                        secure_connect_bundle_file_path = os.path.join(r'src/temp_data_store',
                                                                        secure_connect_bundle_filename)
                         secure_connect_bundle.save(secure_connect_bundle_file_path)
                         file_path = os.path.join('src/temp_data_store', f"{table_name}.csv")
@@ -499,7 +499,7 @@ def prediction():
                         mongo_db_url = request.form['mongo_db_url']
                         mongo_database = request.form['mongo_database']
                         collection = request.form['collection']
-                        file_path = os.path.join('src/temp_data_store', f"{table_name}.csv")
+                        file_path = os.path.join('src/temp_data_store', f"{collection}.csv")
                         mongo_helper = mongo_data_helper(mongo_db_url)
                         conn_msg = mongo_helper.check_connection(mongo_database, collection)
                         if conn_msg != 'Successful':
@@ -544,7 +544,8 @@ def prediction():
                         print(df)
                         return redirect(url_for('index'))
                     else:
-                        return render_template('prediction.html', loggedin=True, msg="Failed to download the file!!")
+                        return render_template('prediction.html', loggedin=True, data={'pid': action},
+                                               msg="Failed to download the file!!")
             else:
                 return render_template('prediction.html', loggedin=True)
 
@@ -553,8 +554,6 @@ def prediction():
 
     else:
         return redirect(url_for('login'))
-
-
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -644,7 +643,7 @@ def exportFile(project_id, project_name):
             fileType = request.form['fileType']
             print(project_id, project_name)
 
-            #project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
+            # project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
             download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
             if download_status != "Successful":
                 render_template('exportFile.html',
@@ -661,21 +660,6 @@ def exportFile(project_id, project_name):
                 return Response(content.to_csv(sep='\t'), mimetype="text/tsv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
-            # elif fileType == 'excel':
-            #     wb = csv_to_excel(file_path)
-            #
-            #     file_stream = BytesIO()
-            #     wb.save(file_stream)
-            #     file_stream.seek(0)
-            #
-            #     filename = filename.rsplit('.', 1)[0]
-            #     if os.path.isfile(filename + '.xlsx'):
-            #         os.remove(filename + '.xlsx')
-            #     else:
-            #         print(filename + '.xlsx file doesnt exist')
-            #
-            #     return send_file(file_stream, attachment_filename=f"{project_name}.xlsx", as_attachment=True)
-
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
                 return Response(content.to_json(), mimetype="text/json",
@@ -684,7 +668,8 @@ def exportFile(project_id, project_name):
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id}, msg=e.__str__())
+        return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
+                               msg=e.__str__())
 
 
 @app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
@@ -906,7 +891,8 @@ def renderDeleteProject(id):
 @app.route('/target-column', methods=['GET', 'POST'])
 def setTargetColumn():
     try:
-        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session['target_column'] is None:
+        if 'loggedin' in session and 'id' in session and session['project_type'] != 3 and session[
+            'target_column'] is None:
             logger.info('Redirect To Target Column Page')
             df = load_data()
             columns = list(df.columns)
@@ -940,6 +926,7 @@ def deleteProject(id):
                 mysql.delete_record(f'UPDATE tblProjects SET IsActive=0 WHERE Pid="{id}"')
                 logger.info('Data Successfully Deleted From Database')
                 mongodb.drop_collection(id)
+                # log.info(log_type='INFO', log_message='Data Successfully Deleted From Database')
                 return redirect(url_for('index'))
             else:
                 logger.info('Redirect to index invalid id')
@@ -1039,38 +1026,98 @@ def systemlogs(action):
 
 @app.route('/history/actions', methods=['GET'])
 def history():
-    if request.method == 'GET':
-        my_collection = mysql.fetch_all(f''' Select ProjectId, Name, Input,Output,ActionDate 
-        from tblProject_Actions_Reports 
-        Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
-        where ProjectId ="{session['pid']}"''')
-        print(my_collection)
-        return render_template('history/actions.html', my_collection=my_collection)
+    try:
+        if 'loggedin' in session:
+            if request.method == 'GET':
+                my_collection = mysql.fetch_all(f''' Select ProjectId, Name, Input,Output,ActionDate 
+                from tblProject_Actions_Reports 
+                Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
+                where ProjectId ="{session['pid']}"''')
+                print(my_collection)
+                return render_template('history/actions.html', my_collection=my_collection)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In history")
 
 
 @app.route('/scheduler/<action>', methods=['GET'])
 def scheduler_get(action):
-    if action == 'help':
-        return render_template('scheduler/help.html')
+    try:
+        if 'loggedin' in session:
+            if action == 'help':
+                return render_template('scheduler/help.html')
 
-    if action == 'Training_scheduler':
-        return render_template('scheduler/Training_scheduler.html', action=action, localdate=None)
+            if action == 'Training_scheduler':
+                responseData = [{
+                    "project_id": session['project_name'],
+                    "mode_names": "Regression",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    # "date" : respone.split(" ")[0],
+                    # "time" : respone.split(" ")[1],
+                    "date": '12/11/2021',
+                    "time": '00:21',
+                    "email_send": 'tester@gmail.com',
+                }, {
+                    "project_id": session['project_name'],
+                    "mode_names": "Regression",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    "date": '12/11/2021',
+                    "time": '00:21',
+                    "email_send": 'tester@gmail.com',
+                }, {
+                    "project_id": session['project_name'],
+                    "mode_names": "Classification",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    "date": '12/11/2021',
+                    "time": '00:21',
+                    "email_send": 'tester@gmail.com',
+                }, {
+                    "project_id": session['project_name'],
+                    "mode_names": "Clustering",
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    "date": '12/11/2021',
+                    "time": '00:21',
+                    "email_send": 'tester@gmail.com',
+                }]
+                return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
+
+            if action == "add_scheduler":
+                return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS, TIMEZONE=TIMEZONE)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In scheduler")
 
 
 @app.route('/scheduler/<action>', methods=['POST'])
 def scheduler_post(action):
-    if action == 'help':
-        return render_template('scheduler/help.html')
+    try:
+        if 'loggedin' in session:
+            if action == 'help':
+                return render_template('scheduler/help.html')
 
-    if action == 'Training_scheduler':
-        respone = request.form['filter-date']
-        date = respone.split(" ")[0]
-        time = respone.split(" ")[1]
-        project_id = session['project_name']
-        mode_names = ALL_MODELS
-        target_col_name = None
-        email_send = None
-        return render_template('scheduler/Information.html')
+            if action == 'Training_scheduler':
+                date = request.form['date']
+                time = request.form['time']
+                responseData = [{
+                    "project_id": session['project_name'],
+                    "mode_names": request.form['model_name'],
+                    "target_col_name": 'Target Column Name',
+                    "status": "completed",
+                    "date": request.form['date'],
+                    "time": time,
+                    "email_send": request.form['email'],
+                }]
+                return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.error(f"{e} In scheduler")
 
 
 if __name__ == '__main__':
@@ -1078,4 +1125,3 @@ if __name__ == '__main__':
         print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
         app.run(host="127.0.0.1", port=8000, debug=True)
-

@@ -10,6 +10,7 @@ import pandas as pd
 from flask import session
 from pickle import dump,load
 from from_root import from_root
+from flask import send_file
 
 from src.constants.model_params import Params_Mappings
 
@@ -62,6 +63,7 @@ def save_project_encdoing(encoder):
     file_name=os.path.join(path,'encoder.pkl')  
     dump(encoder, open(file_name, 'wb'))
     
+    
 
     
 def save_project_scaler(encoder):
@@ -72,22 +74,73 @@ def save_project_scaler(encoder):
     file_name=os.path.join(path,'scaler.pkl')  
     dump(encoder, open(file_name, 'wb'))
     
-    
-def save_project_model(model):
+def save_project_pca(pca):
     path=os.path.join(from_root(),'artifacts',session.get('project_name'))
     if not os.path.exists(path):
         os.mkdir(path)
         
-    file_name=os.path.join(path,'model_temp.pkl')  
+    file_name=os.path.join(path,'pca.pkl')  
+    dump(pca, open(file_name, 'wb'))
+    
+def save_project_model(model,name='model_temp.pkl'):
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+        
+    file_name=os.path.join(path,name)  
     dump(model, open(file_name, 'wb'))
     
-def load_project_model(model):
+def load_project_model():
     path=os.path.join(from_root(),'artifacts',session.get('project_name'),'model_temp.pkl')
     if os.path.exists(path):
-        model=pickle.load(path)
+        with open(path, 'rb') as pickle_file:
+            model = pickle.load(pickle_file)
         return model
     else:
-        None
+        return None
+    
+def load_project_encdoing():
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'encoder.pkl')
+    if os.path.exists(path):
+        with open(path, 'rb') as pickle_file:
+            model = pickle.load(pickle_file)
+        return model
+    else:
+        return None
+    
+def load_project_scaler():
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'scaler.pkl')
+    if os.path.exists(path):
+        with open(path, 'rb') as pickle_file:
+            model = pickle.load(pickle_file)
+        return model
+    else:
+        return None
+    
+def load_project_pca():
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'pca.pkl')
+    if os.path.exists(path):
+        with open(path, 'rb') as pickle_file:
+            model = pickle.load(pickle_file)
+        return model
+    else:
+        return None
+    
+    
+def save_prediction_result(df):
+    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+        
+    file_name=os.path.join(path,"prediction.csv")  
+    df.to_csv(file_name,index=False)
+    
+def load_prediction_result():
+    file_name=os.path.join(from_root(),'artifacts',session.get('project_name'),"prediction.csv")  
+    return send_file(file_name,
+                     mimetype='text/csv',
+                     attachment_filename='predictions.csv',
+                     as_attachment=True)
     
     
 def get_param_value(obj,value):
