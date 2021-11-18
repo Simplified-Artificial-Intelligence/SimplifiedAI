@@ -62,7 +62,7 @@ Industrial:
 
 ## Documentation
 
-[Documentation](https://linktodocumentation)
+[Documentation or Design Architechture](https://drive.google.com/drive/folders/1G7GcVTQe2NI6LR-uJ0Nwapnz81f3_Btd?usp=sharing)
 
 
 ## Contributers
