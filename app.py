@@ -9,7 +9,7 @@ import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
-from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, ALL_MODELS
+from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, ALL_MODELS, TIMEZONE
 from src.utils.common.data_helper import load_data, csv_to_json, to_tsv, csv_to_excel
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
@@ -1074,7 +1074,7 @@ def scheduler_get(action):
                     return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
 
             if action == "add_scheduler":
-                return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
+                return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS, TIMEZONE=TIMEZONE)
         else:
             return redirect(url_for('login'))
 
@@ -1090,15 +1090,16 @@ def scheduler_post(action):
                 return render_template('scheduler/help.html')
 
             if action == 'Training_scheduler':
-                respone = request.form['filter-date']
+                date = request.form['date']
+                time = request.form['time']
                 responseData = [{
                     "project_id": session['project_name'],
-                    "mode_names": "Regression",
+                    "mode_names": request.form['model_name'],
                     "target_col_name": 'Target Column Name',
                     "status": "completed",
-                    "date": respone.split(" ")[0],
-                    "time": respone.split(" ")[1],
-                    "email_send": 'tester@gmail.com',
+                    "date": request.form['date'],
+                    "time": time,
+                    "email_send": request.form['email'],
                 }]
                 return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
         else:
