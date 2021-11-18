@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, send_file
+from flask import Flask, redirect, url_for, render_template, request, session, send_file, send_from_directory
 from werkzeug.wrappers import Response
 import re
 from src.constants.constants import PROJECT_TYPES
@@ -25,6 +25,7 @@ from src.routes.routes_fe import app_fe
 from src.routes.routes_training import app_training
 from from_root import from_root
 import scheduler
+from openpyxl import load_workbook
 
 # Yaml Config File
 config_args = read_config("./config.yaml")
@@ -100,8 +101,9 @@ def index():
         logger.error(e)
 
 
-@app.route('/project/<model>', methods=['GET', 'POST'])
+@app.route('/project/<mode>', methods=['GET', 'POST'])
 def project(mode):
+    print(mode)
     # df = None, table_name = None
     try:
         if 'loggedin' in session:
@@ -639,10 +641,8 @@ def exportFile(project_id, project_name):
     try:
         if 'loggedin' in session:
             logger.info('Export File')
-
             fileType = request.form['fileType']
             print(project_id, project_name)
-
             # project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
             download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
             if download_status != "Successful":
@@ -652,13 +652,19 @@ def exportFile(project_id, project_name):
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
-                return Response(content.to_csv(), mimetype="text/csv",
+                return Response(content.to_csv(index=False), mimetype="text/csv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
                 content = pd.read_csv(file_path)
-                return Response(content.to_csv(sep='\t'), mimetype="text/tsv",
+                return Response(content.to_csv(sep='\t', index=False), mimetype="text/tsv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
+
+            elif fileType == 'xlsx':
+                content = pd.read_csv(file_path)
+                content.to_excel(os.path.join(app.config["UPLOAD_FOLDER"], f'{project_name}.xlsx'), index=False)
+                return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=f'{project_name}.xlsx',
+                                           as_attachment=True)
 
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
