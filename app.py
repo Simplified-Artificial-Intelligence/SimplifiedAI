@@ -100,8 +100,8 @@ def index():
         logger.error(e)
 
 
-@app.route('/project/<mode>', methods=['GET', 'POST'])
-def project(mode):
+@app.route('/project', methods=['GET', 'POST'])
+def project():
     # df = None, table_name = None
     try:
         if 'loggedin' in session:
