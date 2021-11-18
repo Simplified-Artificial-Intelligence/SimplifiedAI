@@ -132,13 +132,13 @@ class MongoHelper:
                 print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
 
             if file_type == 'csv':
-                df.to_csv(path)
+                df.to_csv(path, index=False)
             elif file_type == 'tsv':
-                df.to_csv(path, sep='\t')
+                df.to_csv(path, sep='\t', index=False)
             elif file_type == 'json':
                 df.to_json(path)
+                print(path)
             elif file_type == 'xlsx':
-                print("excel")
                 df.to_excel(path)
             download_status = 'Successful'
             return download_status, path
