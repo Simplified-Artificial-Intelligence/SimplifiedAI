@@ -125,8 +125,8 @@ class MongoHelper:
                 df.to_csv(path, sep='\t', index=False)
             elif file_type == 'json':
                 df.to_json(path)
+                print(path)
             elif file_type == 'xlsx':
-                print("excel", index=False)
                 df.to_excel(path)
             download_status = 'Successful'
             return download_status, path
