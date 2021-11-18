@@ -1,6 +1,5 @@
 from flask import Flask, redirect, url_for, render_template, request, session, send_file
 from werkzeug.wrappers import Response
-from io import BytesIO
 import re
 from src.constants.constants import PROJECT_TYPES
 from src.utils.databases.mysql_helper import MySqlHelper
@@ -25,6 +24,7 @@ from src.routes.routes_dp import app_dp
 from src.routes.routes_fe import app_fe
 from src.routes.routes_training import app_training
 from from_root import from_root
+import scheduler
 
 # Yaml Config File
 config_args = read_config("./config.yaml")
@@ -1044,52 +1044,40 @@ def history():
 @app.route('/scheduler/<action>', methods=['GET'])
 def scheduler_get(action):
     try:
+        df = load_data()
         if 'loggedin' in session:
             if action == 'help':
                 return render_template('scheduler/help.html')
 
             if action == 'Training_scheduler':
-                responseData = [{
-                    "project_id": session['project_name'],
-                    "mode_names": "Regression",
-                    "target_col_name": 'Target Column Name',
-                    "status": "completed",
-                    # "date" : respone.split(" ")[0],
-                    # "time" : respone.split(" ")[1],
-                    "date": '12/11/2021',
-                    "time": '00:21',
-                    "email_send": 'tester@gmail.com',
-                }, {
-                    "project_id": session['project_name'],
-                    "mode_names": "Regression",
-                    "target_col_name": 'Target Column Name',
-                    "status": "completed",
-                    "date": '12/11/2021',
-                    "time": '00:21',
-                    "email_send": 'tester@gmail.com',
-                }, {
-                    "project_id": session['project_name'],
-                    "mode_names": "Classification",
-                    "target_col_name": 'Target Column Name',
-                    "status": "completed",
-                    "date": '12/11/2021',
-                    "time": '00:21',
-                    "email_send": 'tester@gmail.com',
-                }, {
-                    "project_id": session['project_name'],
-                    "mode_names": "Clustering",
-                    "target_col_name": 'Target Column Name',
-                    "status": "completed",
-                    "date": '12/11/2021',
-                    "time": '00:21',
-                    "email_send": 'tester@gmail.com',
-                }]
-                return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
+                query = f'''select Model_Name, Model_Trained,pid from tblProjects Where Id="{session.get('pid')}"'''
+                model_name, Model_Trained, pid = mysql.fetch_one(query)
+                if Model_Trained == 0:
+                    result = mysql.fetch_one(
+                        f'select * from auto_neuron.tblProject_scheduler where ProjectId ="{pid}" and train_status=0 and deleted=0')
+                    if result is not None and result[5] == 0 and result[6] == 0:
+                        responseData = [{
+                            "project_id": result[1],
+                            "mode_names": model_name,
+                            "target_col_name": session['target_column'],
+                            "status": result[5],
+                            "date": result[2],
+                            "time": result[3],
+                            "email_send": result[4]
+                        }]
+
+                        return render_template('scheduler/Training_scheduler.html', action=action,
+                                               responseData=responseData)
+                    else:
+                        return render_template('scheduler/help.html')
+                else:
+                    return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
 
             if action == "add_scheduler":
                 return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
         else:
             return redirect(url_for('login'))
+
     except Exception as e:
         logger.error(f"{e} In scheduler")
 

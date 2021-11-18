@@ -8,11 +8,12 @@ import os
 import re
 import pandas as pd
 from flask import session
-from pickle import dump,load
+from pickle import dump, load
 from from_root import from_root
 from flask import send_file
 
 from src.constants.model_params import Params_Mappings
+
 
 def read_config(config):
     with open(config) as config:
@@ -50,121 +51,129 @@ def decrypt(message):
     return encMessage.decode("utf-8")
 
 
-def immutable_multi_dict_to_str(immutable_multi_dict,flat=False):
+def immutable_multi_dict_to_str(immutable_multi_dict, flat=False):
     input_str = immutable_multi_dict.to_dict(flat)
-    input_str = { key: value if len(value)>1 else value[0] for key, value in input_str.items() }
+    input_str = {key: value if len(value) > 1 else value[0] for key, value in input_str.items()}
     return json.dumps(input_str)
 
-def save_project_encdoing(encoder):
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
-    if not os.path.exists(path):
-        os.mkdir(path)
-        
-    file_name=os.path.join(path,'encoder.pkl')  
-    dump(encoder, open(file_name, 'wb'))
-    
-    
 
-    
-def save_project_scaler(encoder):
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+def save_project_encdoing(encoder):
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'))
     if not os.path.exists(path):
         os.mkdir(path)
-        
-    file_name=os.path.join(path,'scaler.pkl')  
+
+    file_name = os.path.join(path, 'encoder.pkl')
     dump(encoder, open(file_name, 'wb'))
-    
+
+
+def save_project_scaler(encoder):
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    file_name = os.path.join(path, 'scaler.pkl')
+    dump(encoder, open(file_name, 'wb'))
+
+
 def save_project_pca(pca):
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'))
     if not os.path.exists(path):
         os.mkdir(path)
-        
-    file_name=os.path.join(path,'pca.pkl')  
+
+    file_name = os.path.join(path, 'pca.pkl')
     dump(pca, open(file_name, 'wb'))
-    
-def save_project_model(model,name='model_temp.pkl'):
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+
+
+def save_project_model(model, name='model_temp.pkl'):
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'))
     if not os.path.exists(path):
         os.mkdir(path)
-        
-    file_name=os.path.join(path,name)  
+
+    file_name = os.path.join(path, name)
     dump(model, open(file_name, 'wb'))
-    
+
+
 def load_project_model():
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'model_temp.pkl')
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'), 'model_temp.pkl')
     if os.path.exists(path):
         with open(path, 'rb') as pickle_file:
             model = pickle.load(pickle_file)
         return model
     else:
         return None
-    
+
+
 def load_project_encdoing():
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'encoder.pkl')
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'), 'encoder.pkl')
     if os.path.exists(path):
         with open(path, 'rb') as pickle_file:
             model = pickle.load(pickle_file)
         return model
     else:
         return None
-    
+
+
 def load_project_scaler():
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'scaler.pkl')
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'), 'scaler.pkl')
     if os.path.exists(path):
         with open(path, 'rb') as pickle_file:
             model = pickle.load(pickle_file)
         return model
     else:
         return None
-    
+
+
 def load_project_pca():
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'),'pca.pkl')
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'), 'pca.pkl')
     if os.path.exists(path):
         with open(path, 'rb') as pickle_file:
             model = pickle.load(pickle_file)
         return model
     else:
         return None
-    
-    
+
+
 def save_prediction_result(df):
-    path=os.path.join(from_root(),'artifacts',session.get('project_name'))
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'))
     if not os.path.exists(path):
         os.mkdir(path)
-        
-    file_name=os.path.join(path,"prediction.csv")  
-    df.to_csv(file_name,index=False)
-    
+
+    file_name = os.path.join(path, "prediction.csv")
+    df.to_csv(file_name, index=False)
+
+
 def load_prediction_result():
-    file_name=os.path.join(from_root(),'artifacts',session.get('project_name'),"prediction.csv")  
+    file_name = os.path.join(from_root(), 'artifacts', session.get('project_name'), "prediction.csv")
     return send_file(file_name,
                      mimetype='text/csv',
                      attachment_filename='predictions.csv',
                      as_attachment=True)
-    
-    
-def get_param_value(obj,value):
-    if obj['dtype']=="boolean":
+
+
+def get_param_value(obj, value):
+    if obj['dtype'] == "boolean":
         return Params_Mappings[value]
-    elif obj['dtype']=="string":
+    elif obj['dtype'] == "string":
         return str(value)
-    elif obj['dtype']=="int":
-        if obj['accept_none'] and value=="":
+    elif obj['dtype'] == "int":
+        if obj['accept_none'] and value == "":
             return None
         else:
             return int(value)
-    elif obj['dtype']=="float":
-        if obj['accept_none'] and value=="":
+    elif obj['dtype'] == "float":
+        if obj['accept_none'] and value == "":
             return None
         else:
-            return float(value)  
+            return float(value)
+
 
 def get_numeric_categorical_columns(df):
     cols = df.columns
     num_cols = df._get_numeric_data().columns
     cat_cols = list(set(cols) - set(num_cols))
     return num_cols, cat_cols
-    
+
+
 def check_file_presence(project_id):
     try:
         path1 = os.path.join('src', 'data')

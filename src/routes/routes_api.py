@@ -1,6 +1,10 @@
-from flask import Blueprint, request, jsonify,session
-from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, GradientBoostRegressor_Params
-from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, DecisionTreeClassifier_Params, RandomForestClassifier_Params, AdaBoostClassifier_Params, GradientBoostingClassifier_Params
+from flask import Blueprint, request, jsonify, session
+from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, \
+    Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, \
+    GradientBoostRegressor_Params
+from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, \
+    DecisionTreeClassifier_Params, RandomForestClassifier_Params, AdaBoostClassifier_Params, \
+    GradientBoostingClassifier_Params
 from src.constants.model_params import KmeansClustering_Params, DbscanClustering_Params, AgglomerativeClustering_Params
 from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params
 from src.utils.common.common_helper import load_prediction_result
@@ -13,12 +17,13 @@ import numpy as np
 
 app_api = Blueprint('api', __name__)
 
-
 """[summary]
 Api for feature engeenring
 Returns:
     [type]: [description]
 """
+
+
 @app_api.route('/api/feature_selection', methods=['POST'])
 def fe_feature_selection():
     try:
@@ -155,28 +160,28 @@ def fe_encoding():
         df = load_data()
         encoding_type = request.json['encoding_type']
         columns = df.columns
-        
+
         if session['target_column'] is not None:
             columns = list(df.columns[df.columns != session['target_column']])
-                            
+
         d = {'success': True}
         df = df.loc[:, columns]
         if encoding_type == "Base N Encoder":
-            df,_ = FeatureEngineering.encodings(df, columns, encoding_type, base=request.json['base'])
+            df, _ = FeatureEngineering.encodings(df, columns, encoding_type, base=request.json['base'])
         elif encoding_type == "Target Encoder":
-            df,_ = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['target'])
+            df, _ = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['target'])
         elif encoding_type == "Hash Encoder":
             """This is remaining to handle"""
-            df,_ = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['hash'])
+            df, _ = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['hash'])
         else:
-            df,_ = FeatureEngineering.encodings(df, columns, encoding_type)
+            df, _ = FeatureEngineering.encodings(df, columns, encoding_type)
         data = df.head(200).to_html()
         d['data'] = data
         return jsonify(d)
 
     except Exception as e:
         print(e)
-        return jsonify({'success': False,'error':str(e)})
+        return jsonify({'success': False, 'error': str(e)})
 
 
 @app_api.route('/api/pca', methods=['POST'])
@@ -202,60 +207,60 @@ def fe_pca():
     except Exception as e:
         print(e)
         return jsonify({'success': False})
-    
-    
+
+
 @app_api.route('/api/get_params', methods=['POST'])
 def get_params():
     try:
         model_name = request.json['model']
         d = {'success': True}
-        if model_name=="LinearRegression":
-            d['params']=LinearRegression_Params
-        elif model_name=="DecisionTreeRegressor":
-            d['params']=DecisionTreeRegressor_Params
-        elif model_name=="RandomForestRegressor":
-            d['params']=RandomForestRegressor_Params
-        elif model_name=="SVR":
-            d['params']=SVR_params
-        elif model_name=="GradientBoostingRegressor":
-            d['params']=GradientBoostRegressor_Params
-        elif model_name=="AdaBoostRegressor":
-            d['params']=AdabootRegressor_Params
-        elif model_name=="Ridge":
-            d['params']=Ridge_Params
-        elif model_name=="Lasso":
-            d['params']=Lasso_Params
-        elif model_name=="ElasticNet":
-            d['params']=ElasticNet_Params
+        if model_name == "LinearRegression":
+            d['params'] = LinearRegression_Params
+        elif model_name == "DecisionTreeRegressor":
+            d['params'] = DecisionTreeRegressor_Params
+        elif model_name == "RandomForestRegressor":
+            d['params'] = RandomForestRegressor_Params
+        elif model_name == "SVR":
+            d['params'] = SVR_params
+        elif model_name == "GradientBoostingRegressor":
+            d['params'] = GradientBoostRegressor_Params
+        elif model_name == "AdaBoostRegressor":
+            d['params'] = AdabootRegressor_Params
+        elif model_name == "Ridge":
+            d['params'] = Ridge_Params
+        elif model_name == "Lasso":
+            d['params'] = Lasso_Params
+        elif model_name == "ElasticNet":
+            d['params'] = ElasticNet_Params
         elif model_name == "LogisticRegression":
-            d['params']=LogisticRegression_Params
+            d['params'] = LogisticRegression_Params
         elif model_name == "SVC":
-            d['params']=SVC_Params
-        elif model_name== "KNeighborsClassifier":
-            d['params']=KNeighborsClassifier_Params
+            d['params'] = SVC_Params
+        elif model_name == "KNeighborsClassifier":
+            d['params'] = KNeighborsClassifier_Params
         elif model_name == "DecisionTreeClassifier":
-            d['params']=DecisionTreeClassifier_Params
-        elif model_name=="RandomForestClassifier":
-            d['params']=RandomForestClassifier_Params
-        elif model_name=="AdaBoostClassifier":
-            d['params']=AdaBoostClassifier_Params
-        elif model_name=="GradientBoostingClassifier":
-            d['params']=GradientBoostingClassifier_Params
-        elif model_name=="KMeans":
-            d['params']=KmeansClustering_Params
-        elif model_name=="DBSCAN":
-            d['params']=DbscanClustering_Params
-        elif model_name=="AgglomerativeClustering":
-            d['params']=AgglomerativeClustering_Params
+            d['params'] = DecisionTreeClassifier_Params
+        elif model_name == "RandomForestClassifier":
+            d['params'] = RandomForestClassifier_Params
+        elif model_name == "AdaBoostClassifier":
+            d['params'] = AdaBoostClassifier_Params
+        elif model_name == "GradientBoostClassifier":
+            d['params'] = GradientBoostingClassifier_Params
+        elif model_name == "KMeans":
+            d['params'] = KmeansClustering_Params
+        elif model_name == "DBSCAN":
+            d['params'] = DbscanClustering_Params
+        elif model_name == "AgglomerativeClustering":
+            d['params'] = AgglomerativeClustering_Params
         else:
-            d['params']=None
+            d['params'] = None
         return jsonify(d)
 
     except Exception as e:
         print(e)
-        return jsonify({'success': False}) 
-    
-    
+        return jsonify({'success': False})
+
+
 @app_api.route('/api/download_prediction', methods=['POST'])
 def download_prediction():
     try:
@@ -263,4 +268,4 @@ def download_prediction():
 
     except Exception as e:
         print(e)
-        return jsonify({'success': False})    
+        return jsonify({'success': False})

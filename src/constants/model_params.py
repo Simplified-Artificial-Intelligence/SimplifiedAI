@@ -223,16 +223,15 @@ GradientBoostingClassifier_Params = [
     {"name": "min_weight_fraction_leaf", "type": "input", "values": 0.0, "dtype": "float", "accept_none": False},
     {"name": "max_depth", "type": "input", "values": 3, "dtype": "int", "accept_none": False},
     {"name": "min_impurity_decrease", "type": "input", "values": 0.0, "dtype": "float", "accept_none": False},
-    {"name": "init", "type": "select", "values": ["", "zero"], "dtype": "string", "accept_none": True},
-    {"name": "random_state", "type": "input", "values": "", "dtype": "int", "accept_none": True},
+    {"name": "random_state", "type": "input", "values": 100, "dtype": "int", "accept_none": True},
     {"name": "max_features", "type": "select", "values": ["auto", "sqrt", "log2"], "dtype": "string",
      "accept_none": True},
     {"name": "verbose", "type": "input", "values": 0, "dtype": "int", "accept_none": False},
-    {"name": "max_leaf_nodes", "type": "input", "values": "", "dtype": "int", "accept_none": True},
+    {"name": "max_leaf_nodes", "type": "input", "values": 5, "dtype": "int", "accept_none": True},
     {"name": "warm_start", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False},
     {"name": "validation_fraction", "type": "input", "values": 0.1, "dtype": "float", "accept_none": False},
-    {"name": "n_iter_no_change", "type": "input", "values": "", "dtype": "int", "accept_none": True},
-    {"name": "tot", "type": "input", "values": 0.0001, "dtype": "float", "accept_none": False},
+    {"name": "n_iter_no_change", "type": "input", "values": 5, "dtype": "int", "accept_none": True},
+    {"name": "tol", "type": "input", "values": 0.0001, "dtype": "float", "accept_none": False},
     {"name": "ccp_alpha", "type": "input", "values": 0.0, "dtype": "float", "accept_none": False}]
 
 AdaBoostClassifier_Params = [

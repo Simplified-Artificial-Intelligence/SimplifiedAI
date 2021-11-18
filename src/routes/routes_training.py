@@ -115,7 +115,6 @@ def model_training_post(action):
                         model = request.form['model']
                         range = int(request.form['range'])
                         random_state = int(request.form['random_state'])
-
                         logger.info('Submitted Custom Training Page')
                         ProjectReports.insert_record_ml('Submitted Custom Training Page',
                                                         f"Model:{model}; Range:{range}; Random_State: {random_state}")
@@ -175,7 +174,7 @@ def model_training_post(action):
                         elif model == "AdaBoostClassifier":
                             Model_Params = AdaBoostClassifier_Params
                             train_model_fun = ClassificationModels.ada_boost_classifier
-                        elif model == "GradientBoostingClassifier":
+                        elif model == "GradientBoostClassifier":
                             Model_Params = GradientBoostingClassifier_Params
                             train_model_fun = ClassificationModels.gradient_boosting_classifier
                         elif model == "KMeans":
@@ -209,12 +208,14 @@ def model_training_post(action):
                             scores.append({"key": "r2_score", "value": r2_score(y_test, y_pred)})
                             scores.append({"key": "mean_absolute_error", "value": mean_absolute_error(y_test, y_pred)})
                             scores.append({"key": "mean_squared_error", "value": mean_squared_error(y_test, y_pred)})
+                            # Model Name Set in table while training
+                            query = f'''Update tblProjects Set Model_Name="{model}", Model_Trained=0 Where Id="{session.get('pid')}"'''
+                            mysql.update_record(query)
 
                             return render_template('model_training/model_result.html', action=action, status="success",
                                                    reports=reports, scores=scores, model_params=model_params)
 
                         # Classification
-                        print('here')
                         if trained_model is not None and session['project_type'] == 2:
                             y_pred = trained_model.predict(X_test)
                             scores.append({"key": "Accuracy", "value": accuracy_score(y_test, y_pred)})
@@ -223,6 +224,9 @@ def model_training_post(action):
                             scores.append({"key": "Recall", "value": recall_score(y_test, y_pred, average=None)})
                             scores.append({"key": "F1_score", "value": f1_score(y_test, y_pred, average=None)})
 
+                            # Model Name Set in table while training
+                            query = f'''Update tblProjects Set Model_Name="{model}", Model_Trained=0 Where Id="{session.get('pid')}"'''
+                            result = mysql.update_record(query)
                             return render_template('model_training/model_result.html', action=action, status="success",
                                                    reports=reports, scores=scores, model_params=model_params)
 
@@ -287,13 +291,13 @@ def model_training_post(action):
                     try:
                         logger.info('Final Train Model')
                         ProjectReports.insert_record_ml('Final Train Model')
-
-                        model_name = request.form['model_name']
+                        query = f'''select Model_Name from tblProjects Where Id="{session.get('pid')}"'''
+                        model_name = mysql.fetch_one(query)[0]
+                        print(model_name)
                         target = session['target_column']
                         X = df.drop(target, axis=1)
                         y = df[target]
                         model = load_project_model()
-
                         if model is None:
                             return render_template('model_training/model_result.html', action=action, status="error",
                                                    msg="Model is not found, please train model again")
@@ -303,28 +307,61 @@ def model_training_post(action):
                                 model_params[key] = value
                             if model_name == "LinearRegression":
                                 train_model_fun = RegressionModels.linear_regression_regressor
+                            elif model_name == "Ridge":
+                                train_model_fun = RegressionModels.ridge_regressor
+                            elif model_name == "Lasso":
+                                train_model_fun = RegressionModels.lasso_regressor
+                            elif model_name == "ElasticNet":
+                                train_model_fun = RegressionModels.elastic_net_regressor
                             elif model_name == "DecisionTreeRegressor":
                                 train_model_fun = RegressionModels.decision_tree_regressor
+                            elif model_name == "RandomForestRegressor":
+                                train_model_fun = RegressionModels.random_forest_regressor
+                            elif model_name == "SVR":
+                                train_model_fun = RegressionModels.support_vector_regressor
+                            elif model_name == "AdaBoostRegressor":
+                                train_model_fun = RegressionModels.ada_boost_regressor
+                            elif model_name == "GradientBoostingRegressor":
+                                train_model_fun = RegressionModels.gradient_boosting_regressor
+                            elif model_name == "LogisticRegression":
+                                train_model_fun = ClassificationModels.logistic_regression_classifier
+                            elif model_name == "SVC":
+                                train_model_fun = ClassificationModels.support_vector_classifier
+                            elif model_name == "KNeighborsClassifier":
+                                train_model_fun = ClassificationModels.k_neighbors_classifier
+                            elif model_name == "DecisionTreeClassifier":
+                                train_model_fun = ClassificationModels.decision_tree_classifier
+                            elif model_name == "RandomForestClassifier":
+                                train_model_fun = ClassificationModels.random_forest_classifier
+                            elif model_name == "AdaBoostClassifier":
+                                train_model_fun = ClassificationModels.ada_boost_classifier
+                            elif model_name == "GradientBoostClassifier":
+                                train_model_fun = ClassificationModels.gradient_boosting_classifier
+                            elif model_name == "KMeans":
+                                train_model_fun = ClusteringModels.kmeans_clustering
+                            elif model_name == "DBSCAN":
+                                train_model_fun = ClusteringModels.dbscan_clustering
+                            elif model_name == "AgglomerativeClustering":
+                                train_model_fun = ClusteringModels.agglomerative_clustering
+                            else:
+                                return 'Non-Implemented Action'
 
                             trained_model = train_model_fun(X, y, True, **model_params)
 
                             """Save Final Model"""
                             save_project_model(trained_model, 'model.pkl')
-
-                            query = f'''Update tblProjects Set Model_Name="{model_name}", Model_Trained=1 Where Id={session.get('pid')}'''
+                            query = f'''Update tblProjects Set Model_Trained=1 Where Id="{session.get('pid')}"'''
                             mysql.update_record(query)
-
                             logger.info('Final Training Done')
                             ProjectReports.insert_record_ml('Final Training Done')
 
-                            return redirect('/congrats')
+                            return render_template('model_training/congrats.html')
 
                     except Exception as e:
                         logger.error('Error in Model Training Submit')
                         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
                         render_template('model_training/model_result.html', action=action, status="error",
                                         msg="Model is not found, please train model again")
-
                 else:
                     return "Non Implemented Method"
         else:
@@ -348,7 +385,7 @@ def congrats():
                     return render_template('model_training/model_result.html', status="error",
                                            msg="Model is not found, please train model again")
                 else:
-                    for key, vale in model.get_param():
+                    for key, value in model.get_params():
                         exec(key + "=value")
 
             logger.info('Loaded Congrats Page')
