@@ -251,7 +251,7 @@ KmeansClustering_Params = [
     {"name": "tol", "type": "float", "values": 0.0001, "dtype": "float", "accept_none": False},
     {"name": "verbose", "type": "input", "values": 0, "dtype": "int", "accept_none": False},
     {"name": "random_state", "type": "input", "values": 1, "dtype": "int", "accept_none": True},
-    {"name": "copy_x", "type": "boolean", "values": [True, False], "dtype": "boolean", "accept_none": False},
+    {"name": "copy_x", "type": "select", "values": [True, False], "dtype": "boolean", "accept_none": False},
     {"name": "algorithm", "type": "select", "values": ["auto", "full", "elkan"], "dtype": "string",
      "accept_none": False}]
 
@@ -268,12 +268,10 @@ DbscanClustering_Params = [
 
 AgglomerativeClustering_Params = [
     {"name": "n_clusters", "type": "input", "values": 2, "dtype": "int", "accept_none": True},
-    {"name": "affinity", "type": "select", "values": ["euclidean"]},
-    {"name": "connectivity", "type": "input", "values": "", "dtype": "string", "accept_none": True},
+    {"name": "affinity", "type": "select", "values": ["euclidean"],"dtype": "string", "accept_none": False},
     {"name": "compute_full_tree", "type": "select", "values": ["auto"], "dtype": "string", "accept_none": False},
     {"name": "linkage", "type": "select", "values": ["ward", "complete", "average", "single"], "dtype": "string",
      "accept_none": False},
-    {"name": "distance_threshold", "type": "input", "values": "", "dtype": "float", "accept_none": True},
     {"name": "compute_distances", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False}]
 
 Params_Mappings = {

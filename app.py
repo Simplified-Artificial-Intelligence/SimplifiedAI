@@ -100,7 +100,7 @@ def index():
         logger.error(e)
 
 
-@app.route('/project/<mode>', methods=['GET', 'POST'])
+@app.route('/project/<model>', methods=['GET', 'POST'])
 def project(mode):
     # df = None, table_name = None
     try:
