@@ -4,9 +4,33 @@ from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
 from src.utils.common.project_report_helper import ProjectReports
 from flask import session
+import schedule
+from src.utils.databases.mysql_helper import MySqlHelper
 
 
-def training_scheduler_(df, model_name, mysql, logger, date,time):
+def check_schedule_model():
+    # It will on root level
+    # sort table data on the basis date and time
+    # ascending order
+    # start scheduler 1 by 1 after 1 hr
+    # train result email
+    mysql = MySqlHelper.get_connection_obj()
+    query = """ select a.pid ProjectId , a.TargetColumn TargetName, 
+                a.Model_Name ModelName, 
+                b.Schedule_date, 
+                b.schedule_time ,
+                a.Model_Trained, 
+                b.train_status ,
+                b.email, 
+                b.deleted
+                from tblProjects as a
+                join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = 'test'"""
+    result = mysql.fetch_all(query=query)
+
+    schedule.every()
+
+
+def training_scheduler_(df, model_name, mysql, logger, date, time):
     ProjectReports.insert_record_ml('Training Schedule')
     target = session['target_column']
     X = df.drop(target, axis=1)

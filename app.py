@@ -304,9 +304,9 @@ def project():
 
                         download_status = azure_helper.download_file(container_name, file_name, file_path)
                         print(download_status)
+
                     else:
-                        # Implement something here
-                        pass
+                        return render_template('new_project.html', msg="Select Any Various Resource Type!!")
 
                     if download_status == 'Successful':
                         timestamp = round(time.time() * 1000)
@@ -408,7 +408,7 @@ def prediction(action):
                     else:
                         msg = 'This file format is currently not supported'
                         return render_template('prediction.html', msg=msg)
-                    print(df)
+
                     return redirect(url_for('index'))
 
                 elif source_type == 'uploadResource':
@@ -671,6 +671,10 @@ def exportFile(project_id, project_name):
                 content = pd.read_csv(file_path)
                 return Response(content.to_json(), mimetype="text/json",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.json"})
+            else:
+                return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
+                                       msg="Select Any File Type!!")
+
         else:
             return redirect(url_for('login'))
     except Exception as e:
@@ -778,6 +782,11 @@ def exportCloudDatabaseFile(project_name, project_id):
                     print(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
                     return redirect(url_for('index'))
 
+                else:
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id},
+                                           msg="Select Any Cloud Type!!")
+
             elif source_type == 'uploadDatabase':
                 databaseType = request.form['databaseType']
 
@@ -868,6 +877,14 @@ def exportCloudDatabaseFile(project_name, project_id):
                     print(f'{project_name}_{timestamp} collection created in {mongo_database} database')
                     return redirect(url_for('index'))
 
+                else:
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id},
+                                           msg="Select Any Database Type!!")
+            else:
+                return render_template('exportFile.html',
+                                       data={"project_name": project_name, "project_id": project_id},
+                                       msg="Select Any Cloud or Database")
         else:
             return redirect(url_for('login'))
     except Exception as e:
@@ -1059,35 +1076,77 @@ def scheduler_get(action):
     try:
         df = load_data()
         if 'loggedin' in session:
-            if action == 'help':
-                return render_template('scheduler/help.html')
+            if df is not None:
+                if action == 'help':
+                    return render_template('scheduler/help.html')
 
-            if action == 'Training_scheduler':
-                query = f'''select Model_Name, Model_Trained,pid from tblProjects Where Id="{session.get('pid')}"'''
-                model_name, Model_Trained, pid = mysql.fetch_one(query)
-                if Model_Trained == 0:
-                    result = mysql.fetch_one(
-                        f'select * from auto_neuron.tblProject_scheduler where ProjectId ="{pid}" and train_status=0 and deleted=0')
-                    if result is not None and result[5] == 0 and result[6] == 0:
-                        responseData = [{
-                            "project_id": result[1],
-                            "mode_names": model_name,
-                            "target_col_name": session['target_column'],
-                            "status": result[5],
-                            "date": result[2],
-                            "time": result[3],
-                            "email_send": result[4]
-                        }]
+                if action == 'Training_scheduler':
+                    # To get the trained
+                    Model_Trained, model_name,TargetColumn, pid  = mysql.fetch_one(f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
+                    query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
+                                a.Model_Name ModelName, 
+                                b.Schedule_date, 
+                                b.schedule_time ,
+                                a.Model_Trained, 
+                                b.train_status ,
+                                b.email, 
+                                b.deleted
+                                from tblProjects as a
+                                join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{pid}'
+                                """
+                    result = mysql.fetch_one(query)
+                    print(result)
+                    if Model_Trained == 0:
+                        # Create Scheduler
+                        if result is None:
+                            return render_template('scheduler/add_new_scheduler.html',
+                                                action=action,
+                                                model_name=model_name,
+                                                target=session['target_column'])
+                        # Show created scheduler
+                        if result is not None:
+                            responseData = [{
+                                "project_id": pid,
+                                "mode_names": model_name,
+                                "target_col_name": TargetColumn,
+                                "status": result[6],
+                                "date": result[3],
+                                "time": result[4],
+                                "email_send": result[7]
+                            }]
 
-                        return render_template('scheduler/Training_scheduler.html', action=action,
-                                               responseData=responseData)
+                            # From here we have run our scheduler 
+                            # after scheduling set 1 in tbl projects 
+                            # then set 1 in tbl scheduler
+                            return render_template('scheduler/Training_scheduler.html', action=action,
+                                                responseData=responseData)
+
+                        else:
+                            return "Error in card creation"
+
+                    if Model_Trained == 1:
+                        # Retrain for scheduler
+                        if result is None:
+                            return "You have to Retrain your model to create a scheduler"
+
+                        # Send email
+                        if result is not None and result[6] == 1:
+                            return "Email Has to be sent here"
+
                     else:
-                        return render_template('scheduler/help.html')
-                else:
-                    return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
+                        return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
 
-            if action == "add_scheduler":
-                return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS, TIMEZONE=TIMEZONE)
+                if action == "add_scheduler":
+                    return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS, TIMEZONE=TIMEZONE)
+                
+                if action == 'deleteScheduler':
+                    pid  = mysql.fetch_one(f"""select pid from tblProjects Where Id={session.get('pid')}""")
+                    query = f'DELETE FROM tblProject_scheduler WHERE ProjectId = "{pid[0]}" '
+                    mysql.delete_record(query)
+                    print('Scheduled Process deleted')
+                    return redirect('/scheduler/Training_scheduler')          
+            else:
+                return "No data"
         else:
             return redirect(url_for('login'))
 
@@ -1100,22 +1159,23 @@ def scheduler_get(action):
 def scheduler_post(action):
     try:
         if 'loggedin' in session:
+            Model_Trained, model_name,TargetColumn, pid  = mysql.fetch_one(f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
             if action == 'help':
                 return render_template('scheduler/help.html')
 
-            if action == 'Training_scheduler':
+            if action == 'Create_scheduler':
                 date = request.form['date']
                 time = request.form['time']
-                responseData = [{
-                    "project_id": session['project_name'],
-                    "mode_names": request.form['model_name'],
-                    "target_col_name": 'Target Column Name',
-                    "status": "completed",
-                    "date": request.form['date'],
-                    "time": time,
-                    "email_send": request.form['email'],
-                }]
-                return render_template('scheduler/Training_scheduler.html', action=action, responseData=responseData)
+                email = request.form['email']
+
+                query = f''' INSERT INTO tblProject_scheduler 
+                             (ProjectId,Schedule_date,schedule_time,email,train_status,deleted)
+                            values('{pid}','{date}','{time}','{email}' ,0,0) '''
+                
+                mysql.update_record(query)
+                return redirect('/scheduler/Training_scheduler')
+        
+
         else:
             return redirect(url_for('login'))
     except Exception as e:
