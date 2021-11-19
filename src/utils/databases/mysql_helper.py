@@ -5,7 +5,8 @@ import os
 from loguru import logger
 from from_root import from_root
 
-config_args = read_config("config.yaml")
+config_path = os.path.join(from_root(), "config.yaml")
+config_args = read_config(config_path)
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 
