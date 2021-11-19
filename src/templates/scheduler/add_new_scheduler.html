@@ -1,7 +1,7 @@
 {% extends 'project_base.html' %}
 {% block content %}
 
-<form action="/scheduler/Training_scheduler" enctype="multipart/form-data" method="POST">
+<form action="/scheduler/Create_scheduler" enctype="multipart/form-data" method="POST">
   <div class="container_scheduler">
     <div class="card">
         <div class="form__name">
@@ -41,17 +41,13 @@
                 <div class="row margin-bottom-20 margin-top-20">
                   <div class="col-sm-12 sol-md-12 col-lg-12">
                     <label for="model_name"><b>Select Model Name:</b></label>
-                    <select class="form-control" name="model_name" id="model_name">
-                      {% for model_name in ALL_MODELS %}
-                        <option value={{model_name}}>{{model_name}}</option>
-                      {% endfor %}
-                    </select>
+                        <input type="text" name="model_name" id="model_name" value={{model_name}} disabled>
                   </div>
                 </div>
             
                 <div class="">
                   <label for="target_col_name"><b>Target Column:</b></label>
-                  <input type="text" name="target_col_name" id="target_col_name" disabled>
+                  <input type="text" name="target_col_name" id="target_col_name" value="{{target}}" disabled>
                 </div>
             
             </div>

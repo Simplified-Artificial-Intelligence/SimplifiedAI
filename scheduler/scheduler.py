@@ -4,8 +4,7 @@ import pymongo
 from src.utils.databases.mysql_helper import MySqlHelper
 import pandas as pd
 import os
-
-data = pd.read_csv(r'AMES_Final_DF.csv')
+from from_root import from_root
 
 
 def get_data():
@@ -26,6 +25,7 @@ def delete_data_from_mongo(projectId=None):
             return 'Still present inside mongodb'
         else:
             return 'Deleted', dataBase
+
 
 def upload_checkpoint(projectId=None, data_path=None):
     data = pd.read_csv(data_path)
@@ -76,7 +76,7 @@ def file_path(path=None, backup=None, normal=None):
     return normal_data_path, backup_data_path
 
 
-def data_updater(path=r".\src\data"):
+def data_updater(path=os.path.join(from_root(),'src','data')):
     backup, normal = get_names_from_files(path)
     normal_data_path, backup_data_path = file_path(path, backup, normal)
     print(normal_data_path)
@@ -86,7 +86,7 @@ def data_updater(path=r".\src\data"):
         print(upload_checkpoint(pid, data_path))
 
 
-schedule.every(6).minutes.do(data_updater)
+schedule.every(2).minutes.do(data_updater)
 
 while True:
     schedule.run_pending()
