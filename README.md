@@ -8,7 +8,7 @@
 <a href="https://github.com/ketangangal/Projectathon/network"><img alt="GitHub forks" src="https://img.shields.io/github/forks/ketangangal/Projectathon"></a>  
 <a href="https://github.com/ketangangal/Projectathon/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ketangangal/Projectathon"></a>
   </p>
-# Simplified Ai
+<h1>SimplifiedAI</h1>
 
 
 
@@ -50,12 +50,21 @@ Back End:
 ```
 
 ## Acadamic and Industrial usage
-```
 Research : 
 ```
+The web app can the used by the small bussinesses that are incompetent to hire to a Data Analyst/Scientist. The interface 
+and functionalities are so simple and straight forward that anyone who can run a computer can easily work on our web app.
+The user can upload the data from the provided sources, can perform Exploratory Data Analysis (EDA), Data Preprocessing,
+Feature Engineering and can train Machine Learning models. Once the model is trained the user can download all the required
+binary files in the form of a zip file for prediction and future usages.
+
 ```
 Industrial: 
 ```
+The web app is also equally useful to the people who are working or have the knowledge of Data Analysis, Machine Learning etc.
+The user can use our web app to save time and effort in order to analyse the data and train Machine Learning models.
+```
+
 ## Interface
 ![image](https://user-images.githubusercontent.com/40850370/142195610-651cffda-494a-47a0-a9d0-6eb2e4150d97.png)
 ![image](https://user-images.githubusercontent.com/40850370/142195760-80a1903f-f8f6-47a1-bfdf-8e818381ee47.png)
