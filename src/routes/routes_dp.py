@@ -35,8 +35,11 @@ def data_preprocessing(action):
             df = load_data()
             if df is not None:
                 if action == "delete-columns":
+                    col_lst = list(df.columns)
+                    if session['target_column'] != None:
+                        col_lst.remove(session['target_column'])
                     logger.info('Redirect To Delete Columns!')
-                    return render_template('dp/delete_columns.html', columns=list(df.columns), action=action)
+                    return render_template('dp/delete_columns.html', columns=col_lst, action=action)
                 elif action == "duplicate-data":
                     duplicate_data = df[df.duplicated()].head(500)
                     data = duplicate_data.to_html()
@@ -83,7 +86,6 @@ def data_preprocessing_post(action):
                 if action == "delete-columns":
                     logger.info('Redirect To Delete Columns!')
                     columns = request.form.getlist('columns')
-                    
                     ProjectReports.insert_project_action_report(ProjectActions.DELETE_COLUMN.value,",".join(columns))
                     df = Preprocessing.delete_col(df, columns)
                     df = update_data(df)
@@ -195,13 +197,16 @@ def data_preprocessing_post(action):
                         df = update_data(df)
                         success = True
                         columns = list(df.columns)
+                        #print(selected_column)
+                        columns.remove(selected_column)
                         logger.info('Sending Data on Front End')
                         return render_template('dp/missing_values.html', columns=columns, action=action,
-                                               success=success)
+                                               selected_column=selected_column, success=success)
                     else:
                         logger.info('Method is not present in request.form')
                         columns = list(df.columns)
                         selected_column = request.form['columns']
+                        print(selected_column)
                         data = EDA.missing_cells_table(df.loc[:, [selected_column]])
                         null_value_count = 0
                         unique_category = []
@@ -216,11 +221,14 @@ def data_preprocessing_post(action):
                                 outlier_handler_methods = NUMERIC_MISSING_HANDLER
 
                         data = data.to_html()
+                        columns.remove(selected_column)
                         logger.info('Sending Data on Front End')
                         return render_template('dp/missing_values.html', unique_category=unique_category,
                                                columns=columns, selected_column=selected_column, action=action,
                                                data=data, null_value_count=null_value_count,
                                                handler_methods=outlier_handler_methods)
+
+
 
                 elif action == "delete-outlier":
                     logger.info('Delete outlier')

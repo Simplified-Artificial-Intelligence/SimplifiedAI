@@ -27,7 +27,8 @@
                   <label for="time">Time</label> 
                   <input id="time" name="time" type="time">
               </div>
-              <div class="timezone">
+
+              <!-- <div class="timezone">
                   <label for="timezone">Timezone</label> 
                   <select class="form-control" name="timezone" id="timezone">
                     {% for item in TIMEZONE %}
@@ -36,7 +37,7 @@
                       {% endfor %}
                     {% endfor %}
                   </select>
-                </div>
+              </div> -->
 
                 <div class="row margin-bottom-20 margin-top-20">
                   <div class="col-sm-12 sol-md-12 col-lg-12">
@@ -48,7 +49,14 @@
                 <div class="">
                   <label for="target_col_name"><b>Target Column:</b></label>
                   <input type="text" name="target_col_name" id="target_col_name" value="{{target}}" disabled>
+
                 </div>
+              </div>
+          
+              <div class="">
+                <label for="target_col_name"><b>Target Column:</b></label>
+                <input type="text" name="target_col_name" id="target_col_name" disabled>
+              </div>
             
             </div>
         </div>

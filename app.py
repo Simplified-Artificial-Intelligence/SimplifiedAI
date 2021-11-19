@@ -303,9 +303,9 @@ def project():
 
                         download_status = azure_helper.download_file(container_name, file_name, file_path)
                         print(download_status)
+
                     else:
-                        # Implement something here
-                        pass
+                        return render_template('new_project.html', msg="Select Any Various Resource Type!!")
 
                     if download_status == 'Successful':
                         timestamp = round(time.time() * 1000)
@@ -407,7 +407,7 @@ def prediction(action):
                     else:
                         msg = 'This file format is currently not supported'
                         return render_template('prediction.html', msg=msg)
-                    print(df)
+
                     return redirect(url_for('index'))
 
                 elif source_type == 'uploadResource':
@@ -670,6 +670,10 @@ def exportFile(project_id, project_name):
                 content = pd.read_csv(file_path)
                 return Response(content.to_json(), mimetype="text/json",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.json"})
+            else:
+                return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
+                                       msg="Select Any File Type!!")
+
         else:
             return redirect(url_for('login'))
     except Exception as e:
@@ -777,6 +781,11 @@ def exportCloudDatabaseFile(project_name, project_id):
                     print(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
                     return redirect(url_for('index'))
 
+                else:
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id},
+                                           msg="Select Any Cloud Type!!")
+
             elif source_type == 'uploadDatabase':
                 databaseType = request.form['databaseType']
 
@@ -867,6 +876,14 @@ def exportCloudDatabaseFile(project_name, project_id):
                     print(f'{project_name}_{timestamp} collection created in {mongo_database} database')
                     return redirect(url_for('index'))
 
+                else:
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id},
+                                           msg="Select Any Database Type!!")
+            else:
+                return render_template('exportFile.html',
+                                       data={"project_name": project_name, "project_id": project_id},
+                                       msg="Select Any Cloud or Database")
         else:
             return redirect(url_for('login'))
     except Exception as e:
@@ -1071,7 +1088,7 @@ def scheduler_get(action):
                                 join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{pid}'
                                 """
                     result = mysql.fetch_one(query)
-
+                    print(result)
                     if Model_Trained == 0:
                         # Create Scheduler
                         if result is None:
@@ -1114,6 +1131,13 @@ def scheduler_get(action):
 
                 if action == "add_scheduler":
                     return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS, TIMEZONE=TIMEZONE)
+                
+                if action == 'deleteScheduler':
+                    pid  = mysql.fetch_one(f"""select pid from tblProjects Where Id={session.get('pid')}""")
+                    query = f'DELETE FROM tblProject_scheduler WHERE ProjectId = "{pid[0]}" '
+                    mysql.delete_record(query)
+                    print('Scheduled Process deleted')
+                    return redirect('/scheduler/Training_scheduler')          
             else:
                 return "No data"
         else:
@@ -1142,9 +1166,7 @@ def scheduler_post(action):
                 
                 mysql.update_record(query)
                 return redirect('/scheduler/Training_scheduler')
-            
-            if action == 'deleteScheduler':
-                pass
+        
 
         else:
             return redirect(url_for('login'))
