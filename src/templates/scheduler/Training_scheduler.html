@@ -29,13 +29,18 @@
 				<img class="card-img-top" src="/static/css/Clustering.jpg" alt="Clustering" height="150px">
 			{% endif %}
 			<div class="card-body">
-			  <div class="card-title"> <strong> {{item.project_id}} </strong> </div>
-			  <div class="card-text"> {{item.mode_names}} </div>
-			  <div class="card-text"> {{item.target_col_name}} </div>
-			  <div class="card-text"> {{item.status}} </div>
-			  <div class="card-text"> {{item.date}} </div>
-			  <div class="card-text"> {{item.time}} </div>
-			  <div class="card-text"> {{item.email_send}} </div>
+			  <!-- <div class="card-title"> <strong> {{item.project_id}} </strong> </div> -->
+			  <div class="card-text"> Model Name: {{item.mode_names}} </div>
+			  <div class="card-text"> Target Column: {{item.target_col_name}} </div>
+			  <div class="card-text"> Status: 
+				  {% if item.status == 'completed' %} 
+				  	<span class="badge bg-success">{{item.status}} </span>
+				  {% elif item.status == '' %}
+				  	<span class="badge bg-danger">{{item.status}} </span>
+				  {% endif %} </div>
+			  <div class="card-text"> Date: {{item.date}} </div>
+			  <div class="card-text"> Time: {{item.time}} </div>
+			  <div class="card-text"> Email: {{item.email_send}} </div>
 			  <div style="margin-top: 17px;">
 				<a href="/deletePage/"><img style="height: 35px;  margin-right: 10px;" title="Delete Project" src="https://img.icons8.com/external-wanicon-lineal-wanicon/64/000000/external-delete-user-interface-wanicon-lineal-wanicon.png"/></a>
 			  </div>
