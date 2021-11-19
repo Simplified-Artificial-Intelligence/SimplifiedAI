@@ -313,7 +313,7 @@
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/project/create",
+              url: "/project",
               data: JSON.stringify(formData),
               processData: false,
               contentType: false,
@@ -371,7 +371,7 @@
           $.ajax({
               type: "POST",
               enctype: 'multipart/form-data',
-              url: "/project",
+              url: "/project/create",
               data: data,
               processData: false,
               contentType: false,

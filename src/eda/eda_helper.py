@@ -155,7 +155,7 @@ class EDA:
                 q1 = np.percentile(dataframe[column].fillna(dataframe[column].mean()), lower_bound)
                 q3 = np.percentile(dataframe[column].fillna(dataframe[column].mean()), upper_bound)
                 IQR = round(q3 - q1)
-                upper_limit = floor(q3 + (IQR * 1.5))
+                upper_limit = round(q3 + (IQR * 1.5))
                 lower_limit = round(q1 - (IQR * 1.5))
 
                 for element in dataframe[column].fillna(dataframe[column].mean()):
