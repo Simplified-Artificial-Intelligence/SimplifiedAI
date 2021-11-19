@@ -146,7 +146,8 @@ def feature_engineering(action):
         else:
             return redirect(url_for('/'))
     except Exception as e:
-        print(e)
+        logger.error(e)
+        return render_template('500.html', exception=e)
 
 
 @app_fe.route('/fe/<action>', methods=['POST'])
@@ -289,7 +290,7 @@ def feature_engineering_post(action):
                         return render_template('fe/dimension_reduction.html', status="success", action=action,
                                                data=data)
                     except Exception as e:
-                        print(e)
+                        logger.error(e)
                         return render_template('fe/dimension_reduction.html', status="error", action=action, data=data)
                 else:
                     return 'Non-Implemented Action'
@@ -299,4 +300,5 @@ def feature_engineering_post(action):
             return redirect(url_for('/'))
 
     except Exception as e:
-        print(e)
+        logger.error(e)
+        return render_template('500.html', exception=e)

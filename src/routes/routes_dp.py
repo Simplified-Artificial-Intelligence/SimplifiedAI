@@ -75,6 +75,7 @@ def data_preprocessing(action):
             return redirect(url_for('/'))
     except Exception as e:
         logger.error(e)
+        return render_template('500.html', exception=e)
 
 
 @app_dp.route('/dp/<action>', methods=['POST'])
@@ -289,4 +290,5 @@ def data_preprocessing_post(action):
             return redirect(url_for('/'))
     except Exception as e:
         logger.error(e)
+        return render_template('500.html', exception=e)
 

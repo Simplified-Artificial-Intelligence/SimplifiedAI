@@ -99,6 +99,7 @@ def index():
             return redirect(url_for('login'))
     except Exception as e:
         logger.error(e)
+        return render_template('500.html', exception=e)
 
 
 
@@ -921,7 +922,8 @@ def setTargetColumn():
             return redirect('/')
     except Exception as e:
         logger.error(f'{e}, Occur occurred in target-columns.')
-        return redirect('/')
+        return render_template('500.html', exception=e)
+        # return redirect('/')
 
 
 @app.route('/deleteProject/<id>', methods=['GET'])
@@ -939,6 +941,7 @@ def deleteProject(id):
                 return redirect(url_for('index'))
         except Exception as ex:
             logger.info(str(ex))
+            return render_template('500.html', exception=ex)
     else:
         logger.info('Login Needed')
         return redirect(url_for('login'))
@@ -999,6 +1002,7 @@ def stream(pid):
             return redirect(url_for('/'))
     except Exception as e:
         logger.error(e)
+        return render_template('500.html', exception=e)
 
 
 @app.route('/module')
@@ -1012,6 +1016,7 @@ def module():
             return redirect(url_for('/'))
     except Exception as e:
         logger.error(e)
+        return render_template('500.html', exception=e)
 
 
 @app.route('/systemlogs/<action>', methods=['GET'])
@@ -1028,6 +1033,7 @@ def systemlogs(action):
             return 'Not Visible'
     except Exception as e:
         logger.error(f"{e} In System Logs API")
+        return render_template('500.html', exception=e)
 
 
 @app.route('/history/actions', methods=['GET'])
@@ -1045,6 +1051,7 @@ def history():
             return redirect(url_for('login'))
     except Exception as e:
         logger.error(f"{e} In history")
+        return render_template('500.html', exception=e)
 
 
 @app.route('/scheduler/<action>', methods=['GET'])
@@ -1086,6 +1093,7 @@ def scheduler_get(action):
 
     except Exception as e:
         logger.error(f"{e} In scheduler")
+        return render_template('500.html', exception=e)
 
 
 @app.route('/scheduler/<action>', methods=['POST'])
@@ -1112,6 +1120,7 @@ def scheduler_post(action):
             return redirect(url_for('login'))
     except Exception as e:
         logger.error(f"{e} In scheduler")
+        return render_template('500.html', exception=e)
 
 
 if __name__ == '__main__':
