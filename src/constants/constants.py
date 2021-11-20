@@ -2,6 +2,7 @@
 from enum import Enum
 
 TWO_D_GRAPH_TYPES = ["Selet Any", "Bar Graph", "Histogram", "Scatter Plot", "Pie Chart", "Line Chart", "Box Plot", "Dist Plot", "Heat Map"]
+TWO_D_GRAPH_TYPES_2 = ["Selet Any", "Scatter Plot", "Line Chart", "Heat Map"]
 THREE_D_GRAPH_TYPES = ["3D Axes", "3D Scatter Plot", "3D Surface Plot", "3D Bubble Charts"]
 
 encoding_list = ["Label/Ordinal Encoder", "One Hot Encoder", "Hash Encoder", "Target Encoder"]
@@ -33,7 +34,8 @@ class ProjectActions(Enum):
     COLUMN_NAME_CHANGE = 3
     ENCODING = 4
     SCALING = 5
-    PCA = 6
+    PCA = 6,
+    CUSTOM_SCRIPT=7
 
 
 REGRESSION_MODELS = ['LinearRegression', 'Ridge', 'Lasso', 'ElasticNet', 'DecisionTreeRegressor',

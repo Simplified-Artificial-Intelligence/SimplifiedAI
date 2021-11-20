@@ -104,7 +104,7 @@ def model_training(action):
                         else:
                             return render_template('model_training/custom_training.html')
                     except Exception as e:
-                        print(e)
+                        logger.error(e)
                         return render_template('model_training/custom_training.html')
                 else:
                     return 'Non-Implemented Action'
@@ -115,6 +115,7 @@ def model_training(action):
     except Exception as e:
         logger.error('Error in Model Training')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+        return render_template('500.html', exception=e)
 
 
 @app_training.route('/model_training/<action>', methods=['POST'])
@@ -453,6 +454,7 @@ def model_training_post(action):
     except Exception as e:
         logger.error('Error in Model Training Submit')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+        return render_template('500.html', exception=e)
 
 
 @app_training.route('/congrats', methods=['GET', 'POST'])
@@ -481,26 +483,57 @@ def congrats():
     except Exception as e:
         logger.error('Error in Model Training Submit')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+        return render_template('500.html', exception=e)
 
 
 @app_training.route('/prediction', methods=['GET', 'POST'])
 def prediction():
-    try:
         if 'pid' in session:
+            file_path=""
             logger.info('Loaded Prediction Page')
             ProjectReports.insert_record_ml('Loaded Prediction Page')
             if request.method == "GET":
                 is_trained = mysql.fetch_all(
                     f"SELECT * FROM tblProjects WHERE Id ={session.get('pid')} AND Model_Trained=1")
                 if is_trained is None:
-                    return render_template('model_training/prediction_page.html', status="error")
+                    return render_template('model_training/prediction_page.html', status="error",msg="your model is not trained, please train model first")
                 else:
                     return render_template('model_training/prediction_page.html', status="success")
             else:
                 try:
-                    df = pd.read_csv("src/data/predict.csv")
+                    
+                    f = request.files['file']
+                    ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json']
+                    msg=""
+                    if len(request.files) == 0:
+                        msg='Please select a file to upload'
+                    elif f.filename.strip() == '':
+                       msg='Please select a file to upload'
+                    elif f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                        msg='This file format is not allowed, please select mentioned one'
+                        
+                    if msg:
+                        logger.error(msg)                        
+                        return render_template('model_training/prediction_page.html', status="error",msg=msg)
+                    
+                    filename = secure_filename(f.filename)
+                    file_path = os.path.join(config_args['dir_structure']['upload_folder'], filename)
+                    f.save(file_path)
+
+                    if file_path.endswith('.csv'):
+                        df = pd.read_csv(file_path)
+                    elif file_path.endswith('.tsv'):
+                        df = pd.read_csv(file_path, sep='\t')
+                    elif file_path.endswith('.json'):
+                        df = pd.read_json(file_path)
+                    else:
+                        msg = 'This file format is currently not supported'
+                        logger.info(msg)
+                        return render_template('model_training/prediction_page.html', status="error",msg=msg)
+                    
                     prediction = make_prediction(df)
                     data = prediction.to_html()
+                    
                     if len(data) > 0:
                         save_prediction_result(prediction)
                         return render_template('model_training/prediction_result.html', status="success", data=data)
@@ -508,14 +541,16 @@ def prediction():
                         return render_template('model_training/prediction_result.html', status="error",
                                                msg="There is some issue, coudn't perform prediction. Please check your data")
                 except Exception as e:
-                    return render_template('model_training/prediction_result.html', status="error", msg=str(e))
+                    logger.error('Error in Model Training Submit')
+                    ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+                    return render_template('model_training/prediction_page.html', status="error", msg=str(e))
+                finally:
+                    if file_path:
+                        os.remove(file_path)
         else:
+            logger.error('Project id not found, redirect to home page')
+            ProjectReports.insert_record_ml('Project id not found, redirect to home page', '', '', 0, str(e))
             return redirect('/')
-
-    except Exception as e:
-        logger.error('Error in Model Training Submit')
-        ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
-        return redirect('/')
 
 
 @app_training.route('/download_prediction', methods=['POST'])
@@ -524,5 +559,5 @@ def download_prediction():
         return load_prediction_result()
 
     except Exception as e:
-        print(e)
+        logger.error(e)
         return jsonify({'success': False})

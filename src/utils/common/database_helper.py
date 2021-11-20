@@ -54,7 +54,8 @@ class mysql_data_helper:
             schema_query = f"describe {table_name}"
             data = conn.execute(data_query).fetchall()
             schema = conn.execute(schema_query).fetchall()
-            conn.close()
+            if conn is not None:
+                conn.close()
             logger.info(f"Data and schema retrived from {table_name} table!")
             column_names = []
             for row in schema:
@@ -108,7 +109,8 @@ class mysql_data_helper:
             conn = self.connect_todb()
             query = 'SHOW TABLES'
             data = conn.execute(query).fetchall()
-            conn.close()
+            if conn is not None:
+                conn.close()
             for i in data:
                 for table in i:
                     table_list.append(table)

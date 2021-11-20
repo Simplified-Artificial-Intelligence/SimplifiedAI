@@ -20,7 +20,7 @@
 
 		{% for item in responseData %}
 
-		<div class="card" style="width: 18rem; margin: 20px 20px; box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;">
+		<div class="card" style="width: 22rem; margin: 20px 20px; box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;">
 			{% if item.mode_names == 'Regression' %}
 				<img class="card-img-top" src="/static/css/Regression.png" alt="Regression" height="150px">
 			{% elif item.mode_names == 'Classification' %}
@@ -30,17 +30,17 @@
 			{% endif %}
 			<div class="card-body">
 			  <!-- <div class="card-title"> <strong> {{item.project_id}} </strong> </div> -->
-			  <div class="card-text"> Model Name: {{item.mode_names}} </div>
-			  <div class="card-text"> Target Column: {{item.target_col_name}} </div>
-			  <div class="card-text"> Status: 
-				  {% if item.status == 'completed' %} 
-				  	<span class="badge bg-success">{{item.status}} </span>
-				  {% elif item.status == '' %}
-				  	<span class="badge bg-danger">{{item.status}} </span>
+			  <div class="card-text"> <strong> Model Name: </strong> {{item.mode_names}} </div>
+			  <div class="card-text"> <strong> Target Column: </strong> {{item.target_col_name}} </div>
+			  <div class="card-text"> <strong> Status: </strong>
+				  {% if item.status == 1 %} 
+				  	<span class="badge bg-success"> trained </span>
+				  {% elif item.status == 0 %}
+				  	<span class="badge bg-danger"> not trained </span>
 				  {% endif %} </div>
-			  <div class="card-text"> Date: {{item.date}} </div>
-			  <div class="card-text"> Time: {{item.time}} </div>
-			  <div class="card-text"> Email: {{item.email_send}} </div>
+			  <div class="card-text"> <strong> Date: </strong> {{item.date}} </div>
+			  <div class="card-text"> <strong> Time: </strong> {{item.time}} </div>
+			  <div class="card-text"> <strong> Email: </strong> {{item.email_send}} </div>
 			  <div style="margin-top: 17px;">
 				<a href="/scheduler/deleteScheduler"><img style="height: 35px;  margin-right: 10px;" title="Delete Project" src="https://img.icons8.com/external-wanicon-lineal-wanicon/64/000000/external-delete-user-interface-wanicon-lineal-wanicon.png"/></a>
 			  </div>

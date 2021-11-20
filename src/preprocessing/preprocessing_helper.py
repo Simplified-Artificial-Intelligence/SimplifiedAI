@@ -304,58 +304,60 @@ class Preprocessing:
             return e.__str__()
 
     @staticmethod
-    def under_sample(dataframe, target_col, ratio=None):
+    def under_sample(dataframe, target_col, class_dict):
         try:
             X = dataframe.drop(columns=[target_col])
             y = dataframe[target_col]
 
-            if ratio:
-                ns = NearMiss(sampling_strategy=ratio)
-                X_resampled, y_resampled = ns.fit_resample(X, y)
-            else:
-                ns = NearMiss()
-                X_resampled, y_resampled = ns.fit_resample(X, y)
+            dict_={}
+            for item in class_dict:
+                dict_[item[0]]=item[1]
+                
+            ns = NearMiss(dict_)
+            X_resampled, y_resampled = ns.fit_resample(X, y)
 
             resampled_dataset = X_resampled.join(y_resampled)
             logger.info("Under Sampling Implemented!")
             return resampled_dataset
         except Exception as e:
             logger.info(e)
+            raise e
 
     @staticmethod
-    def over_sample(dataframe, target_col, ratio=None):
+    def over_sample(dataframe, target_col, class_dict):
         try:
             X = dataframe.drop(columns=[target_col])
             y = dataframe[target_col]
-
-            if ratio:
-                ros = RandomOverSampler(sampling_strategy=ratio)
-                X_resampled, y_resampled = ros.fit_resample(X, y)
-            else:
-                ros = RandomOverSampler()
-                X_resampled, y_resampled = ros.fit_resample(X, y)
+            
+            dict_={}
+            for item in class_dict:
+                dict_[item[0]]=item[1]
+            ros = RandomOverSampler(dict_)
+            X_resampled, y_resampled = ros.fit_resample(X, y)
 
             resampled_dataset = X_resampled.join(y_resampled)
             logger.info("Over sampling Implemented!")
             return resampled_dataset
         except Exception as e:
             logger.info(e)
+            raise e
 
     @staticmethod
-    def smote_technique(dataframe, target_col, ratio=None):
+    def smote_technique(dataframe, target_col, class_dict):
         try:
             X = dataframe.drop(columns=[target_col])
             y = dataframe[target_col]
 
-            if ratio:
-                sm = SMOTE(sampling_strategy=ratio)
-                X_resampled, y_resampled = sm.fit_resample(X, y)
-            else:
-                sm = SMOTE()
-                X_resampled, y_resampled = sm.fit_resample(X, y)
+            dict_={}
+            for item in class_dict:
+                dict_[item[0]]=item[1]
+                
+            sm = SMOTE(dict_)
+            X_resampled, y_resampled = sm.fit_resample(X, y)
 
             resampled_dataset = X_resampled.join(y_resampled)
             logger.info("Smote Successfully Implemented!")
             return resampled_dataset
         except Exception as e:
             logger.info(e)
+            raise e

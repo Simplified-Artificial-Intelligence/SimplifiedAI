@@ -209,6 +209,24 @@ def fe_pca():
         return jsonify({'success': False})
 
 
+@app_api.route('/api/custom-script', methods=['POST'])
+def fe_script():
+    try:
+        df = load_data()
+        d = {'success': True}
+        code = request.json['code']
+        if code is not None:
+            exec(code)
+            data = df.head(1000).to_html()
+            d['data']=data
+
+        return jsonify(d)
+
+    except Exception as e:
+        print(e)
+        return jsonify({'success': False,'error':str(e)})
+    
+    
 @app_api.route('/api/get_params', methods=['POST'])
 def get_params():
     try:
