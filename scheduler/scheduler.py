@@ -89,13 +89,12 @@ def data_updater(path=os.path.join(from_root(),'src','data')):
             os.remove(data_path)
             print('Data removed from Data folder')
 
-
     for pid, data_path in zip(backup, backup_data_path):
         os.remove(data_path)
         print('Backup Files Removed')
     
 
-schedule.every(2).minutes.do(data_updater)
+schedule.every(1).minutes.do(data_updater)
 
 while True:
     schedule.run_pending()

@@ -263,8 +263,7 @@ DbscanClustering_Params = [
     {"name": "algorithm", "type": "select", "values": ["auto", "ball_tree", "kd_tree", "brute"], "dtype": "string",
      "accept_none": False},
     {"name": "leaf_size", "type": "input", "values": 30, "dtype": "int", "accept_none": False},
-    {"name": "p", "type": "input", "values": "", "dtype": "float", "accept_none": True},
-    {"name": "n_jobs", "type": "select", "values": -1, "dtype": "int", "accept_none": True}]
+    {"name": "n_jobs", "type": "input", "values": -1, "dtype": "int", "accept_none": True}]
 
 AgglomerativeClustering_Params = [
     {"name": "n_clusters", "type": "input", "values": 2, "dtype": "int", "accept_none": True},

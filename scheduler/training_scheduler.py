@@ -21,15 +21,17 @@ def load_model(pid):
 def load_data(pid):
     path = os.path.join(from_root(), 'src', 'data', pid + '.csv')
     if os.path.exists(path):
+        print('taking data from local')
         df = pd.read_csv(path)
         return df
     else:
+        print('fetching data ')
         CONNECTION_URL = f"mongodb+srv://vishal:123@auto-neuron.euorq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
         client = pymongo.MongoClient(CONNECTION_URL)
         dataBase = client["Auto-neuron"]
         collection = dataBase[pid]
         df = pd.DataFrame(list(collection.find()))
-        df.drop(['_id', 'index'], axis=1, inplace=True)
+        df.drop(['_id'], axis=1, inplace=True)
         return df
 
 
@@ -156,7 +158,7 @@ def check_schedule_model():
             print(process)
             train_model(model_name=process[2], target=process[1], pid=process[0])
             print('Training Done')
-            email_check = email_sender(process[7])
+            email_check = email_sender(process[7],1)
             if email_check:
                 mysql.update_record(f"""DELETE FROM tblProject_scheduler WHERE ProjectID = '{process[0]}'""")
                 print('Email sent Done')

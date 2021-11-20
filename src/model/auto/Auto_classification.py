@@ -18,7 +18,7 @@ logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {m
 
 
 class ModelTrain_Classification:
-    def _init_(self, X_train, X_test, y_train, y_test, start: bool):
+    def __init__(self, X_train, X_test, y_train, y_test, start: bool):
         try:
             logger.info("Constructor Created!")
             self.frame = pd.DataFrame(columns=['Model_Name', 'Accuracy', 'Classes', 'Precision', 'Recall', 'F1_Score'])
