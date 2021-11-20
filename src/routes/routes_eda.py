@@ -199,6 +199,7 @@ def eda_post(action):
                         df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df.columns)>10 else len(df.columns), :], names='Features',
                         values='Total outliers', title='Top 10 Outliers')
 
+
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
                                            upper=upper, barplot=graphJSON, pieplot=pie_graphJSON)
