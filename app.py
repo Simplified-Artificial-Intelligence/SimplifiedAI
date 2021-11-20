@@ -801,6 +801,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
+                    print(download_status, file_path)
                     if download_status != "Successful":
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
@@ -808,6 +809,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                     timestamp = round(time.time() * 1000)
                     upload_status = azure_helper.upload_file(file_path, container_name,
                                                              f'{project_name}_{timestamp}.{file_type}')
+                    print(upload_status)
                     if upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
