@@ -1,6 +1,7 @@
 from flask import Blueprint, request, render_template, session, redirect, url_for
 from flask.wrappers import Response
 from loguru import logger
+from pandas.core.frame import DataFrame
 from src.utils.common.data_helper import load_data
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
@@ -14,7 +15,7 @@ import plotly
 from src.utils.common.common_helper import immutable_multi_dict_to_str, get_numeric_categorical_columns
 import os
 from from_root import from_root
-
+import pandas as pd
 app_eda = Blueprint('eda', __name__)
 
 
@@ -220,14 +221,25 @@ def eda_post(action):
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
 
                     elif selected_graph_type == "Pie Chart":
+                                                
                         x_column = request.form['xcolumn']
-                        y_column = request.form['ycolumn']
-                        graphJSON = PlotlyHelper.pieplot(df, names=x_column, values=y_column, title='Pie Chart')
+                        new_df=df.groupby(x_column).count()
+                        temp_df=pd.DataFrame()
+                        
+                        temp_df[x_column]=list(new_df.index)
+                        temp_df['Count']=list(new_df.iloc[:,0])
+                        
+                        graphJSON = PlotlyHelper.pieplot(temp_df, names=x_column, values='Count',title='Pie Chart')
 
                     elif selected_graph_type == "Bar Graph":
                         x_column = request.form['xcolumn']
-                        y_column = request.form['ycolumn']
-                        graphJSON = PlotlyHelper.barplot(df, x=x_column, y=y_column)
+                        new_df=df.groupby(x_column).count()
+                        temp_df=pd.DataFrame()
+                        
+                        temp_df[x_column]=list(new_df.index)
+                        temp_df['Count']=list(new_df.iloc[:,0])
+                        
+                        graphJSON = PlotlyHelper.barplot(temp_df, x=x_column, y='Count')
 
                     elif selected_graph_type == "Histogram":
                         x_column = request.form['xcolumn']
@@ -246,9 +258,12 @@ def eda_post(action):
                     elif selected_graph_type == "Dist Plot":
                         x_column = request.form['xcolumn']
                         y_column = request.form['ycolumn']
-                        # Target column
-                        z_column = "species"
-                        graphJSON = PlotlyHelper.distplot(df, x=x_column, y=y_column, color=z_column)
+                        hist_data=[]
+                        category_list=list(df[y_column].unique())
+                        for category in category_list:
+                          hist_data.append(list(df[df[y_column]==category][x_column]))
+                        
+                        graphJSON = PlotlyHelper.create_distplot(hist_data,category_list)
 
                     elif selected_graph_type == "Heat Map":
                         graphJSON = PlotlyHelper.heatmap(df)
@@ -278,7 +293,7 @@ def x_y_columns():
             if df is not None:
                 num_cols, cat_cols = get_numeric_categorical_columns(df)
                 if graph_selected == "Bar Graph":
-                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols),
+                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols),
                                            graph_selected=graph_selected)
                 elif graph_selected == "Histogram":
                     return render_template('eda/x_y_columns.html', x_list=list(df.columns), y_list=[],
@@ -287,7 +302,7 @@ def x_y_columns():
                     return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols),
                                            graph_selected=graph_selected)
                 elif graph_selected == "Pie Chart":
-                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols), y_list=list(num_cols),
+                    return render_template('eda/x_y_columns.html', x_list=list(cat_cols),
                                            graph_selected=graph_selected)
                 elif graph_selected == "Line Chart":
                     return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(num_cols),
@@ -299,7 +314,7 @@ def x_y_columns():
                     return render_template('eda/x_y_columns.html', x_list=list(num_cols), y_list=list(cat_cols),
                                            graph_selected=graph_selected)
                 elif graph_selected == "Heat Map":
-                    return render_template('eda/x_y_columns.html', x_list=list(num_cols), graph_selected=graph_selected)
+                    return render_template('eda/x_y_columns.html', graph_selected=graph_selected)
                 else:
                     return redirect(url_for('/eda/help'))
             else:

@@ -41,16 +41,19 @@
     </form>
     
     <h3 class="result">Result</h3>
-    {{records | safe}}
+    <div style="overflow:auto;">
+        {{records | safe}}
+      </div>
 </div>
 
 <script>
     $(document).ready(function() {
         $('.dataframe').DataTable({
-            "scrollX": "100%",
-            "scrollY": '50vh',
             "scrollCollapse": true,
         });
+       setTimeout(()=>{
+        jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
+       },5000)
     } );
 
     $(document).ready(function() {
