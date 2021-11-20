@@ -60,6 +60,9 @@ def make_prediction(df):
                         columns=df.columns
                         df=pca.transform(df)
                         df=pd.DataFrame(df,columns=columns)
+                    elif action[0]=='Custom Script':
+                        if action[1] is not None:
+                            exec(action[1])
                         
                 model=load_project_model()
                 result=model.predict(df)
