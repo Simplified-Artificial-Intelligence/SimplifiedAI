@@ -13,6 +13,14 @@ p {
     color: #999;
 }
 
+.pclass {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 300;
+  line-height: 1.7em;
+  color: #fff;
+}
+
 a,
 a:hover,
 a:focus {

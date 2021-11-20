@@ -84,8 +84,19 @@ span.psw {
     margin-left: 20%;
     color:#fff;
     margin-top:30px;
+    
 }
 
+.project-form2{
+  padding-right: 20%;
+    padding-left: 20%;
+    border-radius: 10px;
+    background: #17a2b8;
+    color:#fff;
+    margin-top:30px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
 .project-form-dataframe{
   border-radius: 10px;
   background: #fff;
@@ -945,4 +956,30 @@ width:60px
   padding: unset !important;
   padding-left: 20px !important;
   padding-right: 20px !important;
+}
+
+.predict-div{
+  text-align: left;
+    margin-top: 30px;
+}
+.dataTables_scroll
+{
+    overflow:auto;
+}
+.right{
+  color: #13da40;
+  font-weight: 600;
+}
+
+.wrong{
+  color: #da1341;
+    font-weight: 600;
+}
+.terminal{
+  color: #fff;
+    background: #000;
+}
+#code{
+  color: #13da40;
+  background-color: #000;
 }

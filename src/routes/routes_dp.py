@@ -39,33 +39,62 @@ def data_preprocessing(action):
                     if session['target_column'] != None:
                         col_lst.remove(session['target_column'])
                     logger.info('Redirect To Delete Columns!')
-                    return render_template('dp/delete_columns.html', columns=col_lst, action=action)
+                    ProjectReports.insert_record_dp('Redirect To Delete Columns!')
+                    return render_template('dp/delete_columns.html', columns=list(df.columns), action=action)
                 elif action == "duplicate-data":
                     duplicate_data = df[df.duplicated()].head(500)
                     data = duplicate_data.to_html()
                     logger.info('Redirect To Handle Duplicate Data!')
+                    ProjectReports.insert_record_dp('Redirect To Handle Duplicate Data!')
                     return render_template('dp/duplicate.html', columns=list(df.columns), action=action, data=data,
                                            duplicate_count=len(duplicate_data))
 
                 elif action == "outlier":
                     logger.info('Redirect To Handler Outlier!')
+                    ProjectReports.insert_record_dp('Redirect To Handle Duplicate Data!')
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
                     return render_template('dp/outliers.html', columns=columns, action=action)
 
                 elif action == "missing-values":
                     logger.info('Redirect To Missing-Values!')
+                    ProjectReports.insert_record_dp('Redirect To Missing-Values!')
                     columns = list(df.columns)
                     return render_template('dp/missing_values.html', columns=columns, action=action)
 
                 elif action == "delete-outlier" or action == "remove-duplicate-data":
                     logger.info('Redirect To Handler Outlier!')
+                    ProjectReports.insert_record_dp('Redirect To Handler Outlier!')
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
                     return redirect('/dp/outlier')
 
                 elif action == "imbalance-data":
+                    
                     logger.info('Redirect To Handle Imbalance Data!')
+                    ProjectReports.insert_record_dp('Redirect To Handle Imbalance Data!')
+                    
+                    if session['project_type'] == 2 and session['target_column'] is None:
+                        return redirect('/target-column')
+                    
+                    if session['project_type'] != 2:
+                        return render_template('dp/handle_imbalance.html', error="This section only for classification")
+                    
+                    target_column =session['target_column']
+                    df_counts = pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
+                    y = list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
+                    df_counts['Count']=df_counts[y]
+                    graphJSON = PlotlyHelper.barplot(df_counts, x=target_column, y=df_counts['Count'])
+                    pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=target_column, values=y, title='')
+                    data={}
+                    
+                    for (key, val) in zip(df_counts[target_column],df_counts['Count']):
+                        data[str(key)]=val
+                            
                     columns = list(df.columns)
-                    return render_template('dp/handle_imbalance.html', action=action, columns=columns)
+                    return render_template('dp/handle_imbalance.html',
+                            target_column=target_column, action=action,
+                            pie_graphJSON=pie_graphJSON, graphJSON=graphJSON,
+                            data=data,
+                            perform_action=True)
                 else:
                     return render_template('eda/help.html')
             else:
@@ -247,16 +276,21 @@ def data_preprocessing_post(action):
                         if 'perform_action' in request.form:
                             target_column = request.form['target_column']
                             method = request.form['method']
-                            range = request.form['range']
                             logger.info(f'{target_column} {method} {range}')
 
+                            class_dict=[]
+                            
+                            for label in list(df[target_column].unique()):
+                                class_dict.append([label,int(request.form[str(label)])])
+                                
                             if method == 'OS':
-                                new_df = Preprocessing.over_sample(df, target_column, float(range))
+                                new_df = Preprocessing.over_sample(df, target_column, class_dict)
                             elif method == 'US':
-                                new_df = Preprocessing.under_sample(df, target_column, float(range))
+                                new_df = Preprocessing.under_sample(df, target_column, class_dict)
                             else:
-                                new_df = Preprocessing.smote_technique(df, target_column, float(range))
-
+                                new_df = Preprocessing.smote_technique(df, target_column, class_dict)
+                            
+                                                            
                             df = update_data(new_df)
                             logger.info('Sending New Data on the front end')
                             return render_template('dp/handle_imbalance.html', columns=list(df.columns),

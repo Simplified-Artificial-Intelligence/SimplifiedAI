@@ -1,7 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, session, send_file, send_from_directory
 from werkzeug.wrappers import Response
 import re
-from src.constants.constants import PROJECT_TYPES
+from src.constants.constants import PROJECT_TYPES, ProjectActions
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -10,7 +10,7 @@ from src.utils.common.common_helper import decrypt, read_config, unique_id_gener
 from src.utils.databases.mongo_helper import MongoHelper
 import pandas as pd
 from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, ALL_MODELS, TIMEZONE
-from src.utils.common.data_helper import load_data, csv_to_json, to_tsv, csv_to_excel
+from src.utils.common.data_helper import load_data, csv_to_json, to_tsv, csv_to_excel, update_data
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
 from src.utils.common.cloud_helper import azure_data_helper
@@ -27,6 +27,11 @@ from from_root import from_root
 import scheduler
 from openpyxl import load_workbook
 
+import numpy as np
+import pandas as pd
+import zipfile
+import pathlib
+import io
 # Yaml Config File
 config_args = read_config("./config.yaml")
 
@@ -627,21 +632,77 @@ def signup():
             return render_template('signup.html', msg=msg)
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    # note that we set the 404 status explicitly
+    return render_template('500.html',msg=str(e)), 500
+
+@app.route('/export-resources/<pid>', methods=['GET','POST'])
+def exportResources(pid):
+    try:
+        if 'loggedin' in session:
+            if request.method=='GET':
+                folder_path = os.path.join(from_root(), config_args['dir_structure']['artifacts_dir'], pid)
+                if not os.path.exists(folder_path):
+                    return render_template('export-resources.html',status="error", msg="No resources found to export, please train your model first")
+                logger.info('Redirect To Export Reources Page')
+                return render_template('export-resources.html',status="success",pid=pid)
+            else:
+                folder_path = os.path.join(from_root(), config_args['dir_structure']['artifacts_dir'], pid)
+                
+                
+                """Get Projects Actions"""
+                query_ = f"""
+                        Select tblProjectActions.Name , Input,Output from  tblProject_Actions_Reports 
+                        Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id
+                        join tblProjects on tblProjects.Id=tblProject_Actions_Reports.ProjectId
+                        where PId="{pid}"
+                        """
+                action_performed = mysql.fetch_all(query_)
+                
+                """Save Actions file"""
+                if len(action_performed)>0:
+                    df=pd.DataFrame(action_performed,columns=['Action','Input','Output'])
+                    df.to_csv(os.path.join(folder_path,'actions.csv'))
+                    
+                base_path = pathlib.Path(folder_path)
+                data = io.BytesIO()
+                with zipfile.ZipFile(data, mode='w') as z:
+                    for f_name in base_path.iterdir():
+                        z.write(f_name)
+                data.seek(0)
+                return Response(
+                    data,
+                    mimetype='application/zip',
+                    headers={"Content-disposition": f"attachment; filename=data.zip"})
+        else:
+            return redirect(url_for('login'))
+    except Exception as e:
+        logger.info(e)
+        return render_template('export-resources.html',status="error", msg=str(e))
+    
+    
 @app.route('/exportFile/<pid>/<project_name>', methods=['GET'])
-def exportForm(pid, project_name):
+def exportForm(pid,project_name):
     if 'loggedin' in session:
         logger.info('Redirect To Export File Page')
         return render_template('exportFile.html',
-                               data={"project_name": project_name, "project_id": pid, "id": 1})
+                               data={"project_name": project_name, "project_id": pid})
     else:
         return redirect(url_for('login'))
 
 
-@app.route('/exportAsFile/<project_id>/<project_name>', methods=['GET', 'POST'])
-def exportFile(project_id, project_name):
+@app.route('/exportFile/<project_id>/<project_name>', methods=['POST'])
+def exportFile(project_id,project_name):
     try:
         if 'loggedin' in session:
             logger.info('Export File')
+
             fileType = request.form['fileType']
             print(project_id, project_name)
             # project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
@@ -1055,20 +1116,45 @@ def systemlogs(action):
 
 @app.route('/history/actions', methods=['GET'])
 def history():
+    if request.method == 'GET':
+        my_collection = mysql.fetch_all(f''' Select Name, Input,Output,ActionDate 
+        from tblProject_Actions_Reports 
+        Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
+        where ProjectId ="{session['pid']}"''')
+        df=pd.DataFrame(np.array(my_collection),columns=['Action','Input','Output','DateTime'])
+        data=df.to_html()
+        return render_template('history/actions.html', data=data)
+    
+    
+@app.route('/custom-script', methods=['GET','POST'])
+def custom_script():
     try:
         if 'loggedin' in session:
-            if request.method == 'GET':
-                my_collection = mysql.fetch_all(f''' Select ProjectId, Name, Input,Output,ActionDate 
-                from tblProject_Actions_Reports 
-                Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
-                where ProjectId ="{session['pid']}"''')
-                print(my_collection)
-                return render_template('history/actions.html', my_collection=my_collection)
+            df = load_data()
+            if df is not None:
+                logger.info('Redirect To Custom Script')
+                ProjectReports.insert_record_fe('Redirect To Custom Script')
+                data = df.head(1000).to_html()
+                if request.method=='GET':
+                    return render_template('custom-script.html',status="success",data=data)
+                else:
+                    df=load_data()
+                    code = request.form['code']
+                    if code is not None:
+                        exec(code)
+                        update_data(df)
+                        ProjectReports.insert_project_action_report(ProjectActions.CUSTOM_SCRIPT.value,code)
+                        return redirect('/eda/show')
+                    else:
+                        return render_template('custom-script.html',status="error", msg="Code snippets is not valid")
+            else:
+                return redirect(url_for('/'))
         else:
             return redirect(url_for('login'))
     except Exception as e:
-        logger.error(f"{e} In history")
-        return render_template('500.html', exception=e)
+        logger.info(e)
+        ProjectReports.insert_record_fe(f'Error In Custom Script: {str(e)}')
+        return render_template('custom-script.html',status="error", msg=str(e))
 
 
 @app.route('/scheduler/<action>', methods=['GET'])

@@ -76,10 +76,11 @@ class ProjectReports:
             mysql = MySqlHelper.get_connection_obj()
 
             query = f"""INSERT INTO 
-            tblProject_Actions_Reports(`ProjectId`, `ProjectActionId`, `Input`, `Output`)
-            VALUES ('{session.get('pid')}','{projectActionId}','{input}','{output}')"""
+            tblProject_Actions_Reports(ProjectId, ProjectActionId, Input, Output)
+            VALUES ({session.get('pid')},{projectActionId},'{input}','{output}')"""
             
             rowcount = mysql.insert_record(query)
+            return rowcount
         except Exception as e:
             print(e)
     
