@@ -38,8 +38,9 @@ class ModelTrain_Classification:
                 logger.info("Auto Classification Training Completed!")
 
         except Exception as e:
-            print(e)
-
+            logger.error(f"{e} occurred in Auto Classification model training!")
+            raise Exception(e)
+        
     def LogisticRegression_(self):
         model = LogisticRegression()
         model.fit(self.X_train, self.y_train)
