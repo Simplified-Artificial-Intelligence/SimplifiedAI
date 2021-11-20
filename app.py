@@ -92,7 +92,6 @@ def index():
             order by 1 desc'''
 
             projects = mysql.fetch_all(query)
-            print(projects)
             project_lists = []
 
             for project in projects:
@@ -705,12 +704,12 @@ def exportFile(project_id,project_name):
 
             fileType = request.form['fileType']
             print(project_id, project_name)
-            # project_name, project_id = mysql.fetch_one(f'SELECT name, pid from tblProjects WHERE Pid={id}')
-            download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
-            if download_status != "Successful":
-                render_template('exportFile.html',
-                                data={"project_name": project_name, "project_id": project_id},
-                                msg="OOPS something went wrong!!")
+            if fileType != "":
+                download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
+                if download_status != "Successful":
+                    render_template('exportFile.html',
+                                    data={"project_name": project_name, "project_id": project_id},
+                                    msg="OOPS something went wrong!!")
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
