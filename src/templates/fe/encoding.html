@@ -68,7 +68,9 @@
 
         </div>
         <div class="result"><h2>Encoding Result</h2>
-            <div class="table"></div>
+            <div style="overflow:auto;">
+                <div class="table"></div>
+              </div>
             <div class="row">
                 <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
                     <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#exampleModal">Save Result</button>
@@ -156,9 +158,10 @@
                     $(".result").show()
                     $(".table").append(data.data)
                     $('.dataframe').DataTable({
-                        "sScrollX": "100%",
                         "bScrollCollapse": true,
                     });
+                    jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
+
                 }else{
                     alert(data?.error)
                 }

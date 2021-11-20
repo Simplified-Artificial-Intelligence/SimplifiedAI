@@ -130,6 +130,11 @@ def feature_engineering(action):
                                            columns_len=df.shape[1] - 1)
 
                 elif action == 'dimension_reduction':
+                    columns = list(df.columns)
+                    if session['target_column']:
+                            columns = [col for col in columns if col != session['target_column']]
+                            
+                    df=df.loc[:, columns]
 
                     logger.info('Redirect To Dimention Reduction')
                     ProjectReports.insert_record_fe('Redirect To Dimention Reduction')
@@ -238,8 +243,7 @@ def feature_engineering_post(action):
 
                         logger.info(f'Perform Encoding:{encoding_type}')
 
-                        return render_template('fe/encoding.html', status="success", encoding_types=ENCODING_TYPES,
-                                               columns=list(df.columns[df.dtypes == 'object']), action=action)
+                        return redirect('/eda/show')
                     except Exception as e:
 
                         logger.info(f'Perform Encoding:{encoding_type}')
@@ -278,13 +282,20 @@ def feature_engineering_post(action):
                 elif action == 'dimension_reduction':
                     # Check this remove target column
                     try:
-                        df_ = df.loc[:, df.columns != 'Label']
+                        columns = list(df.columns)
+                        if session['target_column']:
+                                columns = [col for col in columns if col != session['target_column']]
+                            
+                        df_=df.loc[:, columns]
                         no_pca_selected = request.form['range']
                         df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
                         df_ = df_[:, :int(no_pca_selected)]
                         df_evr = pd.DataFrame()
                         data = pd.DataFrame(df_, columns=[f"Col_{col + 1}" for col in np.arange(0, df_.shape[1])])
-                        data['Label'] = df.loc[:, 'Label']
+                        
+                        if session['target_column']:
+                            data[session['target_column']] = df.loc[:, session['target_column']]
+                            
                         df = update_data(data)
                         data = df.head(200).to_html()
                         return render_template('fe/dimension_reduction.html', status="success", action=action,

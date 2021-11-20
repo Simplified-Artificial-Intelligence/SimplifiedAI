@@ -79,6 +79,14 @@ def data_preprocessing(action):
                         return render_template('dp/handle_imbalance.html', error="This section only for classification")
                     
                     target_column =session['target_column']
+                    cols_=[col for col in df.columns if col!=target_column]
+                    
+                    #Check data contain any categorical independent features
+                    Categorical_columns=Preprocessing.col_seperator(df.loc[:,cols_],"Categorical_columns")
+                    if len(Categorical_columns.columns)>0:
+                        return render_template('dp/handle_imbalance.html', action=action, columns=list(df.columns),
+                                               error="Data contain some categorical indepedent features, please perform encoding first")
+                    
                     df_counts = pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
                     y = list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
                     df_counts['Count']=df_counts[y]
@@ -298,9 +306,25 @@ def data_preprocessing_post(action):
                             
                                                             
                             df = update_data(new_df)
-                            logger.info('Sending New Data on the front end')
-                            return render_template('dp/handle_imbalance.html', columns=list(df.columns),
-                                                   target_column=target_column, success=True)
+                            
+                            target_column =session['target_column']
+                            df_counts = pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
+                            y = list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
+                            df_counts['Count']=df_counts[y]
+                            graphJSON = PlotlyHelper.barplot(df_counts, x=target_column, y=df_counts['Count'])
+                            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=target_column, values=y, title='')
+                            data={}
+                            
+                            for (key, val) in zip(df_counts[target_column],df_counts['Count']):
+                                data[str(key)]=val
+                                    
+                            columns = list(df.columns)
+                            return render_template('dp/handle_imbalance.html',
+                                    target_column=target_column, action=action,
+                                    pie_graphJSON=pie_graphJSON, graphJSON=graphJSON,
+                                    data=data,success=True,
+                                    perform_action=True)
+                
                         else:
                             logger.info('perform_action was not found on request form')
                             target_column = request.form['target_column']
