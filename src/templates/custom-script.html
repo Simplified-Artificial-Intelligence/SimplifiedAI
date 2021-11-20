@@ -59,7 +59,9 @@ df['Tax']=df['base']*100+df['Year']*0.7
       <form action="/custom-script" method="post">
         <div style="overflow:auto;">
             <h3>Current Data:</h3>
-            {{data | safe}}
+            <div style="overflow:auto;">
+                {{data | safe}}
+              </div>
           </div>
             <div style="overflow:auto;" id="result">
                 <h3>New Data:</h3>
@@ -84,13 +86,12 @@ df['Tax']=df['base']*100+df['Year']*0.7
 <script>
         $(document).ready(function() {
         $('.dataframe').DataTable({
-            "sScrollX": "100%",
-            "sScrollXInner": "100%",
             "bScrollCollapse": true,
         });
+        jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
+
         $("#result").hide()
         $("#submit_btn").hide()
-        jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
         });
         $("#check_btn").on('click',()=>{
 
@@ -99,7 +100,7 @@ df['Tax']=df['base']*100+df['Year']*0.7
             $("div.load-wrapper").css('display', 'block');
                 $.ajax({
                         type: "POST",
-                        url: `${window.location.origin}/custom-script`,
+                        url: `${window.location.origin}/api/custom-script`,
                         dataType:'json',
                         data:JSON.stringify(data),
                         contentType:'application/json',

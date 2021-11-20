@@ -1115,14 +1115,21 @@ def systemlogs(action):
 
 @app.route('/history/actions', methods=['GET'])
 def history():
-    if request.method == 'GET':
+    try:
         my_collection = mysql.fetch_all(f''' Select Name, Input,Output,ActionDate 
         from tblProject_Actions_Reports 
         Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
         where ProjectId ="{session['pid']}"''')
-        df=pd.DataFrame(np.array(my_collection),columns=['Action','Input','Output','DateTime'])
-        data=df.to_html()
-        return render_template('history/actions.html', data=data)
+        
+        data=""
+        if len(my_collection)>0:
+            df=pd.DataFrame(np.array(my_collection),columns=['Action','Input','Output','DateTime'])
+            data=df.to_html()
+        return render_template('history/actions.html',status="success", data=data)
+    except Exception as e:
+        logger.info(e)
+        ProjectReports.insert_record_dp(f'Error In History Page :{str(e)}')
+        return render_template('history/actions.html',status="error", msg=str(e))
     
     
 @app.route('/custom-script', methods=['GET','POST'])
