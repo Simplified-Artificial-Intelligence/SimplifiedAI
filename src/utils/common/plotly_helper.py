@@ -6,6 +6,7 @@ from loguru import logger
 import os
 from from_root import from_root
 from src.utils.common.common_helper import read_config
+import plotly.figure_factory as ff
 
 config_args = read_config("./config.yaml")
 
@@ -14,6 +15,17 @@ logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {m
 
 
 class PlotlyHelper:
+    
+    @staticmethod
+    def create_distplot(hist_data, group_labels):
+        try:
+            fig = ff.create_distplot(hist_data, group_labels, bin_size=1.0,curve_type="kde")
+            graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            logger.info("BarPlot Implemented!")
+            return graphJSON
+        except Exception as e:
+            logger.error(e)
+        
     @staticmethod
     def barplot(df, x, y):
         try:
@@ -75,9 +87,9 @@ class PlotlyHelper:
             logger.error(e)
 
     @staticmethod
-    def distplot(df, x, y, color):
+    def distplot(df, x, y):
         try:
-            fig = px.histogram(df, x=x, y=y, color=color, marginal='violin', hover_data=df.columns)
+            fig = px.histogram(df, x=x, y=y, marginal='violin', hover_data=df.columns)
             graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             logger.info("DistPlot Implemented!")
             return graphJSON
