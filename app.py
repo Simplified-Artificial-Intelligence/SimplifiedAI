@@ -120,6 +120,8 @@ def project():
             else:
                 source_type = request.form['source_type']
                 f = None
+                ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json', 'xlsx']
+
                 if source_type == 'uploadFile':
                     name = request.form['project_name']
                     description = request.form['project_desc']
@@ -128,7 +130,6 @@ def project():
                     if len(request.files) > 0:
                         f = request.files['file']
 
-                    ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json']
                     message = ''
                     if not name.strip():
                         message = 'Please enter project name'
@@ -156,6 +157,8 @@ def project():
                         df = pd.read_csv(file_path, sep='\t')
                     elif file_path.endswith('.json'):
                         df = pd.read_json(file_path)
+                    elif file_path.endswith('.xlsx'):
+                        df = pd.read_excel(file_path)
                     else:
                         message = 'This file format is currently not supported'
                         logger.info(message)
@@ -188,6 +191,7 @@ def project():
                     description = request.form['project_desc']
                     resource_type = request.form['resource_type']
 
+
                     if not name.strip():
                         message = 'Please enter project name'
                         logger.info(message)
@@ -196,13 +200,17 @@ def project():
                         message = 'Please enter project description'
                         logger.info(message)
                         return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
-
+                        
                     if resource_type == "awsS3bucket":
                         region_name = request.form['region_name']
                         aws_access_key_id = request.form['aws_access_key_id']
                         aws_secret_access_key = request.form['aws_secret_access_key']
                         bucket_name = request.form['bucket_name']
                         file_name = request.form['file_name']
+                        if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                            message = 'This file format is not allowed, please select mentioned one'
+                            return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
+
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
                         aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
                         conn_msg = aws_s3.check_connection(bucket_name, file_name)
@@ -217,6 +225,10 @@ def project():
                         credentials_file = request.files['GCP_credentials_file']
                         bucket_name = request.form['bucket_name']
                         file_name = request.form['file_name']
+                        if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                            message = 'This file format is not allowed, please select mentioned one'
+                            return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
+                        
                         credentials_filename = secure_filename(credentials_file.filename)
                         credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
                         credentials_file.save(credentials_file_path)
@@ -299,6 +311,10 @@ def project():
                         azure_connection_string = request.form['azure_connection_string']
                         container_name = request.form['container_name']
                         file_name = request.form['file_name']
+                        if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                            message = 'This file format is not allowed, please select mentioned one'
+                            return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
+
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
                         azure_helper = azure_data_helper(azure_connection_string)
                         conn_msg = azure_helper.check_connection(container_name, file_name)
@@ -324,10 +340,13 @@ def project():
                             df = pd.read_csv(file_path, sep='\t')
                         elif file_path.endswith('.json'):
                             df = pd.read_json(file_path)
+                        elif file_path.endswith('.xlsx'):
+                            df = pd.read_excel(file_path)
                         else:
                             msg = 'This file format is currently not supported'
                             return render_template('new_project.html', msg=msg)
 
+                        print(df)
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
 
@@ -359,7 +378,7 @@ def project():
 
     except Exception as e:
         logger.error(e)
-        return render_template('new_project.html', msg=e.__str__())
+        return render_template('new_project.html', project_types=PROJECT_TYPES, msg=e.__str__())
 
 
 @app.route('/edit-project/<pid>', methods=['GET', 'POST'])

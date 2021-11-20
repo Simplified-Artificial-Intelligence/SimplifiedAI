@@ -33,7 +33,11 @@ class MongoHelper:
         """
         try:
             collection = self.db[collection_name]
-            df.reset_index(inplace=True)
+            try:
+                df.reset_index(inplace=True)
+            except Exception as e:
+                logger.error(e)
+
             begin = time.time()
             
             self.delete_collection_data(collection_name)
