@@ -1131,6 +1131,11 @@ def custom_script():
                 else:
                     df = load_data()
                     code = request.form['code']
+                    
+                    ## Double quote is not allowed
+                    if '"' in code:
+                       return render_template('custom-script.html',status="error", msg="Double quote is not allowed")
+        
                     if code is not None:
                         exec(code)
                         update_data(df)

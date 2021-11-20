@@ -14,7 +14,7 @@
              or stale data, which leads to bad reporting, skewed metrics, and poor sender reputation.
               It can even result in different sales representatives calling on the same account.</p>
       </div>
-      <h3>Total Outliers: {{duplicate_count}}</h3>
+      <h3>Total Duplicate Records: {{duplicate_count}}</h3>
       <form action="/dp/{{action}}" method="post">
         <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12 col-sm-12">
@@ -41,7 +41,9 @@
           <strong>Great!</strong> There is no duplicate data.
       </div>
       {% endif %}
-      {{data | safe}}
+     <div style="overflow:auto;">
+        {{data | safe}}
+      </div>
       {% if duplicate_count!=0 %}
       <form action="/dp/remove-duplicate-data" method="post">
         <div class="row">
@@ -65,19 +67,21 @@
               </div>
             </div>
           </div>
-          <input type="hidden" value="{{selected_column}}" name="selected_column"/>
+          <input type="hidden" value="{{selected_column}}" name="selected_column" id="selected_column"/>
       </form>
       {% endif %}
 </div>
 <script>
    $(document).ready(function() {
     $('.dataframe').DataTable({
-            "sScrollX": "100%",
             "bScrollCollapse": true,
-        });
+    });
+        jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
     // $("#delete-btn").hide()  
     $('.js-example-basic-multiple').select2();
-    $('.js-example-basic-multiple').select2();
+    if($("#selected_column").val()){
+        $("#columns").select2().val($("#selected_column").val().split(",")).trigger("change");
+    }
 });
 </script>
 {% endblock %}
