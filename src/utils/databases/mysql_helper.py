@@ -100,8 +100,10 @@ class MySqlHelper:
         :param cursor: 
         :return: 
         """
-        cursor.close()
-        conn.close()
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
     def fetch_all(self, query):
         """

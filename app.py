@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, send_file, send_from_directory
+from flask import Flask, redirect, url_for, render_template, request, session, send_from_directory
 from werkzeug.wrappers import Response
 import re
 from src.constants.constants import PROJECT_TYPES, ProjectActions
@@ -8,7 +8,6 @@ import os
 import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
-import pandas as pd
 from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, ALL_MODELS, TIMEZONE
 from src.utils.common.data_helper import load_data, csv_to_json, to_tsv, csv_to_excel, update_data
 from src.utils.common.cloud_helper import aws_s3_helper
@@ -25,20 +24,21 @@ from src.routes.routes_fe import app_fe
 from src.routes.routes_training import app_training
 from from_root import from_root
 import scheduler
-from openpyxl import load_workbook
-
 import numpy as np
 import pandas as pd
 import zipfile
 import pathlib
 import io
+
 # Yaml Config File
 config_args = read_config("./config.yaml")
-
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
+
 logger.remove()
+
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
 logger.info('Fetching Data from configuration file')
+
 # SQL Connection code
 host = config_args['secrets']['host']
 port = config_args['secrets']['port']
@@ -46,6 +46,7 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
+# DataBase Initilazation
 logger.info('Initializing Databases')
 mysql = MySqlHelper.get_connection_obj()
 mongodb = MongoHelper()
@@ -56,6 +57,7 @@ static_dir = config_args['dir_structure']['static_dir']
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
 logger.info('App Started')
 
+# Routes (API,EDA,DP,FE,Training)
 app.register_blueprint(app_api)
 app.register_blueprint(app_eda)
 app.register_blueprint(app_dp)
@@ -72,10 +74,10 @@ def context_processor():
     loggedin = False
     if 'loggedin' in session:
         loggedin = True
-
     return dict(loggedin=loggedin)
 
 
+# Index Route
 @app.route('/', methods=['GET', 'POST'], )
 def index():
     try:
@@ -92,13 +94,13 @@ def index():
             order by 1 desc'''
 
             projects = mysql.fetch_all(query)
-            print(projects)
             project_lists = []
 
             for project in projects:
                 projectid = encrypt(f"{project[6]}&{project[0]}").decode("utf-8")
                 project_lists.append(project + (projectid,))
 
+            logger.info("Project Initilazation Completed")
             return render_template('index.html', projects=project_lists)
         else:
             return redirect(url_for('login'))
@@ -107,10 +109,8 @@ def index():
         return render_template('500.html', exception=e)
 
 
-
 @app.route('/project', methods=['GET', 'POST'])
 def project():
-    # df = None, table_name = None
     try:
         if 'loggedin' in session:
             download_status = None
@@ -126,7 +126,7 @@ def project():
                     name = request.form['project_name']
                     description = request.form['project_desc']
                     project_type = request.form['project_type']
-                    print(source_type, name, description)
+                    logger.info(source_type, name, description)
                     if len(request.files) > 0:
                         f = request.files['file']
 
@@ -301,11 +301,11 @@ def project():
                         mongo_helper = mongo_data_helper(mongo_db_url)
                         conn_msg = mongo_helper.check_connection(mongo_database, collection)
                         if conn_msg != 'Successful':
-                            print(conn_msg)
+                            logger.info(conn_msg)
                             return render_template('new_project.html', msg=conn_msg)
 
                         download_status = mongo_helper.retrive_dataset(mongo_database, collection, file_path)
-                        print(name, description, resource_type, download_status, file_path)
+                        logger.info(name, description, resource_type, download_status, file_path)
 
                     elif resource_type == "azureStorage":
                         azure_connection_string = request.form['azure_connection_string']
@@ -320,11 +320,11 @@ def project():
                         conn_msg = azure_helper.check_connection(container_name, file_name)
 
                         if conn_msg != 'Successful':
-                            print(conn_msg)
+                            logger.info(conn_msg)
                             return render_template('new_project.html', msg=conn_msg)
 
                         download_status = azure_helper.download_file(container_name, file_name, file_path)
-                        print(download_status)
+                        logger.info(name, description, resource_type, download_status, file_path)
 
                     else:
                         return render_template('new_project.html', msg="Select Any Various Resource Type!!")
@@ -344,6 +344,7 @@ def project():
                             df = pd.read_excel(file_path)
                         else:
                             msg = 'This file format is currently not supported'
+                            logger.info(msg)
                             return render_template('new_project.html', msg=msg)
 
                         print(df)
@@ -363,15 +364,15 @@ def project():
                                 return redirect(url_for('index'))
                             else:
                                 message = "Error while creating new Project"
-                                logger.info(message)
+                                logger.error(message)
                                 return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
                         else:
                             message = "Error while creating new Project"
-                            logger.info(message)
+                            logger.error(message)
                             return render_template('new_project.html', msg=message)
                     else:
                         message = "Error while creating new Project"
-                        logger.info(message)
+                        logger.error(message)
                         return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
         else:
             return redirect(url_for('login'))
@@ -381,46 +382,23 @@ def project():
         return render_template('new_project.html', project_types=PROJECT_TYPES, msg=e.__str__())
 
 
-@app.route('/edit-project/<pid>', methods=['GET', 'POST'])
-def edit_project(pid):
-    query = f'''select tp.Name,tp.Description,tp.TargetColumn,tpy.Name from tblProjects as tp
-            join tblProjectType as tpy on tpy.Id=tp.ProjecTtype
-            where tp.Pid='{pid}';'''
-    print(pid)
-    data = mysql.fetch_one(query)
-
-    project_data = {'project_name': data[0], 'project_desp': data[1],
-                    'project_type': data[3], 'target_col': data[2]}
-    return render_template('edit_project.html', project_types=PROJECT_TYPES, data=project_data)
-
-
+# Make Prediction Route
 @app.route('/prediction_file/<action>', methods=['GET', 'POST'])
 def prediction(action):
     if 'loggedin' in session:
         try:
-            print(request.method)
             if request.method == "POST":
                 download_status = None
                 file_path = None
                 source_type = request.form['source_type']
-                print(source_type)
 
                 if source_type == 'uploadFile':
-
                     ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json', 'xlsx']
-                    # message = ''
-                    # if f.filename.strip() == '':
-                    #     message = 'Please select a file to upload'
-                    # elif f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
-                    #     message = 'This file format is not allowed, please select mentioned one'
-                    # if message:
-                    #     print(message)
-                    #     return render_template('prediction.html', msg=message)
-
                     f = request.files['file']
                     filename = secure_filename(f.filename)
                     file_path = os.path.join('artifacts', f'{action}', filename)
                     f.save(file_path)
+
                     if file_path.endswith('.csv'):
                         df = pd.read_csv(file_path)
                     elif file_path.endswith('.tsv'):
@@ -530,7 +508,7 @@ def prediction(action):
                         mongo_helper = mongo_data_helper(mongo_db_url)
                         conn_msg = mongo_helper.check_connection(mongo_database, collection)
                         if conn_msg != 'Successful':
-                            print(conn_msg)
+                            logger.info(conn_msg)
                             return render_template('prediction.html', msg=conn_msg)
 
                         download_status = mongo_helper.retrive_dataset(mongo_database, collection, file_path)
@@ -545,14 +523,13 @@ def prediction(action):
                         conn_msg = azure_helper.check_connection(container_name, file_name)
 
                         if conn_msg != 'Successful':
-                            print(conn_msg)
+                            logger.info(conn_msg)
                             return render_template('prediction.html', msg=conn_msg)
 
                         download_status = azure_helper.download_file(container_name, file_name, file_path)
                         logger.info(download_status)
                     else:
-                        # Implement something here
-                        pass
+                        return None
 
                     if download_status == 'Successful':
 
@@ -566,9 +543,9 @@ def prediction(action):
                             df = pd.read_excel(file_path)
                         else:
                             msg = 'This file format is currently not supported'
+                            logger.error(msg)
                             return render_template('prediction.html', msg=msg)
 
-                        print(df)
                         return redirect(url_for('index'))
                     else:
                         return render_template('prediction.html', loggedin=True, data={'pid': action},
@@ -577,15 +554,16 @@ def prediction(action):
                 return render_template('prediction.html', loggedin=True)
 
         except Exception as e:
+            logger.error(e)
             return render_template('prediction.html', loggedin=True, msg=e.__str__())
-
     else:
         return redirect(url_for('login'))
 
 
+# Login Page Route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    global msg
+    msg = None
     if 'loggedin' in session:
         logger.info('Redirect To Main Page')
         return redirect('/')
@@ -611,6 +589,7 @@ def login():
             return render_template('login.html', msg=msg)
 
 
+# SignUp Page Route
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if 'loggedin' in session:
@@ -651,30 +630,33 @@ def signup():
             return render_template('signup.html', msg=msg)
 
 
+# ExportFile Route
 @app.errorhandler(404)
 def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template('404.html'), 404
 
+
 @app.errorhandler(500)
 def internal_server_error(e):
     # note that we set the 404 status explicitly
-    return render_template('500.html',msg=str(e)), 500
+    return render_template('500.html', msg=str(e)), 500
 
-@app.route('/export-resources/<pid>', methods=['GET','POST'])
+
+@app.route('/export-resources/<pid>', methods=['GET', 'POST'])
 def exportResources(pid):
     try:
         if 'loggedin' in session:
-            if request.method=='GET':
+            if request.method == 'GET':
                 folder_path = os.path.join(from_root(), config_args['dir_structure']['artifacts_dir'], pid)
                 if not os.path.exists(folder_path):
-                    return render_template('export-resources.html',status="error", msg="No resources found to export, please train your model first")
+                    return render_template('export-resources.html', status="error",
+                                           msg="No resources found to export, please train your model first")
                 logger.info('Redirect To Export Reources Page')
-                return render_template('export-resources.html',status="success",pid=pid)
+                return render_template('export-resources.html', status="success", pid=pid)
             else:
                 folder_path = os.path.join(from_root(), config_args['dir_structure']['artifacts_dir'], pid)
-                
-                
+
                 """Get Projects Actions"""
                 query_ = f"""
                         Select tblProjectActions.Name , Input,Output from  tblProject_Actions_Reports 
@@ -683,12 +665,12 @@ def exportResources(pid):
                         where PId="{pid}"
                         """
                 action_performed = mysql.fetch_all(query_)
-                
+
                 """Save Actions file"""
-                if len(action_performed)>0:
-                    df=pd.DataFrame(action_performed,columns=['Action','Input','Output'])
-                    df.to_csv(os.path.join(folder_path,'actions.csv'))
-                    
+                if len(action_performed) > 0:
+                    df = pd.DataFrame(action_performed, columns=['Action', 'Input', 'Output'])
+                    df.to_csv(os.path.join(folder_path, 'actions.csv'))
+
                 base_path = pathlib.Path(folder_path)
                 data = io.BytesIO()
                 with zipfile.ZipFile(data, mode='w') as z:
@@ -703,11 +685,11 @@ def exportResources(pid):
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('export-resources.html',status="error", msg=str(e))
-    
-    
+        return render_template('export-resources.html', status="error", msg=str(e))
+
+
 @app.route('/exportFile/<pid>/<project_name>', methods=['GET'])
-def exportForm(pid,project_name):
+def exportForm(pid, project_name):
     if 'loggedin' in session:
         logger.info('Redirect To Export File Page')
         return render_template('exportFile.html',
@@ -717,13 +699,13 @@ def exportForm(pid,project_name):
 
 
 @app.route('/exportFile/<project_id>/<project_name>', methods=['POST'])
-def exportFile(project_id,project_name):
+def exportFile(project_id, project_name):
     try:
+        file_path = None
         if 'loggedin' in session:
-            logger.info('Export File')
-
+            logger.info('Export File in Process')
             fileType = request.form['fileType']
-            print(project_id, project_name)
+
             if fileType != "":
                 download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
                 if download_status != "Successful":
@@ -733,32 +715,35 @@ def exportFile(project_id,project_name):
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
+                logger.info('Exported to CSV Sucessful')
                 return Response(content.to_csv(index=False), mimetype="text/csv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
                 content = pd.read_csv(file_path)
+                logger.info('Exported to TSV Sucessful')
                 return Response(content.to_csv(sep='\t', index=False), mimetype="text/tsv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
             elif fileType == 'xlsx':
                 content = pd.read_csv(file_path)
                 content.to_excel(os.path.join(app.config["UPLOAD_FOLDER"], f'{project_name}.xlsx'), index=False)
+                logger.info('Exported to XLSX Sucessful')
                 return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=f'{project_name}.xlsx',
                                            as_attachment=True)
 
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
+                logger.info('Exported to JSON Sucessful')
                 return Response(content.to_json(), mimetype="text/json",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.json"})
             else:
                 return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
                                        msg="Select Any File Type!!")
-
         else:
             return redirect(url_for('login'))
     except Exception as e:
-        logger.info(e)
+        logger.error(e)
         return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
                                msg=e.__str__())
 
@@ -766,9 +751,8 @@ def exportFile(project_id,project_name):
 @app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
 def exportCloudDatabaseFile(project_name, project_id):
     try:
-        global download_status
+        download_status = None
         if 'loggedin' in session:
-            print(project_name, project_id)
             logger.info('Export File')
             source_type = request.form['source_type']
 
@@ -802,7 +786,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    print(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
                     return redirect(url_for('index'))
 
                 elif cloudType == 'azureStorage':
@@ -829,7 +813,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    print(f"{project_name}_{timestamp}.{file_type} pushed to {container_name} container")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {container_name} container")
                     return redirect(url_for('index'))
 
                 elif cloudType == 'gcpStorage':
@@ -859,7 +843,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    print(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
                     return redirect(url_for('index'))
 
                 else:
@@ -896,7 +880,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    print(f'{project_name}_{timestamp} table created in {database} database')
+                    logger.info(f'{project_name}_{timestamp} table created in {database} database')
                     return redirect(url_for('index'))
 
                 elif databaseType == 'cassandra':
@@ -930,7 +914,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    print(f'{project_name}_{timestamp} table created in {keyspace} keyspace')
+                    logger.info(f'{project_name}_{timestamp} table created in {keyspace} keyspace')
                     return redirect(url_for('index'))
 
                 elif databaseType == 'mongodb':
@@ -954,7 +938,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    print(f'{project_name}_{timestamp} collection created in {mongo_database} database')
+                    logger.info(f'{project_name}_{timestamp} collection created in {mongo_database} database')
                     return redirect(url_for('index'))
 
                 else:
@@ -1039,6 +1023,7 @@ def deleteProject(id):
         except Exception as ex:
             logger.info(str(ex))
             return render_template('500.html', exception=ex)
+
     else:
         logger.info('Login Needed')
         return redirect(url_for('login'))
@@ -1135,17 +1120,24 @@ def systemlogs(action):
 
 @app.route('/history/actions', methods=['GET'])
 def history():
-    if request.method == 'GET':
+    try:
         my_collection = mysql.fetch_all(f''' Select Name, Input,Output,ActionDate 
         from tblProject_Actions_Reports 
         Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id 
         where ProjectId ="{session['pid']}"''')
-        df=pd.DataFrame(np.array(my_collection),columns=['Action','Input','Output','DateTime'])
-        data=df.to_html()
-        return render_template('history/actions.html', data=data)
-    
-    
-@app.route('/custom-script', methods=['GET','POST'])
+
+        data = ""
+        if len(my_collection) > 0:
+            df = pd.DataFrame(np.array(my_collection), columns=['Action', 'Input', 'Output', 'DateTime'])
+            data = df.to_html()
+        return render_template('history/actions.html', status="success", data=data)
+    except Exception as e:
+        logger.info(e)
+        ProjectReports.insert_record_dp(f'Error In History Page :{str(e)}')
+        return render_template('history/actions.html', status="error", msg=str(e))
+
+
+@app.route('/custom-script', methods=['GET', 'POST'])
 def custom_script():
     try:
         if 'loggedin' in session:
@@ -1154,18 +1146,18 @@ def custom_script():
                 logger.info('Redirect To Custom Script')
                 ProjectReports.insert_record_fe('Redirect To Custom Script')
                 data = df.head(1000).to_html()
-                if request.method=='GET':
-                    return render_template('custom-script.html',status="success",data=data)
+                if request.method == 'GET':
+                    return render_template('custom-script.html', status="success", data=data)
                 else:
-                    df=load_data()
+                    df = load_data()
                     code = request.form['code']
                     if code is not None:
                         exec(code)
                         update_data(df)
-                        ProjectReports.insert_project_action_report(ProjectActions.CUSTOM_SCRIPT.value,code)
+                        ProjectReports.insert_project_action_report(ProjectActions.CUSTOM_SCRIPT.value, code)
                         return redirect('/eda/show')
                     else:
-                        return render_template('custom-script.html',status="error", msg="Code snippets is not valid")
+                        return render_template('custom-script.html', status="error", msg="Code snippets is not valid")
             else:
                 return redirect(url_for('/'))
         else:
@@ -1173,7 +1165,7 @@ def custom_script():
     except Exception as e:
         logger.info(e)
         ProjectReports.insert_record_fe(f'Error In Custom Script: {str(e)}')
-        return render_template('custom-script.html',status="error", msg=str(e))
+        return render_template('custom-script.html', status="error", msg=str(e))
 
 
 @app.route('/scheduler/<action>', methods=['GET'])
@@ -1187,7 +1179,8 @@ def scheduler_get(action):
 
                 if action == 'Training_scheduler':
                     # To get the trained
-                    Model_Trained, model_name,TargetColumn, pid  = mysql.fetch_one(f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
+                    Model_Trained, model_name, TargetColumn, pid = mysql.fetch_one(
+                        f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
                     query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
                                 a.Model_Name ModelName, 
                                 b.Schedule_date, 
@@ -1197,17 +1190,17 @@ def scheduler_get(action):
                                 b.email, 
                                 b.deleted
                                 from tblProjects as a
-                                join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{pid}'
+                                join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{pid}' 
+                                and b.deleted=0
                                 """
                     result = mysql.fetch_one(query)
-                    print(result)
                     if Model_Trained == 0:
                         # Create Scheduler
                         if result is None:
                             return render_template('scheduler/add_new_scheduler.html',
-                                                action=action,
-                                                model_name=model_name,
-                                                target=session['target_column'])
+                                                   action=action,
+                                                   model_name=model_name,
+                                                   target=session['target_column'])
                         # Show created scheduler
                         if result is not None:
                             responseData = [{
@@ -1220,19 +1213,15 @@ def scheduler_get(action):
                                 "email_send": result[7]
                             }]
 
-                            # From here we have run our scheduler 
-                            # after scheduling set 1 in tbl projects 
-                            # then set 1 in tbl scheduler
                             return render_template('scheduler/Training_scheduler.html', action=action,
-                                                responseData=responseData)
-
+                                                   responseData=responseData)
                         else:
                             return "Error in card creation"
 
                     if Model_Trained == 1:
                         # Retrain for scheduler
                         if result is None:
-                            return "You have to Retrain your model to create a scheduler"
+                            return render_template('scheduler/retrain.html')
 
                         # Send email
                         if result is not None and result[6] == 1:
@@ -1242,14 +1231,15 @@ def scheduler_get(action):
                         return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)
 
                 if action == "add_scheduler":
-                    return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS, TIMEZONE=TIMEZONE)
-                
+                    return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS,
+                                           TIMEZONE=TIMEZONE)
+
                 if action == 'deleteScheduler':
-                    pid  = mysql.fetch_one(f"""select pid from tblProjects Where Id={session.get('pid')}""")
+                    pid = mysql.fetch_one(f"""select pid from tblProjects Where Id={session.get('pid')}""")
                     query = f'DELETE FROM tblProject_scheduler WHERE ProjectId = "{pid[0]}" '
                     mysql.delete_record(query)
                     print('Scheduled Process deleted')
-                    return redirect('/scheduler/Training_scheduler')          
+                    return redirect('/scheduler/Training_scheduler')
             else:
                 return "No data"
         else:
@@ -1264,7 +1254,8 @@ def scheduler_get(action):
 def scheduler_post(action):
     try:
         if 'loggedin' in session:
-            Model_Trained, model_name,TargetColumn, pid  = mysql.fetch_one(f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
+            Model_Trained, model_name, TargetColumn, pid = mysql.fetch_one(
+                f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
             if action == 'help':
                 return render_template('scheduler/help.html')
 
@@ -1276,11 +1267,9 @@ def scheduler_post(action):
                 query = f''' INSERT INTO tblProject_scheduler 
                              (ProjectId,Schedule_date,schedule_time,email,train_status,deleted)
                             values('{pid}','{date}','{time}','{email}' ,0,0) '''
-                
+
                 mysql.update_record(query)
                 return redirect('/scheduler/Training_scheduler')
-        
-
         else:
             return redirect(url_for('login'))
     except Exception as e:

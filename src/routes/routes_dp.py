@@ -176,7 +176,7 @@ def data_preprocessing_post(action):
                         result = EDA.z_score_outlier_detection(df.loc[:, [column]])
                         if len(result) > 0:
                             list_ = list(df[~df.loc[:, column].isnull()][column])
-                            graphJSON = PlotlyHelper.distplot(list_, column)
+                            graphJSON = PlotlyHelper.create_distplot(list_, column)
                         data = result.to_html()
 
                         outliers_list = EDA.outlier_detection(list(df.loc[:, column]), 'z-score')
@@ -265,7 +265,13 @@ def data_preprocessing_post(action):
                     values = request.form.getlist('columns')
                     selected_column = request.form['selected_column']
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
-                    df = df[~df[selected_column].isin(list(values))]
+                    list_=[]
+                    if df[selected_column].dtype=='float':
+                        list_=[float(da) for da in list(values)]
+                    else:
+                        list_=[int(da) for da in list(values)]
+                        
+                    df = df[~df[selected_column].isin(list_)]
                     df = update_data(df)
                     logger.info('Sending Data on Front End')
                     return render_template('dp/outliers.html', columns=columns, action="outlier", status="success")

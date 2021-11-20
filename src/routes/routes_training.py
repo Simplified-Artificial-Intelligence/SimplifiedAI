@@ -71,8 +71,26 @@ def model_training(action):
                                            target_column=session['target_column'])
 
                 elif action == 'custom_training' or action == 'final_train_model':
+                    query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
+                                                   a.Model_Name ModelName, 
+                                                   b.Schedule_date, 
+                                                   b.schedule_time ,
+                                                   a.Model_Trained, 
+                                                   b.train_status ,
+                                                   b.email, 
+                                                   b.deleted
+                                                   from tblProjects as a
+                                                   join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{session.get('project_name')}' 
+                                                   and b.deleted=0
+                                                   """
+                    result = mysql.fetch_one(query)
+
+                    if result is not None:
+                        return render_template('scheduler/training_blocker.html')
+
                     logger.info('Redirect To Custom Training Page')
                     ProjectReports.insert_record_ml('Redirect To Custom Training Page')
+
                     try:
                         if session['project_type'] == 2:
                             return render_template('model_training/classification.html', action=action,
@@ -424,6 +442,11 @@ def model_training_post(action):
                         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
                         render_template('model_training/model_result.html', action=action, status="error",
                                         msg="Model is not found, please train model again")
+
+                if action == "Scheduled_model":
+                    path = os.path.join(from_root(), 'artifacts', 'model_temp.pkl')
+                    pass
+
                 else:
                     return "Non Implemented Method"
         else:
