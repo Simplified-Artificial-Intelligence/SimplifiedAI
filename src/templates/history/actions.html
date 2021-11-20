@@ -1,110 +1,24 @@
 {% extends 'project_base.html' %}
 {% block content %}
-<style>
-        @import url(https://fonts.googleapis.com/css?family=Droid+Serif);
+<div class="table2">
+    <div class="jumbotron text-center jumbtron">
+        <h1>Model Actions</h1>
+        <p>Following is the list of all actions that are prformed on your data and same actions will be performed when you will make predictions</p> 
+      </div>
+      {{data | safe}}
+</div>
 
-        .table {
-            max-width: 100%;
-            background-color: transparent;
-            border-collapse: collapse;
-            border-spacing: 0;
-            font-family: 'Droid Serif', serif;
-        }
+<script>
+    $(document).ready(function() {
+    $('.dataframe').DataTable({
+        "sScrollX": "100%",
+        "bScrollCollapse": true,
+    });
+    jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
+} );
 
-        thead {
-	        	background: hsl(200, 50%, 60%);
-            border-bottom: 2px solid black;
-        }
-
-        .table {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .table th,
-        .table td {
-            padding: 15px;
-            line-height: 20px;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .table th {
-            font-weight: bold;
-        }
-
-        .table tfoot {
-            font-weight: bold;
-        }
-
-        .table thead th {
-            vertical-align: bottom;
-        }
-
-        .table tbody+tbody {
-            border-top: 2px solid #cccccc;
-        }
-
-        .table .table {
-            background-color: #ffffff;
-        }
-
-        .table-slim th,
-        .table-slim td {
-            padding: 4px 5px;
-        }
-
-        .table-border {
-            border: 1px solid #cccccc;
-            border-collapse: separate;
-            *border-collapse: collapse;
-            border-left: 0;
-            -webkit-border-radius: 0;
-            -moz-border-radius: 0;
-            border-radius: 0;
-        }
-
-        .table-border th,
-        .table-border td {
-            border: 1px solid #cccccc;
-        }
-
-        .table-zebra tbody>tr:nth-child(odd)>td,
-        .table-zebra tbody>tr:nth-child(odd)>th {
-            background: hsl(200, 50%, 80%);
-
-        }
-
-        .table-hover tbody tr:hover>td,
-        .table-hover tbody tr:hover>th {
-            background-color: #ecf0f1;
-            transition-property: background-color .2s linear 0s;
-            -moz-transition: background-color .2s linear 0s;
-            -webkit-transition: background-color .2s linear 0s;
-            -o-transition: background-color .2s linear 0s;
-        }
-    </style>
-
-    <table class="table table-zebra table-hover" style="margin-top: 58px">
-        <thead>
-            <tr>
-                <th>ProjectID</th>
-                <th>Name</th>
-                <th>Input</th>
-                <th>Output</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for Pid,Name,Input,Output,Date in my_collection %}
-            <tr>
-                <td>{{Pid}}</td>
-                <td>{{Name}}</td>
-                <td>{{Input}}</td>
-                <td>{{Output}}</td>
-                <td>{{Date}}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+$(document).ready(function() {
+    $('.js-example-basic-multiple').select2();
+});
+</script>
 {% endblock %}

@@ -195,7 +195,11 @@ def eda_post(action):
                         col_no = len(df) - 1
 
                     pie_graphJSON = PlotlyHelper.pieplot(
+<<<<<<< HEAD
                         df.sort_values(by='Total outliers', ascending=False).loc[:col_no, :], names='Features',
+=======
+                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df.columns)>10 else len(df.columns), :], names='Features',
+>>>>>>> af4b8ad57cda1904f463373441a05d305d862ce4
                         values='Total outliers', title='Top 10 Outliers')
 
                     data = df.to_html()

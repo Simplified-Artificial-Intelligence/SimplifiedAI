@@ -10,9 +10,9 @@
             <label for="pwd">Select Number of Records:</label>
             <div class="slidecontainer">
                 <div class="row">
-                    <input type="range" min="1" max="{{length}}" value="{{selectedCount}}" class="slider" id="range" name="range">
+                    <input type="range" min="1" max="2000" value="{{selectedCount}}" class="slider" id="range" name="range">
                 </div>
-                <p>Total Records:  {{length}}; Selected Records: <span id="demo"></span></p>
+                <p>Total Records:  {{length}}; Max Records To Show: <span id="demo"></span></p>
               </div>
         </div>
         <div class="row">
@@ -43,7 +43,9 @@
             </div>
       </form>
       <h3 class="result">Result</h3>
-      {{data | safe}}
+      <div style="overflow:auto;">
+        {{data | safe}}
+      </div>
 </div>
 <script>
     var slider = document.getElementById("range");
@@ -58,9 +60,11 @@
         $(document).ready(function() {
         $('.dataframe').DataTable({
             "sScrollX": "100%",
+            "sScrollXInner": "100%",
             "bScrollCollapse": true,
         });
-    } );
+        jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
+        });
 
     $(document).ready(function() {
         $('.js-example-basic-multiple').select2();

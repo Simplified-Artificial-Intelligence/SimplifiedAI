@@ -5,6 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.metrics import recall_score, precision_score, accuracy_score, f1_score
+from sklearn.metrics import classification_report
 from src.utils.common.common_helper import read_config
 from loguru import logger
 import os
@@ -17,7 +18,7 @@ logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {m
 
 
 class ModelTrain_Classification:
-    def __init__(self, X_train, X_test, y_train, y_test, start: bool):
+    def _init_(self, X_train, X_test, y_train, y_test, start: bool):
         try:
             logger.info("Constructor Created!")
             self.frame = pd.DataFrame(columns=['Model_Name', 'Accuracy', 'Classes', 'Precision', 'Recall', 'F1_Score'])
@@ -45,9 +46,10 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred, average=None)
-        recall = recall_score(self.y_test, y_pred, average=None)
-        f1_score_ = f1_score(self.y_test, y_pred, average=None)
+        precision = precision_score(self.y_test, y_pred)
+        recall = recall_score(self.y_test, y_pred)
+        f1_score_ = f1_score(self.y_test, y_pred)
+        report = classification_report(self.y_test, y_pred)
         self.frame = self.frame.append(
             {'Model_Name': 'LogisticRegression', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
              'Precision': precision, 'Recall': recall,
@@ -58,9 +60,10 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred, average=None)
-        recall = recall_score(self.y_test, y_pred, average=None)
-        f1_score_ = f1_score(self.y_test, y_pred, average=None)
+        precision = precision_score(self.y_test, y_pred)
+        recall = recall_score(self.y_test, y_pred)
+        f1_score_ = f1_score(self.y_test, y_pred)
+        report = classification_report(self.y_test, y_pred)
         self.frame = self.frame.append(
             {'Model_Name': 'SVC', 'Accuracy': accuracy, 'Classes': self.y_test.unique(), 'Precision': precision,
              'Recall': recall,
@@ -71,9 +74,10 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred, average=None)
-        recall = recall_score(self.y_test, y_pred, average=None)
-        f1_score_ = f1_score(self.y_test, y_pred, average=None)
+        precision = precision_score(self.y_test, y_pred)
+        recall = recall_score(self.y_test, y_pred)
+        f1_score_ = f1_score(self.y_test, y_pred)
+        report = classification_report(self.y_test, y_pred)
         self.frame = self.frame.append(
             {'Model_Name': 'KNeighborsClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
              'Precision': precision, 'Recall': recall,
@@ -84,9 +88,10 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred, average=None)
-        recall = recall_score(self.y_test, y_pred, average=None)
-        f1_score_ = f1_score(self.y_test, y_pred, average=None)
+        precision = precision_score(self.y_test, y_pred)
+        recall = recall_score(self.y_test, y_pred)
+        f1_score_ = f1_score(self.y_test, y_pred)
+        report = classification_report(self.y_test, y_pred)
         self.frame = self.frame.append(
             {'Model_Name': 'DecisionTreeClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
              'Precision': precision, 'Recall': recall,
@@ -97,9 +102,10 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred, average=None)
-        recall = recall_score(self.y_test, y_pred, average=None)
-        f1_score_ = f1_score(self.y_test, y_pred, average=None)
+        precision = precision_score(self.y_test, y_pred)
+        recall = recall_score(self.y_test, y_pred)
+        f1_score_ = f1_score(self.y_test, y_pred)
+        report = classification_report(self.y_test, y_pred)
         self.frame = self.frame.append(
             {'Model_Name': 'RandomForestClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
              'Precision': precision, 'Recall': recall,
@@ -110,9 +116,10 @@ class ModelTrain_Classification:
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_test)
         accuracy = accuracy_score(self.y_test, y_pred)
-        precision = precision_score(self.y_test, y_pred, average=None)
-        recall = recall_score(self.y_test, y_pred, average=None)
-        f1_score_ = f1_score(self.y_test, y_pred, average=None)
+        precision = precision_score(self.y_test, y_pred)
+        recall = recall_score(self.y_test, y_pred)
+        f1_score_ = f1_score(self.y_test, y_pred)
+        report = classification_report(self.y_test, y_pred)
         self.frame = self.frame.append(
             {'Model_Name': 'GradientBoostingClassifier', 'Accuracy': accuracy, 'Classes': self.y_test.unique(),
              'Precision': precision, 'Recall': recall,

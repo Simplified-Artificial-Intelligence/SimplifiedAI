@@ -1,7 +1,7 @@
 import os
 from flask import session
 from pandas.core.tools.datetimes import Scalar
-from src.utils.common.common_helper import load_project_encdoing, load_project_model, load_project_scaler, read_config
+from src.utils.common.common_helper import load_project_encdoing, load_project_model, load_project_pca, load_project_scaler, read_config
 from loguru import logger
 from from_root import from_root
 from src.utils.databases.mysql_helper import MySqlHelper
@@ -56,7 +56,9 @@ def make_prediction(df):
                         df=scalar.transform(df)
                         df=pd.DataFrame(df,columns=columns)
                     elif action[0]=='PCA':
-                        pass
+                        pca=load_project_pca()
+                        df=pca.transform(df)
+                        
                 model=load_project_model()
                 result=model.predict(df)
                 df_org.insert(loc=0, column=session['target_column'], value=result)

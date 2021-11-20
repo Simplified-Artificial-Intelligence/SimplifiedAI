@@ -2,7 +2,7 @@ dir_structure:
   template_dir: src/templates
   static_dir: src/static
   upload_folder: src/temp_data_store
-  artifacts_dir: artifacts/models
+  artifacts_dir: artifacts
   eda_dir: src/eda
   fe_dir: src/feature_engineering
   model_dir: src/model
