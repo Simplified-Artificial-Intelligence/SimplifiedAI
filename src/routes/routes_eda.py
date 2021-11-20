@@ -1,5 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect, url_for
 from flask.wrappers import Response
+from loguru import logger
 from src.utils.common.data_helper import load_data
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
@@ -102,7 +103,8 @@ def eda(action):
             return redirect(url_for('/'))
     except Exception as e:
         ProjectReports.insert_record_eda(e)
-        print(e)
+        logger.error(e)
+        return render_template('500.html', exception=e)
 
 
 @app_eda.route('/eda/<action>', methods=['POST'])
@@ -264,6 +266,7 @@ def eda_post(action):
             return redirect(url_for('/'))
     except Exception as e:
         ProjectReports.insert_record_eda(e)
+        return render_template('500.html', exception=e)
 
 
 @app_eda.route('/x_y_columns', methods=['GET', 'POST'])
@@ -306,3 +309,4 @@ def x_y_columns():
             return redirect(url_for('/'))
     except Exception as e:
         ProjectReports.insert_record_eda(e)
+        return render_template('500.html', exception=e)

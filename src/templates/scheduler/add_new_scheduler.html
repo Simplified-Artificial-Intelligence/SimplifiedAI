@@ -21,11 +21,11 @@
 
                 <div class="date">
                   <label for="date">Date</label> 
-                  <input id="date" name="date" type="date">
+                  <input id="date" name="date" type="date" required>
               </div>
               <div class="date" style="position: absolute; right: 50px;">
                   <label for="time">Time</label> 
-                  <input id="time" name="time" type="time">
+                  <input id="time" name="time" type="time" required>
               </div>
 
               <!-- <div class="timezone">
@@ -39,17 +39,14 @@
                   </select>
               </div> -->
 
-                <div class="row margin-bottom-20 margin-top-20">
-                  <div class="col-sm-12 sol-md-12 col-lg-12">
-                    <label for="model_name"><b>Select Model Name:</b></label>
-                        <input type="text" name="model_name" id="model_name" value={{model_name}} disabled>
-                  </div>
-                </div>
-            
-                <div class="">
-                  <label for="target_col_name"><b>Target Column:</b></label>
-                  <input type="text" name="target_col_name" id="target_col_name" value="{{target}}" disabled>
-
+              <div class="row margin-bottom-20 margin-top-20">
+                <div class="col-sm-12 sol-md-12 col-lg-12">
+                  <label for="model_name"><b>Select Model Name:</b></label>
+                  <select class="form-control" name="model_name" id="model_name" required>
+                    {% for model_name in ALL_MODELS %}
+                      <option value={{model_name}}>{{model_name}}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </div>
           
@@ -69,7 +66,7 @@
             <div class="form__contact">
                 <div class="email">
                     <label for="email">Email</label> 
-                    <input placeholder="e.g. rb@email.com" name="email" id="email" type="email">
+                    <input placeholder="e.g. rb@email.com" name="email" id="email" type="email" required>
                 </div>
             </div>
         </div>

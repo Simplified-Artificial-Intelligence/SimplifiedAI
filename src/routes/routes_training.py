@@ -86,7 +86,7 @@ def model_training(action):
                         else:
                             return render_template('model_training/custom_training.html')
                     except Exception as e:
-                        print(e)
+                        logger.error(e)
                         return render_template('model_training/custom_training.html')
                 else:
                     return 'Non-Implemented Action'
@@ -97,6 +97,7 @@ def model_training(action):
     except Exception as e:
         logger.error('Error in Model Training')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+        return render_template('500.html', exception=e)
 
 
 @app_training.route('/model_training/<action>', methods=['POST'])
@@ -430,6 +431,7 @@ def model_training_post(action):
     except Exception as e:
         logger.error('Error in Model Training Submit')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+        return render_template('500.html', exception=e)
 
 
 @app_training.route('/congrats', methods=['GET', 'POST'])
@@ -458,6 +460,7 @@ def congrats():
     except Exception as e:
         logger.error('Error in Model Training Submit')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
+        return render_template('500.html', exception=e)
 
 
 @app_training.route('/prediction', methods=['GET', 'POST'])
@@ -492,7 +495,7 @@ def prediction():
     except Exception as e:
         logger.error('Error in Model Training Submit')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))
-        return redirect('/')
+        return render_template('500.html', exception=e)
 
 
 @app_training.route('/download_prediction', methods=['POST'])
@@ -501,5 +504,5 @@ def download_prediction():
         return load_prediction_result()
 
     except Exception as e:
-        print(e)
+        logger.error(e)
         return jsonify({'success': False})
