@@ -1,6 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, session, send_from_directory
 from werkzeug.wrappers import Response
 import re
+from scheduler.scheduler import data_updater
 from src.constants.constants import PROJECT_TYPES, ProjectActions
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
@@ -28,6 +29,10 @@ import pandas as pd
 import zipfile
 import pathlib
 import io
+import time
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
+
 
 # Yaml Config File
 config_args = read_config("./config.yaml")
@@ -44,6 +49,14 @@ port = config_args['secrets']['port']
 user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
+
+#Scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 # DataBase Initilazation
 logger.info('Initializing Databases')
