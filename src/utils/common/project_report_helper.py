@@ -5,7 +5,9 @@ from flask import session
 from src.utils.databases.mysql_helper import MySqlHelper
 from from_root import from_root
 import pandas as pd
-config_args = read_config("./config.yaml")
+
+path = os.path.join(from_root(), 'config.yaml')
+config_args = read_config(path)
 
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")

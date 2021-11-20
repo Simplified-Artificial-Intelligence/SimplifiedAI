@@ -82,9 +82,18 @@ def data_updater(path=os.path.join(from_root(),'src','data')):
     print(normal_data_path)
     print(backup_data_path)
 
-    for pid, data_path in zip(backup, backup_data_path):
-        print(upload_checkpoint(pid, data_path))
+    for pid, data_path in zip(normal, normal_data_path):
+        result = upload_checkpoint(pid, data_path)
+        print(result)
+        if result == 'SuccessFully Replaced':
+            os.remove(data_path)
+            print('Data removed from Data folder')
 
+
+    for pid, data_path in zip(backup, backup_data_path):
+        os.remove(data_path)
+        print('Backup Files Removed')
+    
 
 schedule.every(2).minutes.do(data_updater)
 
