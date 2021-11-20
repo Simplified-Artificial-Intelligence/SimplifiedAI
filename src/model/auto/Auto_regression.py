@@ -25,10 +25,7 @@ class ModelTrain_Regression:
             self.X_test = X_test
             self.y_train = y_train
             self.y_test = y_test
-        except Exception as e:
-            logger.error(f'{e} occurred during constructor creation in Auto Regression!')
-
-        try:
+            
             if start:
                 logger.info("Auto Regression training started!")
                 self.linear_regression_()

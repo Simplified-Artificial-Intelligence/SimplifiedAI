@@ -1058,6 +1058,8 @@ def stream(pid):
                 session['project_type'] = info[0]
                 if info[0] != 3:
                     session['target_column'] = info[1]
+                else:
+                    session['target_column']=None
 
             mongodb.get_collection_data(values[0])
             return redirect(url_for('module'))

@@ -8,7 +8,7 @@ from src.eda.eda_helper import EDA
 from pandas_profiling import ProfileReport
 from src.utils.databases.mysql_helper import MySqlHelper
 import plotly.figure_factory as ff
-from src.utils.common.common_helper import immutable_multi_dict_to_str, save_project_encdoing, save_project_scaler
+from src.utils.common.common_helper import immutable_multi_dict_to_str, save_project_encdoing, save_project_model, save_project_pca, save_project_scaler
 from src.utils.common.common_helper import read_config
 import os
 from loguru import logger
@@ -289,6 +289,7 @@ def feature_engineering_post(action):
                         df_=df.loc[:, columns]
                         no_pca_selected = request.form['range']
                         df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
+                        save_project_pca(evr_)
                         df_ = df_[:, :int(no_pca_selected)]
                         df_evr = pd.DataFrame()
                         data = pd.DataFrame(df_, columns=[f"Col_{col + 1}" for col in np.arange(0, df_.shape[1])])
