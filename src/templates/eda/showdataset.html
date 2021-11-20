@@ -38,7 +38,7 @@
                 </div>
             </div>
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-                <button type="submit" class="btn btn-default show-loader">Show Result</button>
+                <button type="submit" class="btn btn-default show-loader" id="submit">Show Result</button>
             </div>
             </div>
       </form>
@@ -58,9 +58,10 @@
     </script>
     <script>
         $(document).ready(function() {
+            $("#submit").on('click',()=>{
+                $("#loading").css('display', 'block');
+            })
         $('.dataframe').DataTable({
-            "sScrollX": "100%",
-            "sScrollXInner": "100%",
             "bScrollCollapse": true,
         });
         jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');

@@ -28,7 +28,7 @@ logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {m
 app_dp = Blueprint('dp', __name__)
 
 
-@app_dp.route('/dp/<action>')
+@app_dp.route('/dp/<action>', methods=['GET'])
 def data_preprocessing(action):
     try:
         if 'pid' in session and 'id' in session:
@@ -109,7 +109,7 @@ def data_preprocessing(action):
                 logger.critical('Data Frame is None')
 
         else:
-            return redirect(url_for('/'))
+            return redirect('/')
     except Exception as e:
         logger.error(e)
         return render_template('500.html', exception=e)

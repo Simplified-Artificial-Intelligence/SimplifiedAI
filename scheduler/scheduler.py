@@ -28,17 +28,20 @@ def delete_data_from_mongo(projectId=None):
 
 
 def upload_checkpoint(projectId=None, data_path=None):
-    data = pd.read_csv(data_path)
-    check, dataBase = delete_data_from_mongo(projectId)
-    if check == 'Deleted':
-        collection = dataBase[projectId]
-        collection.insert_many(data.to_dict('records'))
-        return 'SuccessFully Replaced'
-    elif check == 'Still present inside mongodb':
-        return 'Still present inside mongodb'
-    else:
-        print(check)
-        return 'unidentified Error'
+   try:
+        data = pd.read_csv(data_path)
+        check, dataBase = delete_data_from_mongo(projectId)
+        if check == 'Deleted':
+            collection = dataBase[projectId]
+            collection.insert_many(data.to_dict('records'))
+            return 'SuccessFully Replaced'
+        elif check == 'Still present inside mongodb':
+            return 'Still present inside mongodb'
+        else:
+            print(check)
+            return 'unidentified Error'
+   except e:
+       pass
 
 
 def get_user_details(projectId=None):
@@ -76,13 +79,18 @@ def file_path(path=None, backup=None, normal=None):
     return normal_data_path, backup_data_path
 
 
+    """
+    [Run Scheduler every day]
+    """
 def data_updater(path=os.path.join(from_root(),'src','data')):
+    print("scheduler initiated")
     backup, normal = get_names_from_files(path)
     normal_data_path, backup_data_path = file_path(path, backup, normal)
     print(normal_data_path)
     print(backup_data_path)
 
     for pid, data_path in zip(normal, normal_data_path):
+        print(f"Running for {pid}")
         result = upload_checkpoint(pid, data_path)
         print(result)
         if result == 'SuccessFully Replaced':
@@ -95,8 +103,4 @@ def data_updater(path=os.path.join(from_root(),'src','data')):
         print('Backup Files Removed')
     
 
-schedule.every(2).minutes.do(data_updater)
 
-while True:
-    schedule.run_pending()
-    time.sleep(1)
