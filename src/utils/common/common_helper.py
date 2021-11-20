@@ -84,6 +84,16 @@ def save_project_pca(pca):
     dump(pca, open(file_name, 'wb'))
 
 
+def load_project_pca():
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'), 'pca.pkl')
+    if os.path.exists(path):
+        with open(path, 'rb') as pickle_file:
+            model = pickle.load(pickle_file)
+        return model
+    else:
+        return None
+    
+
 def save_project_model(model, name='model_temp.pkl'):
     path = os.path.join(from_root(), 'artifacts', session.get('project_name'))
     if not os.path.exists(path):
@@ -122,15 +132,6 @@ def load_project_scaler():
     else:
         return None
 
-
-def load_project_pca():
-    path = os.path.join(from_root(), 'artifacts', session.get('project_name'), 'pca.pkl')
-    if os.path.exists(path):
-        with open(path, 'rb') as pickle_file:
-            model = pickle.load(pickle_file)
-        return model
-    else:
-        return None
 
 
 def save_prediction_result(df):

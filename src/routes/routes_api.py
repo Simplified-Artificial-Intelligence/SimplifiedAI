@@ -188,7 +188,12 @@ def fe_encoding():
 def fe_pca():
     try:
         df = load_data()
-        df_ = df.loc[:, df.columns != 'Label']
+        columns=df.columns
+        
+        if session['target_column']:
+            columns = [col for col in columns if col != session['target_column']]
+                            
+        df_=df.loc[:, columns]
         df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
         d = {'success': True}
 
@@ -215,6 +220,11 @@ def fe_script():
         df = load_data()
         d = {'success': True}
         code = request.json['code']
+        
+        ## Double quote is not allowed
+        if '"' in code:
+            return jsonify({'success': False,'error':"Double quote is not allowed"})
+        
         if code is not None:
             exec(code)
             data = df.head(1000).to_html()

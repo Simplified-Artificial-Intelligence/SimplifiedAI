@@ -57,7 +57,9 @@ def make_prediction(df):
                         df=pd.DataFrame(df,columns=columns)
                     elif action[0]=='PCA':
                         pca=load_project_pca()
+                        columns=df.columns
                         df=pca.transform(df)
+                        df=pd.DataFrame(df,columns=columns)
                         
                 model=load_project_model()
                 result=model.predict(df)

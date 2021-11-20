@@ -8,8 +8,8 @@ import os
 import time
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
-from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, ALL_MODELS, TIMEZONE
-from src.utils.common.data_helper import load_data, csv_to_json, to_tsv, csv_to_excel, update_data
+from src.constants.constants import ALL_MODELS, TIMEZONE
+from src.utils.common.data_helper import load_data, update_data
 from src.utils.common.cloud_helper import aws_s3_helper
 from src.utils.common.cloud_helper import gcp_browser_storage
 from src.utils.common.cloud_helper import azure_data_helper
@@ -23,7 +23,6 @@ from src.routes.routes_dp import app_dp
 from src.routes.routes_fe import app_fe
 from src.routes.routes_training import app_training
 from from_root import from_root
-import scheduler
 import numpy as np
 import pandas as pd
 import zipfile
@@ -1145,12 +1144,17 @@ def custom_script():
             if df is not None:
                 logger.info('Redirect To Custom Script')
                 ProjectReports.insert_record_fe('Redirect To Custom Script')
-                data = df.head(1000).to_html()
+                data = df.head(100).to_html()
                 if request.method == 'GET':
                     return render_template('custom-script.html', status="success", data=data)
                 else:
                     df = load_data()
                     code = request.form['code']
+                    
+                    ## Double quote is not allowed
+                    if '"' in code:
+                       return render_template('custom-script.html',status="error", msg="Double quote is not allowed")
+        
                     if code is not None:
                         exec(code)
                         update_data(df)
@@ -1163,7 +1167,7 @@ def custom_script():
         else:
             return redirect(url_for('login'))
     except Exception as e:
-        logger.info(e)
+        logger.error(e)
         ProjectReports.insert_record_fe(f'Error In Custom Script: {str(e)}')
         return render_template('custom-script.html', status="error", msg=str(e))
 
