@@ -87,7 +87,6 @@ def index():
             order by 1 desc'''
 
             projects = mysql.fetch_all(query)
-            print(projects)
             project_lists = []
 
             for project in projects:
