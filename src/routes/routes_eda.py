@@ -6,7 +6,7 @@ from src.utils.common.project_report_helper import ProjectReports
 import numpy as np
 from src.eda.eda_helper import EDA
 from pandas_profiling import ProfileReport
-from src.constants.constants import TWO_D_GRAPH_TYPES
+from src.constants.constants import TWO_D_GRAPH_TYPES, TWO_D_GRAPH_TYPES_2
 import plotly.figure_factory as ff
 import json
 import plotly
@@ -85,9 +85,14 @@ def eda(action):
                 elif action == "plots":
                     ProjectReports.insert_record_eda('Plots')
                     num_cols, cat_cols = get_numeric_categorical_columns(df)
+                    if len(cat_cols) == 0:
+                        graph_type_list = TWO_D_GRAPH_TYPES_2
+                    else:
+                        graph_type_list = TWO_D_GRAPH_TYPES
+
                     return render_template('eda/plots.html', columns=list(df.columns), x_list=list(df.columns),
                                            y_list=num_cols,
-                                           graphs_2d=TWO_D_GRAPH_TYPES, action=action, x_column="", y_column="")
+                                           graphs_2d=graph_type_list, action=action, x_column="", y_column="")
                 else:
                     return render_template('eda/help.html')
             else:
@@ -181,8 +186,14 @@ def eda_post(action):
                     ProjectReports.insert_record_eda('Redirect To Outlier', input=input_str)
 
                     graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
+
+                    if len(df) > 10:
+                        col_no = 10
+                    else:
+                        col_no = len(df) - 1
+
                     pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[:len(df), :], names='Features',
+                        df.sort_values(by='Total outliers', ascending=False).loc[:col_no, :], names='Features',
                         values='Total outliers', title='Top 10 Outliers')
 
                     data = df.to_html()
@@ -195,6 +206,11 @@ def eda_post(action):
 
                     input_str = immutable_multi_dict_to_str(request.form)
                     ProjectReports.insert_record_eda('Plot', input=input_str)
+                    num_cols, cat_cols = get_numeric_categorical_columns(df)
+                    if len(cat_cols) == 0:
+                        graph_type_list =  TWO_D_GRAPH_TYPES_2
+                    else:
+                        graph_type_list = TWO_D_GRAPH_TYPES
 
                     if selected_graph_type == "Scatter Plot":
                         x_column = request.form['xcolumn']
@@ -236,7 +252,7 @@ def eda_post(action):
                         graphJSON = PlotlyHelper.heatmap(df)
 
                     return render_template('eda/plots.html', selected_graph_type=selected_graph_type,
-                                           columns=list(df.columns), graphs_2d=TWO_D_GRAPH_TYPES,
+                                           columns=list(df.columns), graphs_2d=graph_type_list,
                                            action=action, graphJSON=graphJSON)
                 else:
                     return render_template('eda/help.html')
