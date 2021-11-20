@@ -1,4 +1,4 @@
-from flask import session
+from flask import session,redirect
 import pandas as pd
 import csv
 import json
@@ -36,6 +36,11 @@ def get_filename():
 def load_data():
     try:
         filename = get_filename()
+        
+        # if not os.path.exists(filename):
+        #     mongodb = MongoHelper()
+        #     mongodb.download_collection_data()
+        
         df = pd.read_csv(filename)
         logger.info(f"DataFrame loaded successfully!")
         return df

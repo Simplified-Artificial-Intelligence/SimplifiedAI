@@ -85,6 +85,16 @@ class PlotlyHelper:
             return graphJSON
         except Exception as e:
             logger.error(e)
+            
+    @staticmethod
+    def boxplot_single(df, x):
+        try:
+            fig = px.box(df, x=x)
+            graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            logger.info("BoxPlot Implemented!")
+            return graphJSON
+        except Exception as e:
+            logger.error(e)
 
     @staticmethod
     def distplot(df, x, y):

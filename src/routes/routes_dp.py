@@ -160,10 +160,18 @@ def data_preprocessing_post(action):
 
                 elif action == "outlier":
                     logger.info('Redirected to outlier POST API')
+                    
                     method = request.form['method']
                     column = request.form['columns']
+                    
                     lower = 25
-                    upper = 75
+                    upper=75
+                    if 'lower' in request.form:
+                        lower=int(request.form['lower'])
+                        
+                    if 'upper' in request.form:
+                        upper=int(request.form['upper'])
+                    
                     graphJSON = ""
                     pie_graphJSON = ""
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
@@ -173,9 +181,9 @@ def data_preprocessing_post(action):
                     if method == "iqr":
                         # lower = request.form['lower']
                         # upper = request.form['upper']
-                        result = EDA.outlier_detection_iqr(df.loc[:, [column]], int(lower), int(upper))
+                        result = EDA.outlier_detection_iqr(df.loc[:, [column]], lower, upper)
                         if len(result) > 0:
-                            graphJSON = PlotlyHelper.boxplot(df, column)
+                            graphJSON = PlotlyHelper.boxplot_single(df, column)
                         data = result.to_html()
 
                         outliers_list = EDA.outlier_detection(list(df.loc[:, column]), 'iqr')
@@ -200,6 +208,8 @@ def data_preprocessing_post(action):
                     return render_template('dp/outliers.html', columns=columns, method=method, selected_column=column,
                                            outliers_list=outliers_list, unique_outliers=unique_outliers,
                                            pie_graphJSON=pie_graphJSON,
+                                           lower=lower,
+                                           upper=upper,
                                            action=action, data=data,
                                            outliercount=result['Total outliers'][0] if len(
                                                result['Total outliers']) > 0 else 0,

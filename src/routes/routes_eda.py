@@ -98,7 +98,7 @@ def eda(action):
                 else:
                     return render_template('eda/help.html')
             else:
-                return 'Hello'
+                return redirect('/')
 
         else:
             return redirect(url_for('/'))

@@ -83,14 +83,6 @@ class MongoHelper:
                 df = pd.DataFrame(list(collection.find()))
                 end = time.time()
                 logger.info(f"All records deleted. Total time taken: {end - begin} seconds.")
-                if '_id' in df.columns:
-                    df = df.drop('_id', axis=1)
-
-                if 'Unnamed: 0' in df.columns:
-                    df = df.drop('Unnamed: 0', axis=1)
-
-                if 'index' in df.columns:
-                    df = df.drop('index', axis=1)
 
                 df.to_csv(path, index=False)
                 df.to_csv(backup_path, index=False)
