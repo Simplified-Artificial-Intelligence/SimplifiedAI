@@ -1,28 +1,9 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from from_root import from_root
-import os
-import zipfile
 
 
-# def zip_dir(paths):
-#     with zipfile.ZipFile('Files'+'.zip', "w", zipfile.ZIP_DEFLATED) as zip_file:
-#         for path in paths:
-#             zip_file.write(path)
-#
-#
-# def file_path(pid=None):
-#     paths = []
-#     path = os.path.join(from_root(), 'artifacts', pid)
-#     for file in os.listdir(path):
-#         paths.append(os.path.join(path, file))
-#     zip_dir(paths)
-#
-# file_path()
-
-
-def email_sender(receiver_email):
+def email_sender(receiver_email, logger):
     try:
         sender = "ketangangal98@gmail.com"
         my_password = 'dfdw yazr ckiy pjqu'
@@ -44,6 +25,4 @@ def email_sender(receiver_email):
         s.quit()
         return True
     except Exception as e:
-        return False
-
-email_sender('pankajmalhan30@gmail.com')
+        return e.__str__()
