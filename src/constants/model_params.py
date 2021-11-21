@@ -146,21 +146,21 @@ LogisticRegression_Params = [
     {"name": "l1_ratio", "type": "input", "values": 0.5, "dtype": "float", "accept_none": True}]
 
 SVC_Params = [
-    {"name": "C", "type": "input", "values": "1.0", "dtype": "float", "accept_none": False},
+    {"name": "C", "type": "input", "values": 1.0, "dtype": "float", "accept_none": False},
     {"name": "kernel", "type": "select", "values": ['rbf', 'poly', 'sigmoid', 'linear', 'precomputed'],
      "dtype": "string", "accept_none": False},
-    {"name": "degree", "type": "input", "values": "3", "dtype": "int", "accept_none": False},
-    {"name": "gamma", "type": "selet", "values": ["scale", "auto"], "dtype": "string", "accept_none": False},
-    {"name": "coef0", "type": "input", "values": "0.0", "dtype": "float", "accept_none": False},
+    {"name": "degree", "type": "input", "values": 3, "dtype": "int", "accept_none": False},
+    {"name": "gamma", "type": "select", "values": ["scale", "auto"], "dtype": "string", "accept_none": False},
+    {"name": "coef0", "type": "input", "values": 0.0, "dtype": "float", "accept_none": False},
     {"name": "shrinking", "type": "select", "values": [True, False], "dtype": "boolean", "accept_none": False},
     {"name": "probability", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False},
-    {"name": "tol", "type": "select", "values": "0.001", "dtype": "float", "accept_none": False},
-    {"name": "cache_size", "type": "input", "values": "200", "dtype": "float", "accept_none": False},
+    {"name": "tol", "type": "input", "values": 0.001, "dtype": "float", "accept_none": False},
+    {"name": "cache_size", "type": "input", "values": 200, "dtype": "float", "accept_none": False},
     {"name": "class_weight", "type": "select", "values": ['balanced'], "dtype": "string", "accept_none": True},
     {"name": "verbose", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False},
-    {"name": "max_iter", "type": "input", "values": "-1", "dtype": "int", "accept_none": False},
-    {"name": "break_ties", "type": "input", "values": [False, True], "dtype": "boolean", "accept_none": False},
-    {"name": "random_state", "type": "input", "values": "", "dtype": "int", "accept_none": True}]
+    {"name": "max_iter", "type": "input", "values": -1, "dtype": "int", "accept_none": False},
+    {"name": "break_ties", "type": "select", "values": [False, True], "dtype": "boolean", "accept_none": False},
+    {"name": "random_state", "type": "input", "values": 101, "dtype": "int", "accept_none": True}]
 
 KNeighborsClassifier_Params = [
     {"name": "n_neighbors", "type": "input", "values": 5, "dtype": "int", "accept_none": False},

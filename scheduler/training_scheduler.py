@@ -4,11 +4,11 @@ import pymongo
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
-from src.utils.common.project_report_helper import ProjectReports
 from src.utils.databases.mysql_helper import MySqlHelper
 import pandas as pd
 from from_root import from_root
 from emailSender.Sender import email_sender
+
 mysql = MySqlHelper.get_connection_obj()
 
 

@@ -67,6 +67,10 @@ def model_training(action):
                 elif action == 'auto_training':
                     logger.info('Redirect To Auto Training Page')
                     ProjectReports.insert_record_ml('Redirect To Auto Training Page')
+                    if session['project_type'] == 3:
+                        return render_template('model_training/auto_training.html', project_type=session['project_type'],
+                                           target_column=session['target_column'],status="error",msg="Auto Training is not available for Clustering!!!")
+                                                
                     return render_template('model_training/auto_training.html', project_type=session['project_type'],
                                            target_column=session['target_column'])
 
