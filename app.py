@@ -7,6 +7,7 @@ from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
 import time
+from scheduler.training_scheduler import check_schedule_model
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 from src.constants.constants import ALL_MODELS, TIMEZONE
@@ -33,7 +34,6 @@ import time
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
-
 # Yaml Config File
 config_args = read_config("./config.yaml")
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
@@ -50,13 +50,15 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
-#Scheduler
-# scheduler = BackgroundScheduler()
+# # Scheduler
+#scheduler = BackgroundScheduler()
 # scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
-# scheduler.start()
-
+#scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
+#scheduler.start()
+#
 # # Shut down the scheduler when exiting the app
-# atexit.register(lambda: scheduler.shutdown())
+#atexit.register(lambda: scheduler.shutdown())
+
 
 # DataBase Initilazation
 logger.info('Initializing Databases')
@@ -1113,7 +1115,7 @@ def stream(pid):
                 if info[0] != 3:
                     session['target_column'] = info[1]
                 else:
-                    session['target_column']=None
+                    session['target_column'] = None
 
             mongodb.get_collection_data(values[0])
             return redirect(url_for('module'))
@@ -1188,11 +1190,11 @@ def custom_script():
                 else:
                     df = load_data()
                     code = request.form['code']
-                    
+
                     ## Double quote is not allowed
                     if '"' in code:
-                       return render_template('custom-script.html',status="error", msg="Double quote is not allowed")
-        
+                        return render_template('custom-script.html', status="error", msg="Double quote is not allowed")
+
                     if code is not None:
                         exec(code)
                         update_data(df)

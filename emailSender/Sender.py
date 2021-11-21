@@ -1,6 +1,14 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from jinja2 import Environment, FileSystemLoader
+import os
+
+
+def template_loader(temp='email_template.html'):
+    env = Environment(
+        loader=FileSystemLoader('%s/' % os.path.dirname(__file__)))
+    return env.get_template(temp)
 
 
 def email_sender(receiver_email, logger):
@@ -14,8 +22,9 @@ def email_sender(receiver_email, logger):
         msg['From'] = sender
         msg['To'] = receiver
 
-        html = '<html><body><p>Hello, Your process has been completed please download the resouces!</p></body></html>'
-        part2 = MIMEText(html, 'html')
+        html = template_loader()
+
+        part2 = MIMEText(html.render(), 'html')
 
         msg.attach(part2)
         s = smtplib.SMTP_SSL('smtp.gmail.com')
@@ -25,4 +34,6 @@ def email_sender(receiver_email, logger):
         s.quit()
         return True
     except Exception as e:
-        return e.__str__()
+        return e
+
+print(email_sender('vishal170997@gmail.com',1))
