@@ -166,18 +166,24 @@ def fe_encoding():
 
         if session['target_column'] is not None:
             columns = list(df.columns[df.columns != session['target_column']])
+            
+        df=df.loc[:,columns]
 
         d = {'success': True}
-        df = df.loc[:, columns]
+        cat_data=Preprocessing.col_seperator(df,'Categorical_columns')
+        num_data=Preprocessing.col_seperator(df,'Numerical_columns')
+        
         if encoding_type == "Base N Encoder":
-            df, _ = FeatureEngineering.encodings(df, columns, encoding_type, base=request.json['base'])
+            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type, base=request.json['base'])
         elif encoding_type == "Target Encoder":
-            df, _ = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['target'])
+            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns,encoding_type, n_components=request.json['target'])
         elif encoding_type == "Hash Encoder":
             """This is remaining to handle"""
-            df, _ = FeatureEngineering.encodings(df, columns, encoding_type, n_components=request.json['hash'])
+            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns,encoding_type, n_components=request.json['hash'])
         else:
-            df, _ = FeatureEngineering.encodings(df, columns, encoding_type)
+            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns,encoding_type)
+            
+        df=pd.concat([df,num_data],axis=1)
         data = df.head(200).to_html()
         d['data'] = data
         return jsonify(d)

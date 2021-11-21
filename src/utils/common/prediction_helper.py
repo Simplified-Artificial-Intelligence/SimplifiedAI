@@ -45,13 +45,14 @@ def make_prediction(df):
                     elif action[0]=='Column Name Change':
                         df=FeatureEngineering.change_column_name(df,action[1],action[2])
                     elif action[0]=='Encdoing':
+                        cat_data=Preprocessing.col_seperator(df,'Categorical_columns')
+                        num_data=Preprocessing.col_seperator(df,'Numerical_columns')
+                        
                         encoder=load_project_encdoing()
-                        columns=action[1].split(",")
-                        df_=df.loc[:,columns]
-                        df_=encoder.transform(df_)
-                        df = Preprocessing.delete_col(df, columns)
-                        frames = [df, df_]
-                        df = pd.concat(frames,axis=1)
+                        # columns=action[1].split(",")
+                        # df_=df.loc[:,columns]
+                        df_=encoder.transform(cat_data)
+                        df=pd.concat([df_,num_data],axis=1)
                     elif action[0]=='Scalling':
                         scalar=load_project_scaler()
                         columns=df.columns

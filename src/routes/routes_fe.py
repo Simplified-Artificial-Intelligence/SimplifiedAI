@@ -248,25 +248,23 @@ def feature_engineering_post(action):
 
                         df_ = df.loc[:, columns]
                         encdoer_ = None
+                        cat_data=Preprocessing.col_seperator(df,'Categorical_columns')
+                        num_data=Preprocessing.col_seperator(df,'Numerical_columns')
 
-                        # columns = request.form.getlist('columns')
-                        d = {'success': True}
                         if encoding_type == "Base N Encoder":
-                            (df_, encdoer_) = FeatureEngineering.encodings(df_, columns, encoding_type,
+                            (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
                                                                            base=int(request.form['base']))
                         elif encoding_type == "Target Encoder":
-                            (df_, encdoer_) = FeatureEngineering.encodings(df_, columns, encoding_type,
+                            (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
                                                                            n_components=request.form['target'])
                         elif encoding_type == "Hash Encoder":
                             """This is remaining to handle"""
-                            (df_, encdoer_) = FeatureEngineering.encodings(df_, columns, encoding_type,
+                            (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
                                                                            n_components=int(request.form['hash']))
                         else:
-                            (df_, encdoer_) = FeatureEngineering.encodings(df_, columns, encoding_type)
+                            (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type)
 
-                        df = Preprocessing.delete_col(df, columns)
-                        frames = [df, df_]
-                        df = pd.concat(frames, axis=1)
+                        df=pd.concat([df_,num_data],axis=1)
                         df = update_data(df)
 
                         save_project_encdoing(encdoer_)
