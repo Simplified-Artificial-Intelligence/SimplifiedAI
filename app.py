@@ -89,6 +89,41 @@ def context_processor():
     return dict(loggedin=loggedin)
 
 
+@app.route('/contact', methods=['GET'], )
+def contact():
+    try:
+        developers = [{
+            'id': "two",
+            'name': 'Pankaj',
+            'src': 'dev1.jfif',
+            'desc': '',
+        }, {
+            'id': "three",
+            'name': 'Ketan',
+            'src': 'dev2.jfif',
+            'desc': '',
+        }, {
+            'id': "two",
+            'name': 'Vishal',
+            'src': 'dev3.jpg',
+            'desc': '',
+        }, {
+            'id': "three",
+            'name': 'Supreeth',
+            'src': 'dev1.jfif',
+            'desc': '',
+        }, {
+            'id': "two",
+            'name': 'Anshu',
+            'src': 'dev2.jfif',
+            'desc': '',
+        }]
+        return render_template('contact.html', developers=developers)
+    except Exception as e:
+        logger.error(e)
+        return render_template('500.html', exception=e)
+
+
 # Index Route
 @app.route('/', methods=['GET', 'POST'], )
 def index():
