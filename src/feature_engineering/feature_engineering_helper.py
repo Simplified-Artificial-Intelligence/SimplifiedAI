@@ -147,7 +147,12 @@ class FeatureEngineering:
                 onehot = ce.OneHotEncoder(cols=cols)
                 onehot_df = onehot.fit_transform(df)
                 logger.info("One Hot Encoder implemented!")
-                return onehot_df, onehot
+                
+                #  onehot_df=pd.get_dummies(df, cols, drop_first=True)
+                # logger.info("One Hot Encoder implemented!")
+                # return (onehot_df,None)  
+            
+                return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in One Hot Encoder!")
             raise Exception(e)
