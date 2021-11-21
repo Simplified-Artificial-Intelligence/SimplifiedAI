@@ -21,15 +21,16 @@
    </form>
 
     </div>
-    {{data | safe}}
+    <div style="overflow:auto;">
+        {{data | safe}}
+      </div>
     </div>
 </div>
 <script>
     $(document).ready(function() {
     $('.dataframe').DataTable({
-        "sScrollX": "100%",
-        "bScrollCollapse": true,
     });
+    jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
     $("#button_download").on('click',()=>{
         $("div.load-wrapper").css('display', 'none');
     })
