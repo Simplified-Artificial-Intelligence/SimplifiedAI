@@ -116,12 +116,12 @@ class MongoHelper:
         try:
             path = os.path.join(os.path.join('src', 'temp_data_store'), f"{project_id}.{file_type}")
             if check_file_presence(project_id)[0]:
-                print("File Exist!!")
+                logger.info("User File Exist!!")
                 df = check_file_presence(project_id)[1]
                 try:
                     df.drop(columns=['_id'], inplace=True)
                 except Exception as e:
-                    pass
+                    logger.info(e)
 
             else:
                 begin = time.time()
@@ -129,7 +129,7 @@ class MongoHelper:
                 df = pd.DataFrame(list(collection.find()))
                 end = time.time()
                 df.drop(columns=['_id'], inplace=True)
-                print(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
+                logger.info(f"Downloded {project_id} collection data from database. Total time taken: {end - begin} seconds.")
 
             if file_type == 'csv':
                 df.to_csv(path, index=False)
@@ -137,14 +137,14 @@ class MongoHelper:
                 df.to_csv(path, sep='\t', index=False)
             elif file_type == 'json':
                 df.to_json(path)
-                print(path)
+                logger.info(path)
             elif file_type == 'xlsx':
                 df.to_excel(path)
             download_status = 'Successful'
             return download_status, path
 
         except Exception as e:
-            print(e.__str__())
+            logger.info(e.__str__())
             download_status = "Unsuccessful"
             return download_status, path
 
