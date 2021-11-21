@@ -151,7 +151,8 @@ def model_training_post(action):
                     try:
                         model = request.form['model']
                         range = int(request.form['range'])
-                        random_state = int(request.form['random_state'])
+                        if model != "KNeighborsClassifier":
+                            random_state = int(request.form['random_state'])
                         logger.info('Submitted Custom Training Page')
                         ProjectReports.insert_record_ml('Submitted Custom Training Page',
                                                         f"Model:{model}; Range:{range}; Random_State: {random_state}")
@@ -164,7 +165,8 @@ def model_training_post(action):
                             X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(cleanedData=X,
                                                                                                    label=y,
                                                                                                    train_size=range / 100,
-                                                                                                   random_state=random_state)
+                                                                                                 random_state=random_state)
+
                             model_params = {}
                             if model == "LinearRegression":
                                 Model_Params = LinearRegression_Params
@@ -200,6 +202,7 @@ def model_training_post(action):
                                 Model_Params = SVC_Params
                                 train_model_fun = ClassificationModels.support_vector_classifier
                             elif model == "KNeighborsClassifier":
+                                print('here')
                                 Model_Params = KNeighborsClassifier_Params
                                 train_model_fun = ClassificationModels.k_neighbors_classifier
                             elif model == "DecisionTreeClassifier":
@@ -506,6 +509,7 @@ def congrats():
 
 @app_training.route('/prediction', methods=['GET', 'POST'])
 def prediction():
+    try:
         if 'pid' in session:
             file_path=""
             logger.info('Loaded Prediction Page')
@@ -567,8 +571,11 @@ def prediction():
                         os.remove(file_path)
         else:
             logger.error('Project id not found, redirect to home page')
-            ProjectReports.insert_record_ml('Project id not found, redirect to home page', '', '', 0, str(e))
+            ProjectReports.insert_record_ml('Project id not found, redirect to home page', '', '', 0, 'Error')
             return redirect('/')
+    except Exception as e:
+        logger.error(e)
+        return redirect('/')
 
 
 @app_training.route('/download_prediction', methods=['POST'])
