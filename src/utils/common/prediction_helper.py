@@ -29,6 +29,7 @@ def make_prediction(df):
                             Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id
                             where ProjectId={session['pid']}"""
             action_performed = mysql.fetch_all(query_)
+            print(action_performed)
             
             feature_columns=[col for col in df.columns if col!=session['target_column']]
             df=df.loc[:,feature_columns]

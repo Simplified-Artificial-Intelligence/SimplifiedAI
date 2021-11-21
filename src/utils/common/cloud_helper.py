@@ -38,10 +38,8 @@ class aws_s3_helper:
                 for obj in self.s3.Bucket(bucket_name).objects.all():
                     file_list.append(obj.key)
                 if file_name in file_list:
-                    logger.info("File found in S3 bucket!")
                     return "Successful"
                 else:
-                    logger.info("File not found in S3 bucket!")
                     return "File does not exist!!"
             else:
                 logger.info("S3 Bucket not found!")

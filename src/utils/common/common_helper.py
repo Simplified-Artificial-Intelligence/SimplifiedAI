@@ -184,8 +184,7 @@ def check_file_presence(project_id):
             return True, df
         elif re.findall(f"{project_id}.\w+", ",".join(os.listdir(path2))):
             file = (re.findall(f"{project_id}.\w+", ",".join(os.listdir(path2)))[0])
-            print(file)
-            print(os.path.join(path2, file))
+            logger.info(os.path.join(path2, file))
             if file.endswith('csv'):
                 print(os.path.join(path2, file))
                 df = pd.read_csv(os.path.join(path2, file))
@@ -202,5 +201,5 @@ def check_file_presence(project_id):
             return False, None
 
     except Exception as e:
-        print(e.__str__())
+        logger.info(e.__str__())
         return False, None
