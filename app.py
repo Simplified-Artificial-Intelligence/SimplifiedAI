@@ -1007,9 +1007,9 @@ def projectReport(id):
         if df is not None:
             df_counts = pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0)
             y = list(pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0).columns)[-1]
-            df_counts['Count']=df_counts[y]
-            graphJSON = PlotlyHelper.barplot(df_counts, x='Module Name', y=df_counts['Count'])
-            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names='Module Name', values=y, title='')
+            df_counts['Total Actions']=df_counts[y]
+            graphJSON = PlotlyHelper.barplot(df_counts, x='Module Name', y=df_counts['Total Actions'])
+            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names='Module Name', values='Total Actions', title='')
         return render_template('projectReport.html', data={"id": id, "moduleId": None}, records=records.to_html(),
                                projectStatus=projectStatus,graphJSON=graphJSON,pie_graphJSON=pie_graphJSON)
     else:

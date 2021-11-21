@@ -64,10 +64,6 @@ df['Tax']=df['base']*100+df['Year']*0.7
                 {{data | safe}}
               </div>
           </div>
-            <div style="overflow:auto;" id="result">
-                <h3>New Data:</h3>
-                <div id="data"></div>
-            </div>
             <h3 style="margin-top: 20px; margin-bottom: 20px;">Write Your Code Here:</h3>
             <textarea class="form-control terminal" id="code" rows="10" name="code" placeholder="def drop_label(df):
             df=df.drop(['Label','Frequency'],axis=1)
@@ -80,6 +76,10 @@ df['Tax']=df['base']*100+df['Year']*0.7
                 <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
                     <button type="submit" id="submit_btn"class="btn btn-success show-loader">Save Script Result</button>
                 </div>
+            </div>
+            <div style="overflow:auto;" id="result">
+                <h3>New Data:</h3>
+                <div id="data"></div>
             </div>
             </div>
       </form>
