@@ -8,6 +8,7 @@ from src.utils.databases.mysql_helper import MySqlHelper
 from src.preprocessing.preprocessing_helper import Preprocessing
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 import pandas as pd
+import numpy as np
 
 config_args = read_config("./config.yaml")
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
@@ -29,6 +30,7 @@ def make_prediction(df):
                             Join tblProjectActions on tblProject_Actions_Reports.ProjectActionId=tblProjectActions.Id
                             where ProjectId={session['pid']}"""
             action_performed = mysql.fetch_all(query_)
+            print(action_performed)
             
             feature_columns=[col for col in df.columns if col!=session['target_column']]
             df=df.loc[:,feature_columns]
@@ -58,8 +60,9 @@ def make_prediction(df):
                     elif action[0]=='PCA':
                         pca=load_project_pca()
                         columns=df.columns
-                        df=pca.transform(df)
-                        df=pd.DataFrame(df,columns=columns)
+                        df_=pca.transform(df)
+                        df_ = df_[:, :int(action[1])]
+                        df = pd.DataFrame(df_, columns=[f"Col_{col + 1}" for col in np.arange(0, df_.shape[1])])
                     elif action[0]=='Custom Script':
                         if action[1] is not None:
                             exec(action[1])
@@ -77,5 +80,5 @@ def make_prediction(df):
 
     except Exception as e:
         logger.info('Error in Prediction '+str(e))
-        raise e
+        raise Exception(e)
     

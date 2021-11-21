@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, send_from_directory
+from flask import Flask, redirect, url_for, render_template, request, session, send_from_directory, flash
 from werkzeug.wrappers import Response
 import re
 from scheduler.scheduler import data_updater
@@ -134,6 +134,8 @@ def project():
             else:
                 source_type = request.form['source_type']
                 f = None
+                ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json', 'xlsx']
+
                 if source_type == 'uploadFile':
                     name = request.form['project_name']
                     description = request.form['project_desc']
@@ -142,7 +144,6 @@ def project():
                     if len(request.files) > 0:
                         f = request.files['file']
 
-                    ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json']
                     message = ''
                     if not name.strip():
                         message = 'Please enter project name'
@@ -170,6 +171,8 @@ def project():
                         df = pd.read_csv(file_path, sep='\t')
                     elif file_path.endswith('.json'):
                         df = pd.read_json(file_path)
+                    elif file_path.endswith('.xlsx'):
+                        df = pd.read_excel(file_path)
                     else:
                         message = 'This file format is currently not supported'
                         logger.info(message)
@@ -187,6 +190,7 @@ def project():
 
                         rowcount = mysql.insert_record(query)
                         if rowcount > 0:
+                            flash("Success!!")
                             return redirect(url_for('index'))
                         else:
                             message = "Error while creating new Project"
@@ -202,6 +206,7 @@ def project():
                     description = request.form['project_desc']
                     resource_type = request.form['resource_type']
 
+
                     if not name.strip():
                         message = 'Please enter project name'
                         logger.info(message)
@@ -210,13 +215,17 @@ def project():
                         message = 'Please enter project description'
                         logger.info(message)
                         return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
-
+                        
                     if resource_type == "awsS3bucket":
                         region_name = request.form['region_name']
                         aws_access_key_id = request.form['aws_access_key_id']
                         aws_secret_access_key = request.form['aws_secret_access_key']
                         bucket_name = request.form['bucket_name']
                         file_name = request.form['file_name']
+                        if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                            message = 'This file format is not allowed, please select mentioned one'
+                            return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
+
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
                         aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
                         conn_msg = aws_s3.check_connection(bucket_name, file_name)
@@ -231,6 +240,10 @@ def project():
                         credentials_file = request.files['GCP_credentials_file']
                         bucket_name = request.form['bucket_name']
                         file_name = request.form['file_name']
+                        if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                            message = 'This file format is not allowed, please select mentioned one'
+                            return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
+                        
                         credentials_filename = secure_filename(credentials_file.filename)
                         credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
                         credentials_file.save(credentials_file_path)
@@ -313,6 +326,10 @@ def project():
                         azure_connection_string = request.form['azure_connection_string']
                         container_name = request.form['container_name']
                         file_name = request.form['file_name']
+                        if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+                            message = 'This file format is not allowed, please select mentioned one'
+                            return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
+
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
                         azure_helper = azure_data_helper(azure_connection_string)
                         conn_msg = azure_helper.check_connection(container_name, file_name)
@@ -338,11 +355,14 @@ def project():
                             df = pd.read_csv(file_path, sep='\t')
                         elif file_path.endswith('.json'):
                             df = pd.read_json(file_path)
+                        elif file_path.endswith('.xlsx'):
+                            df = pd.read_excel(file_path)
                         else:
                             msg = 'This file format is currently not supported'
                             logger.info(msg)
                             return render_template('new_project.html', msg=msg)
 
+                        print(df)
                         project_id = unique_id_generator()
                         inserted_rows = mongodb.create_new_project(project_id, df)
 
@@ -374,7 +394,7 @@ def project():
 
     except Exception as e:
         logger.error(e)
-        return render_template('new_project.html', msg=e.__str__())
+        return render_template('new_project.html', project_types=PROJECT_TYPES, msg=e.__str__())
 
 
 # Make Prediction Route
@@ -703,6 +723,7 @@ def exportFile(project_id, project_name):
 
             if fileType != "":
                 download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
+                logger.info(f'Temporary File Created!!, {project_name}.csv')
                 if download_status != "Successful":
                     render_template('exportFile.html',
                                     data={"project_name": project_name, "project_id": project_id},
@@ -710,18 +731,24 @@ def exportFile(project_id, project_name):
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
+                os.remove(file_path)
+                logger.info(f'Temporary File Deleted!!, {project_name}.csv')
                 logger.info('Exported to CSV Sucessful')
                 return Response(content.to_csv(index=False), mimetype="text/csv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
                 content = pd.read_csv(file_path)
+                os.remove(file_path)
+                logger.info(f'Temporary File Deleted!!, {project_name}.tsv')
                 logger.info('Exported to TSV Sucessful')
                 return Response(content.to_csv(sep='\t', index=False), mimetype="text/tsv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
             elif fileType == 'xlsx':
                 content = pd.read_csv(file_path)
+                os.remove(file_path)
+                logger.info(f'Temporary File Deleted!!, {project_name}.xlsx')
                 content.to_excel(os.path.join(app.config["UPLOAD_FOLDER"], f'{project_name}.xlsx'), index=False)
                 logger.info('Exported to XLSX Sucessful')
                 return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=f'{project_name}.xlsx',
@@ -729,9 +756,12 @@ def exportFile(project_id, project_name):
 
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
+                os.remove(file_path)
+                logger.info(f'Temporary File Deleted!!, {project_name}.json')
                 logger.info('Exported to JSON Sucessful')
                 return Response(content.to_json(), mimetype="text/json",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.json"})
+
             else:
                 return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
                                        msg="Select Any File Type!!")
@@ -762,26 +792,32 @@ def exportCloudDatabaseFile(project_name, project_id):
                     file_type = request.form['fileTypeAws']
 
                     aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
+                    logger.info("Validating User AWS S3 Credentials")
                     conn_msg = aws_s3.check_connection(bucket_name, 'none')
 
                     if conn_msg != 'File does not exist!!':
-                        logger.info(conn_msg)
+                        logger.info("AWS S3 Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("AWS S3 Connection Successful!!")
+                    logger.info("Looking For User File!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
                     if download_status != "Successful":
+                        logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+                    logger.info(f"Trying to push {project_name}.{file_type} File to AWS {bucket_name} bucket!!")
                     timestamp = round(time.time() * 1000)
                     upload_status = aws_s3.push_file_to_s3(bucket_name, file_path,
                                                            f'{project_name}_{timestamp}.{file_type}')
                     if upload_status != 'Successful':
+                        logger.info("Could'nt Upload The File To s3 Bucket!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to AWS S3 {bucket_name} bucket")
                     return redirect(url_for('index'))
 
                 elif cloudType == 'azureStorage':
@@ -792,23 +828,27 @@ def exportCloudDatabaseFile(project_name, project_id):
                     conn_msg = azure_helper.check_connection(container_name, 'none')
 
                     if conn_msg != 'File does not exist!!':
-                        logger.info(conn_msg)
+                        logger.info("AzureStorage Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
+
                     if download_status != "Successful":
+                        logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
                     timestamp = round(time.time() * 1000)
                     upload_status = azure_helper.upload_file(file_path, container_name,
                                                              f'{project_name}_{timestamp}.{file_type}')
+
                     if upload_status != 'Successful':
+                        logger.info("Could'nt Upload The File To Azure Container!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {container_name} container")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to Azure {container_name} container")
                     return redirect(url_for('index'))
 
                 elif cloudType == 'gcpStorage':
@@ -821,12 +861,13 @@ def exportCloudDatabaseFile(project_name, project_id):
                     gcp = gcp_browser_storage(credentials_file_path)
                     conn_msg = gcp.check_connection(bucket_name, 'none')
                     if conn_msg != 'File does not exist!!':
-                        logger.info(conn_msg)
+                        logger.info("GCPStorage Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
                     if download_status != "Successful":
+                        logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
@@ -835,10 +876,11 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                          bucket_name)
 
                     if upload_status != 'Successful':
+                        logger.info("Could'nt Upload The File To GCP Container!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to GCP Storage{bucket_name} bucket")
                     return redirect(url_for('index'))
 
                 else:

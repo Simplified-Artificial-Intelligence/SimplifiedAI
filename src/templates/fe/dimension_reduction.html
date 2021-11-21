@@ -68,7 +68,7 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                  <button type="submit" class="btn btn-danger">Save Result</button>
+                  <button type="submit" id="submit" class="btn btn-danger">Save Result</button>
                 </div>
               </div>
             </div>
@@ -78,6 +78,15 @@
 <script>
 
     $(document).ready(function() {
+
+        $("#check_pca").on('click',()=>{
+                  $("#loading").css('display', 'block');
+            })
+
+            $("#submit").on('click',()=>{
+                  $("#loading").css('display', 'block');
+            })
+
     $('.dataframe').DataTable();
     $("#form").hide()
     var slider = document.getElementById("range");
@@ -95,6 +104,7 @@
                 contentType:'application/json',
                 cache: false
         }).done(function(data) {
+            $("#loading").css('display', 'none');
            if(data.success){
             $("#form").show()
             var after_graph  = data?.graph
@@ -107,6 +117,7 @@
         })
         .fail(function(err) {
             // do stuff here
+            $("#loading").css('display', 'none');
         })
         .always(function(info) {
             // do stuff here

@@ -79,7 +79,7 @@ def feature_engineering(action):
                                                allowed_operation="not",
                                                columns=[], status="error",
                                                msg="You Already Performed Encoding. Don't do this again")
-                    return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,
+                    return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,status="success",
                                            columns=list(df.columns[df.dtypes == 'object']), action=action)
 
                 elif action == 'change-column-name':
@@ -107,7 +107,12 @@ def feature_engineering(action):
                                                    allowed_operation="not",
                                                    columns=[], status="error",
                                                    msg="You Already Performed Scaling. Don't do this again")
-                        print(df.info())
+                        columns=df.columns    
+                        if session['target_column']:
+                            columns = [col for col in columns if col != session['target_column']]
+                            
+                        df=df.loc[:,columns]
+                            
                         if len(df.columns[df.dtypes == 'category']) > 0 or len(df.columns[df.dtypes == 'object']) > 0:
                             return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,
                                                    allowed_operation="not",
@@ -118,6 +123,7 @@ def feature_engineering(action):
                                                columns=list(df.columns))
                     except Exception as e:
                         logger.error(e)
+                        raise Exception(e)
 
                 elif action == 'feature_selection':
 
@@ -147,7 +153,7 @@ def feature_engineering(action):
             else:
                 return 'No Data'
         else:
-            return redirect(url_for('/'))
+            return redirect('/')
     except Exception as e:
         logger.error(e)
         return render_template('500.html', exception=e)
@@ -207,8 +213,8 @@ def feature_engineering_post(action):
                         encoding_type = request.form['encoding_type']
                         columns = list(df.columns[df.dtypes == 'object'])
 
-                        if session['target_column']:
-                            columns = [col for col in columns if session['target_column']]
+                        if session['target_column'] is not None:
+                            columns = list(df.columns[df.columns != session['target_column']])
 
                         df_ = df.loc[:, columns]
                         encdoer_ = None
@@ -267,10 +273,9 @@ def feature_engineering_post(action):
                         save_project_scaler(scaler)
                         ProjectReports.insert_record_fe('Perform Scaling')
                         ProjectReports.insert_project_action_report(ProjectActions.SCALING.value)
+                        
+                        return redirect('/eda/show')
 
-                        return render_template('fe/scaling.html', status="success",
-                                               scaler_types=SUPPORTED_SCALING_TYPES,
-                                               columns=list(df.columns[df.dtypes != 'object']))
 
                     except:
                         return render_template('fe/scaling.html', status="error", scaler_types=SUPPORTED_SCALING_TYPES,
@@ -286,8 +291,10 @@ def feature_engineering_post(action):
                             
                         df_=df.loc[:, columns]
                         no_pca_selected = request.form['range']
-                        df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
-                        save_project_pca(evr_)
+                        df_, evr_,pca = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
+                        save_project_pca(pca)
+                        ProjectReports.insert_record_fe('Dimention Reduction')
+                        ProjectReports.insert_project_action_report(ProjectActions.PCA.value,no_pca_selected)
                         df_ = df_[:, :int(no_pca_selected)]
                         df_evr = pd.DataFrame()
                         data = pd.DataFrame(df_, columns=[f"Col_{col + 1}" for col in np.arange(0, df_.shape[1])])

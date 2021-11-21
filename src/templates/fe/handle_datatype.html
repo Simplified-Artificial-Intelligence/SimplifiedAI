@@ -61,7 +61,7 @@
                         </div>
                         <div class="modal-footer">
                           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                          <button type="submit" class="btn btn-danger">Change Data Type</button>
+                          <button type="submit" id="submit" class="btn btn-danger">Change Data Type</button>
                         </div>
                       </div>
                     </div>
@@ -70,6 +70,10 @@
 </div>
     <script>
         $(document).ready(function() {
+
+          $("#submit").on('click',()=>{
+                  $("#loading").css('display', 'block');
+            })
         $('.dataframe').DataTable({
             "sScrollX": "100%",
             "bScrollCollapse": true,

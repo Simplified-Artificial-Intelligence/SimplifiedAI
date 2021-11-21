@@ -273,6 +273,6 @@ class FeatureEngineering:
             model = PCA(n_components=comp)
             pca = model.fit_transform(data)
             logger.info("PCA implemented !")
-            return pca, np.cumsum(model.explained_variance_ratio_)
+            return pca, np.cumsum(model.explained_variance_ratio_),model
         except Exception as e:
             logger.error(f"{e} occurred in PCA!")

@@ -194,7 +194,7 @@ def fe_pca():
             columns = [col for col in columns if col != session['target_column']]
                             
         df_=df.loc[:, columns]
-        df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
+        df_, evr_,pca = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
         d = {'success': True}
 
         df_evr = pd.DataFrame()

@@ -22,14 +22,14 @@
         <h1>Model Actions</h1>
         <p>Following is the list of all actions that are prformed on your data and same actions will be performed when you will make predictions</p> 
       </div>
-      {{data | safe}}
+      <div style="overflow:auto;">
+        {{data | safe}}
+      </div>
 </div>
 
 <script>
     $(document).ready(function() {
     $('.dataframe').DataTable({
-        "sScrollX": "100%",
-        "bScrollCollapse": true,
     });
     jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
 } );

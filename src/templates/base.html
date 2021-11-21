@@ -57,6 +57,8 @@
      {% endif %}
   </div>
 </nav>
+<div class="loading" id="loading" style=" z-index: 1000;">
+</div>
 {% block content %}{% endblock %}
 
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
@@ -69,6 +71,7 @@
   });
 </script>
   <script>
+     $("#loading").css('display', 'none');
     $(".show-loader").click(function () {
       $("div.load-wrapper").css('display', 'block');
     });

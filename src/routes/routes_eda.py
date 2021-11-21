@@ -98,7 +98,7 @@ def eda(action):
                 else:
                     return render_template('eda/help.html')
             else:
-                return 'Hello'
+                return redirect('/')
 
         else:
             return redirect(url_for('/'))
@@ -198,6 +198,7 @@ def eda_post(action):
                     pie_graphJSON = PlotlyHelper.pieplot(
                         df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df.columns)>10 else len(df.columns), :], names='Features',
                         values='Total outliers', title='Top 10 Outliers')
+
 
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
