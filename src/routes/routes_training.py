@@ -58,6 +58,19 @@ def model_training(action):
         if 'pid' in session:
             df = load_data()
             if df is not None:
+                
+                target_column=""
+                if session['target_column'] is not None:
+                    target_column=session['target_column']
+                    
+                target_column =session['target_column']
+                cols_=[col for col in df.columns if col!=target_column]
+                #Check data contain any categorical independent features
+                Categorical_columns=Preprocessing.col_seperator(df.loc[:,cols_],"Categorical_columns")
+                if len(Categorical_columns.columns)>0:
+                        return render_template('model_training/auto_training.html', project_type=session['project_type'],
+                                           target_column=session['target_column'],status="error",msg="Data contain some categorical indepedent features, please perform encoding first")
+                        
                 """Check If Project type is Regression or Classificaion and target Columns is not Selected"""
                 if session['project_type'] != 3 and session['target_column'] is None:
                     return redirect('/target-column')
@@ -67,6 +80,7 @@ def model_training(action):
                 elif action == 'auto_training':
                     logger.info('Redirect To Auto Training Page')
                     ProjectReports.insert_record_ml('Redirect To Auto Training Page')
+                    
                     if session['project_type'] == 3:
                         return render_template('model_training/auto_training.html', project_type=session['project_type'],
                                            target_column=session['target_column'],status="error",msg="Auto Training is not available for Clustering!!!")
@@ -312,10 +326,10 @@ def model_training_post(action):
                         if target is None:
                             return redirect(url_for('/target-column'))
 
-                        data_len = len(df)
-                        data_len = 10000 if data_len > 10000 else int(len(df) * 0.9)
+                        # data_len = len(df)
+                        # data_len = 10000 if data_len > 10000 else int(len(df) * 0.9)
 
-                        df = df.sample(frac=1).loc[:data_len, :]
+                        # df = df.sample(frac=1).loc[:data_len, :]
                         trainer = None
                         X = df.drop(target, axis=1)
                         y = df[target]

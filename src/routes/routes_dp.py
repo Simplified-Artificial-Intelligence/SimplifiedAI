@@ -190,12 +190,10 @@ def data_preprocessing_post(action):
                         unique_outliers = np.unique(outliers_list)
                     else:
                         result = EDA.z_score_outlier_detection(df.loc[:, [column]])
-                        if len(result) > 0:
-                            list_ = list(df[~df.loc[:, column].isnull()][column])
-                            graphJSON = PlotlyHelper.create_distplot(list_, column)
                         data = result.to_html()
 
                         outliers_list = EDA.outlier_detection(list(df.loc[:, column]), 'z-score')
+                        graphJSON = PlotlyHelper.create_distplot([outliers_list], [column])
                         unique_outliers = np.unique(outliers_list)
 
                     df_outliers = pd.DataFrame(pd.Series(outliers_list).value_counts(), columns=['value']).reset_index(
