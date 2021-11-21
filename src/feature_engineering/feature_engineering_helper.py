@@ -5,7 +5,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, Po
 from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold, mutual_info_classif
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.decomposition import PCA
-#from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.tree import DecisionTreeClassifier
 from src.utils.common.common_helper import read_config
 from loguru import logger
@@ -80,42 +80,33 @@ class FeatureEngineering:
                 scaler = MinMaxScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("MinMax Scaler implemented!")
-                return scaled_data,scaler
-        except Exception as e:
-            logger.error(f"{e} occurred in Min Max Scaler!")
-        try:
+                return scaled_data, scaler
+
             if typ == 'Standard Scaler':
                 scaler = StandardScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Standard Scaler implemented!")
-                return scaled_data,scaler
-        except Exception as e:
-            logger.error(f"{e} occurred in Standard Scaler!")
-        try:
+                return scaled_data, scaler
+
             if typ == 'Robust Scaler':
                 scaler = RobustScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Robust Scaler implemented!")
-                return scaled_data,scaler
-        except Exception as e:
-            logger.error(f"{e} occurred in Robust Scaler")
-        try:
+                return scaled_data, scaler
+
             if typ == 'Power Transformer Scaler':
                 scaler = PowerTransformer(method='yeo-johnson')
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Power Transformer Scaler implemented!")
-                return scaled_data,scaler
-        except Exception as e:
-            logger.error(f"{e} occurred in Power Transformer Scaler!")
-        try:
+                return scaled_data, scaler
+
             if typ == 'Max Abs Scaler':
                 scaler = MaxAbsScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Max Abs Scaler implemented!")
-                return scaled_data,scaler
+                return scaled_data, scaler
         except Exception as e:
             logger.error(f"{e} occurred in Max Abs Scaler!")
-
 
     @staticmethod
     def encodings(df, cols, kind: str, **kwargs):
@@ -124,51 +115,38 @@ class FeatureEngineering:
                 label = ce.OrdinalEncoder(cols=cols, **kwargs)
                 label_df = label.fit_transform(df)
                 logger.info("Label/Ordinal Encoder implemented!")
-                return (label_df,label)
-        except Exception as e:
-            logger.error(f"{e} occurred in Label/Ordinal Encoder!")
-        try:
-            if kind == 'One Hot Encoder':
-                onehot = ce.OneHotEncoder(cols=cols)
-                onehot_df = onehot.fit_transform(df)
-                logger.info("One Hot Encoder implemented!")
-                return (onehot_df,onehot)
-        except Exception as e:
-            logger.error(f"{e} occurred in One Hot Encoder!")
-        try:
+                return (label_df, label)
+
+            # if kind == 'One Hot Encoder':
+            #     onehot = pd.get_dummies(df[cols], drop_first=True)
+            #     logger.info("One Hot Encoder implemented!")
+            #     return (onehot, onehot)
+
             if kind == 'Binary Encoder':
                 onehot = ce.BinaryEncoder(cols=cols, **kwargs)
                 onehot_df = onehot.fit_transform(df)
                 logger.info("Binary Encoder implemented!")
-                return (onehot_df,onehot)
-        except Exception as e:
-            logger.error(f"{e} occurred in Binary Encoder!")
-            
-        try:
+                return (onehot_df, onehot)
+
             if kind == 'Base N Encoder':
                 onehot = ce.BaseNEncoder(cols=cols)
                 onehot_df = onehot.fit_transform(df)
                 logger.info("Base N Encoder implemented !")
-                return (onehot_df,onehot)
-        except Exception as e:
-            logger.error(f"{e} occurred in Base N Encoder!")
-        try:
+                return (onehot_df, onehot)
+
             if kind == 'Hash Encoder':
                 hash_ = ce.HashingEncoder(cols=cols, **kwargs)
                 hash_df = hash_.fit_transform(df)
                 logger.info("Hash Encoder implemented!")
-                return (hash_df,hash_)
-        except Exception as e:
-            logger.error(f"{e} occurred in Hash Encoder!")
-        try:
+                return (hash_df, hash_)
+
             if kind == 'Target Encoder':
                 target = ce.TargetEncoder(cols=cols)
                 target_df = target.fit_transform(df, **kwargs)
                 logger.info("Target Encoder implemented!")
-                return (target_df,target)
+                return (target_df, target)
         except Exception as e:
             logger.error(f"{e} occurred in Target Encoder!")
-
 
     def handleDatetime(self, frame, cols):
         try:
@@ -204,22 +182,15 @@ class FeatureEngineering:
                 important_features['columns'] = features.columns
                 logger.info("SelectKBest implemented!")
                 return important_features.sort_values('scores', ascending=False)
-        except Exception as e:
-            logger.error(f"{e} occurred in SelectKBest!")
 
-        try:
             if typ == 'Find Constant Features':
                 # chi2 + anova test
                 vari_thr = VarianceThreshold(**kwargs)
                 imp = vari_thr.fit(features)
                 logger.info("Find Constant Features implemented!")
                 return features.columns[imp.get_support()]
-        except Exception as e:
-            logger.error(f"{e} occurred in Find Constant Features!")
 
-        try:
             if typ == 'Extra Trees Classifier':
-
                 best_features = ExtraTreesClassifier()
                 best_features.fit(features, target)
                 df = pd.DataFrame()
@@ -227,10 +198,7 @@ class FeatureEngineering:
                 df['Feature'] = features.columns
                 logger.info("Extra Trees Classifier implemented!")
                 return df.sort_values(by='Value', ascending=False)
-        except Exception as e:
-            logger.error(f"{e} occurred in Extra Trees Classifier!")
 
-        try:
             if typ == 'Extra Trees Regressor':
                 best_features = ExtraTreesRegressor()
                 best_features.fit(features, target)
@@ -238,10 +206,7 @@ class FeatureEngineering:
                 important_features['columns'] = features.columns
                 logger.info("Extra Trees Regressor implemented!")
                 return important_features.sort_values('scores', ascending=False)
-        except Exception as e:
-            logger.error(f"{e} occurred in Extra Trees Regressor")
 
-        try:
             if typ == 'Mutual Info Classification':
                 importances = mutual_info_classif(features, target)
                 df = pd.DataFrame()
@@ -254,10 +219,7 @@ class FeatureEngineering:
                 sfs.fit(features, target)
                 logger.info("Mutual Info Classification implemented!")
                 return list(features.columns[sfs.get_support()])
-        except Exception as e:
-            logger.error(f"{e} occurred in Mutual Info Classification!")
 
-        try:
             if typ == 'Backward Elimination':
                 dclas = DecisionTreeClassifier()
                 sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwargs)
@@ -273,6 +235,6 @@ class FeatureEngineering:
             model = PCA(n_components=comp)
             pca = model.fit_transform(data)
             logger.info("PCA implemented !")
-            return pca, np.cumsum(model.explained_variance_ratio_),model
+            return pca, np.cumsum(model.explained_variance_ratio_), model
         except Exception as e:
             logger.error(f"{e} occurred in PCA!")
