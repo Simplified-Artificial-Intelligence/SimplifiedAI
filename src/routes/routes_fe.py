@@ -16,7 +16,7 @@ from from_root import from_root
 import pandas as pd
 import numpy as np
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, ProjectActions, \
+from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, FEATURE_SELECTION_METHODS_CURSOR, FEATURE_SELECTION_METHODS_RGRESSOR, ProjectActions, \
     OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from pickle import dump, load
@@ -131,8 +131,36 @@ def feature_engineering(action):
 
                     logger.info('Redirect To Feature Secltion')
                     ProjectReports.insert_record_fe('Redirect To Feature Secltion')
+                    
+                    methods=[]    
+                    
+                    if session['project_type']==1:
+                        methods=FEATURE_SELECTION_METHODS_RGRESSOR
+                    elif session['project_type']==2:
+                        methods=FEATURE_SELECTION_METHODS_CLASSIFICATION
+                    elif session['project_type']==3:
+                        methods=FEATURE_SELECTION_METHODS_CURSOR
+                               
+                    elif session['target_column'] is None:
+                        return redirect('/target-column')
+                        
+                    target_column =session['target_column']
+                    cols_=[col for col in df.columns if col!=target_column]
+                    
+                    df=df.loc[:,cols_]
+                        
+                    if len(df.columns[df.dtypes == 'category']) > 0 or len(df.columns[df.dtypes == 'object']) > 0:
+                        return render_template('fe/feature_selection.html',
+                                                methods=methods,
+                                                status="error",
+                                                columns_len=df.shape[1] - 1,
+                                                msg="Feature Selection can't be performed at this point, data contain categorical data. Please perform encoding first")
+
+                    
+                        
                     return render_template('fe/feature_selection.html',
-                                           methods=FEATURE_SELECTION_METHODS_CLASSIFICATION,
+                                           methods=methods,
+                                           project_type=session['project_type'],
                                            columns_len=df.shape[1] - 1)
 
                 elif action == 'dimension_reduction':
