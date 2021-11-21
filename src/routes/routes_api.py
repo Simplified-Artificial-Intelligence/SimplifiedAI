@@ -83,7 +83,7 @@ def missing_data():
             before = {}
             after = {}
             list_ = list(df[~df.loc[:, selected_column].isnull()][selected_column])
-            before['graph'] = PlotlyHelper.distplot(list_, selected_column)
+            before['graph'] = PlotlyHelper.create_distplot([list_], [selected_column])
             before['skewness'] = Preprocessing.find_skewness(list_)
             before['kurtosis'] = Preprocessing.find_kurtosis(list_)
 
@@ -100,7 +100,7 @@ def missing_data():
 
             new_list = list(new_df.loc[:, selected_column])
 
-            after['graph'] = PlotlyHelper.distplot(new_list, selected_column)
+            after['graph'] = PlotlyHelper.create_distplot([new_list], [selected_column])
             after['skewness'] = Preprocessing.find_skewness(new_list)
             after['kurtosis'] = Preprocessing.find_kurtosis(new_list)
 

@@ -4,8 +4,13 @@
 <div class="table2">
     {% if status=="success" %}
     <div class="jumbotron text-center">
-        <h1>Make Predictions</h1>
-        <p>This Function helps you to Encode your data into Numerical Data for future training!</p>
+        <h1>Perform Encoding</h1>
+        <p>Encoding or continuization is the transformation of categorical variables to binary or numerical 
+            counterparts. An example is to treat male or female for gender as 1 or 0. Categorical variables
+             must be encoded in many modeling methods </p>
+        <div class="alert alert-success">
+            <strong>Note!</strong> You can perform Encoding Reduction only Once.
+        </div>
     </div>
     {% endif %}
     {% if status=="error" %}

@@ -164,6 +164,16 @@ def feature_engineering(action):
                                            columns_len=df.shape[1] - 1)
 
                 elif action == 'dimension_reduction':
+                    
+                    """ Check Encoding Already Performed or not"""
+                    query_ = f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=6"
+                    rows = mysql.fetch_all(query_)
+                    if len(rows) > 0:
+                        return render_template('fe/dimension_reduction.html',
+                                               columns=[], status="error",
+                                               not_allowed=True,
+                                               msg="You Already Performed Dimensionalty Reduction. Don't do this again")
+                        
                     columns = list(df.columns)
                     if session['target_column']:
                             columns = [col for col in columns if col != session['target_column']]
