@@ -1,5 +1,4 @@
 from flask import Blueprint, request, render_template, session, redirect, url_for
-from flask.wrappers import Response
 from src.utils.common.data_helper import load_data, update_data
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
@@ -14,7 +13,6 @@ import os
 from loguru import logger
 from from_root import from_root
 import pandas as pd
-import numpy as np
 from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, ProjectActions, \
     OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES

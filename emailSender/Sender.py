@@ -35,5 +35,3 @@ def email_sender(receiver_email, logger):
         return True
     except Exception as e:
         return e
-
-print(email_sender('vishal170997@gmail.com',1))
