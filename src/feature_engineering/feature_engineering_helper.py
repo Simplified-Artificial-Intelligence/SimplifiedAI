@@ -152,7 +152,7 @@ class FeatureEngineering:
                 # logger.info("One Hot Encoder implemented!")
                 # return (onehot_df,None)  
             
-                return (onehot_df,onehot)
+                return onehot_df, onehot
         except Exception as e:
             logger.error(f"{e} occurred in One Hot Encoder!")
             raise Exception(e)
@@ -173,7 +173,7 @@ class FeatureEngineering:
                 onehot_df = onehot.fit_transform(df)
                 logger.info("Base N Encoder implemented !")
 
-                return (onehot_df, onehot)
+                return onehot_df, onehot
         except Exception as e:
             logger.error(f"{e} occurred in Base N Encoder!")
             raise Exception(e)
@@ -185,7 +185,7 @@ class FeatureEngineering:
                 hash_df = hash_.fit_transform(df)
                 logger.info("Hash Encoder implemented!")
 
-                return (hash_df, hash_)
+                return hash_df, hash_
         except Exception as e:
             logger.error(f"{e} occurred in Hash Encoder!")
             raise Exception(e)
@@ -196,7 +196,7 @@ class FeatureEngineering:
                 target = ce.TargetEncoder(cols=cols)
                 target_df = target.fit_transform(df, **kwargs)
                 logger.info("Target Encoder implemented!")
-                return (target_df, target)
+                return target_df, target
         except Exception as e:
             logger.error(f"{e} occurred in Target Encoder!")
             raise Exception(e)

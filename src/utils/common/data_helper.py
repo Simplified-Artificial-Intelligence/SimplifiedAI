@@ -1,11 +1,9 @@
-from flask import session,redirect
+from flask import session
 import pandas as pd
 import csv
 import json
 import openpyxl
-
 from src.utils.databases.mongo_helper import MongoHelper
-
 import os
 from src.utils.common.common_helper import read_config
 from loguru import logger
@@ -36,11 +34,11 @@ def get_filename():
 def load_data():
     try:
         filename = get_filename()
-        
+
         # if not os.path.exists(filename):
         #     mongodb = MongoHelper()
         #     mongodb.download_collection_data()
-        
+
         df = pd.read_csv(filename)
         logger.info(f"DataFrame loaded successfully!")
         return df
@@ -156,20 +154,3 @@ def csv_to_excel(csv_file=None, excel_file=None):
 
     except Exception as e:
         logger.error(f"{e} occurred in Convert to Excel of Data Helper!")
-
-
-def check_file_presence(project_id):
-    try:
-        global file_path, download_status
-        if f'{project_id}.csv' not in os.listdir(os.path.join(os.getcwd(), 'src\data')):
-            download_status = mongodb.download_collection_data(project_id)
-            file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
-        elif f'{project_id}.csv' in os.listdir(os.path.join(os.getcwd(), 'src\data')):
-            download_status = 'Successful'
-            file_path = os.path.join(os.path.join(os.getcwd(), 'src\data'), f'{project_id}.csv')
-        return file_path, download_status
-
-    except Exception as e:
-        print(e.__str__())
-        download_status = "Unsuccessful"
-        return file_path, download_status

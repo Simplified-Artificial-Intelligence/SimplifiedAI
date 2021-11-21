@@ -1,45 +1,34 @@
-from flask import Blueprint, redirect, url_for, render_template, request, session, send_file
-from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, \
-    Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, \
-    GradientBoostRegressor_Params, Params_Mappings
+from flask import Blueprint, redirect, url_for, render_template, request, session
+from src.constants.model_params import Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, \
+    SVR_params, AdabootRegressor_Params, \
+    GradientBoostRegressor_Params
 from src.constants.model_params import KmeansClustering_Params, DbscanClustering_Params, AgglomerativeClustering_Params
 from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, \
     DecisionTreeClassifier_Params, RandomForestClassifier_Params, GradientBoostingClassifier_Params, \
     AdaBoostClassifier_Params
-from src.model.custom.classification_models import ClassificationModels
-from src.model.custom.regression_models import RegressionModels
-from src.model.custom.clustering_models import ClusteringModels
-from src.constants.constants import REGRESSION_MODELS, CLASSIFICATION_MODELS, CLUSTERING_MODELS
-import os
-from src.utils.common.common_helper import get_param_value, load_project_model, read_config, save_project_model
+from src.constants.constants import CLASSIFICATION_MODELS, CLUSTERING_MODELS
 from flask.json import jsonify
-from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Params_Mappings
-from src.model.auto.Auto_classification import ModelTrain_Classification
-from src.model.auto.Auto_regression import ModelTrain_Regression
+from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
-from werkzeug.wrappers import Response
-from io import BytesIO
-import re
 from src.preprocessing.preprocessing_helper import Preprocessing
 from src.constants.constants import REGRESSION_MODELS
 from src.utils.common.prediction_helper import make_prediction
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
-import time
-from src.utils.common.common_helper import decrypt, get_param_value, load_prediction_result, load_project_model, \
-    read_config, save_prediction_result, save_project_model, unique_id_generator, Hashing, encrypt
-from src.utils.databases.mongo_helper import MongoHelper
+from src.utils.common.common_helper import get_param_value, load_prediction_result, load_project_model, \
+    read_config, save_prediction_result, save_project_model
 import pandas as pd
-from src.utils.common.data_helper import load_data, update_data, get_filename, csv_to_json, to_tsv, csv_to_excel
+from src.utils.common.data_helper import load_data
 from src.model.auto.Auto_classification import ModelTrain_Classification
 from src.model.auto.Auto_regression import ModelTrain_Regression
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
 from loguru import logger
 from from_root import from_root
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, accuracy_score,precision_score,f1_score,recall_score
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, accuracy_score, precision_score, \
+    f1_score, recall_score
 from src.utils.common.project_report_helper import ProjectReports
 
 app_training = Blueprint('training', __name__)
@@ -58,19 +47,19 @@ def model_training(action):
         if 'pid' in session:
             df = load_data()
             if df is not None:
-                
-                target_column=""
+                target_column = ""
                 if session['target_column'] is not None:
-                    target_column=session['target_column']
-                    
-                target_column =session['target_column']
-                cols_=[col for col in df.columns if col!=target_column]
-                #Check data contain any categorical independent features
-                Categorical_columns=Preprocessing.col_seperator(df.loc[:,cols_],"Categorical_columns")
-                if len(Categorical_columns.columns)>0:
-                        return render_template('model_training/auto_training.html', project_type=session['project_type'],
-                                           target_column=session['target_column'],status="error",msg="Data contain some categorical indepedent features, please perform encoding first")
-                        
+                    target_column = session['target_column']
+
+                target_column = session['target_column']
+                cols_ = [col for col in df.columns if col != target_column]
+                # Check data contain any categorical independent features
+                Categorical_columns = Preprocessing.col_seperator(df.loc[:, cols_], "Categorical_columns")
+                if len(Categorical_columns.columns) > 0:
+                    return render_template('model_training/auto_training.html', project_type=session['project_type'],
+                                           target_column=session['target_column'], status="error",
+                                           msg="Data contain some categorical indepedent features, please perform encoding first")
+
                 """Check If Project type is Regression or Classificaion and target Columns is not Selected"""
                 if session['project_type'] != 3 and session['target_column'] is None:
                     return redirect('/target-column')
@@ -80,11 +69,13 @@ def model_training(action):
                 elif action == 'auto_training':
                     logger.info('Redirect To Auto Training Page')
                     ProjectReports.insert_record_ml('Redirect To Auto Training Page')
-                    
+
                     if session['project_type'] == 3:
-                        return render_template('model_training/auto_training.html', project_type=session['project_type'],
-                                           target_column=session['target_column'],status="error",msg="Auto Training is not available for Clustering!!!")
-                                                
+                        return render_template('model_training/auto_training.html',
+                                               project_type=session['project_type'],
+                                               target_column=session['target_column'], status="error",
+                                               msg="Auto Training is not available for Clustering!!!")
+
                     return render_template('model_training/auto_training.html', project_type=session['project_type'],
                                            target_column=session['target_column'])
 
@@ -151,8 +142,10 @@ def model_training_post(action):
                     try:
                         model = request.form['model']
                         range = int(request.form['range'])
-                        if model != "KNeighborsClassifier":
+
+                        if model != "KNeighborsClassifier" and model != "SVR":
                             random_state = int(request.form['random_state'])
+
                         logger.info('Submitted Custom Training Page')
                         ProjectReports.insert_record_ml('Submitted Custom Training Page',
                                                         f"Model:{model}; Range:{range}; Random_State: {random_state}")
@@ -165,7 +158,7 @@ def model_training_post(action):
                             X_train, X_test, y_train, y_test = FeatureEngineering.train_test_Split(cleanedData=X,
                                                                                                    label=y,
                                                                                                    train_size=range / 100,
-                                                                                                 random_state=random_state)
+                                                                                                   random_state=random_state)
 
                             model_params = {}
                             if model == "LinearRegression":
@@ -297,7 +290,9 @@ def model_training_post(action):
 
                             # Clustering
                             if trained_model is not None and session['project_type'] == 3:
-                                scores.append({"key": "Predicted Classes", "value": pd.DataFrame(data=y_pred,columns=['y_pred'])['y_pred'].unique()})
+                                scores.append({"key": "Predicted Classes",
+                                               "value": pd.DataFrame(data=y_pred, columns=['y_pred'])[
+                                                   'y_pred'].unique()})
 
                                 # Model Name Set in table while training
                                 query = f'''Update tblProjects Set Model_Name="{model}", Model_Trained=0 Where Id="{session.get('pid')}"'''
@@ -376,7 +371,8 @@ def model_training_post(action):
                             y = df[target]
                             model = load_project_model()
                             if model is None:
-                                return render_template('model_training/model_result.html', action=action, status="error",
+                                return render_template('model_training/model_result.html', action=action,
+                                                       status="error",
                                                        msg="Model is not found, please train model again")
                             else:
                                 model_params = {}
@@ -432,7 +428,8 @@ def model_training_post(action):
                             X = df
                             model = load_project_model()
                             if model is None:
-                                return render_template('model_training/model_result.html', action=action, status="error",
+                                return render_template('model_training/model_result.html', action=action,
+                                                       status="error",
                                                        msg="Model is not found, please train model again")
                             else:
                                 model_params = {}
@@ -511,33 +508,34 @@ def congrats():
 def prediction():
     try:
         if 'pid' in session:
-            file_path=""
+            file_path = ""
             logger.info('Loaded Prediction Page')
             ProjectReports.insert_record_ml('Loaded Prediction Page')
             if request.method == "GET":
                 is_trained = mysql.fetch_all(
                     f"SELECT * FROM tblProjects WHERE Id ={session.get('pid')} AND Model_Trained=1")
                 if is_trained is None:
-                    return render_template('model_training/prediction_page.html', status="error",msg="your model is not trained, please train model first")
+                    return render_template('model_training/prediction_page.html', status="error",
+                                           msg="your model is not trained, please train model first")
                 else:
                     return render_template('model_training/prediction_page.html', status="success")
             else:
                 try:
-                    
+
                     f = request.files['file']
                     ALLOWED_EXTENSIONS = ['csv', 'tsv', 'json']
-                    msg=""
+                    msg = ""
                     if len(request.files) == 0:
-                        msg='Please select a file to upload'
+                        msg = 'Please select a file to upload'
                     elif f.filename.strip() == '':
-                       msg='Please select a file to upload'
+                        msg = 'Please select a file to upload'
                     elif f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
-                        msg='This file format is not allowed, please select mentioned one'
-                        
+                        msg = 'This file format is not allowed, please select mentioned one'
+
                     if msg:
-                        logger.error(msg)                        
-                        return render_template('model_training/prediction_page.html', status="error",msg=msg)
-                    
+                        logger.error(msg)
+                        return render_template('model_training/prediction_page.html', status="error", msg=msg)
+
                     filename = secure_filename(f.filename)
                     file_path = os.path.join(config_args['dir_structure']['upload_folder'], filename)
                     f.save(file_path)
@@ -551,11 +549,11 @@ def prediction():
                     else:
                         msg = 'This file format is currently not supported'
                         logger.info(msg)
-                        return render_template('model_training/prediction_page.html', status="error",msg=msg)
-                    
+                        return render_template('model_training/prediction_page.html', status="error", msg=msg)
+
                     prediction = make_prediction(df)
                     data = prediction.to_html()
-                    
+
                     if len(data) > 0:
                         save_prediction_result(prediction)
                         return render_template('model_training/prediction_result.html', status="success", data=data)

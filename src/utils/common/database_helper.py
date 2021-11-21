@@ -121,9 +121,7 @@ class mysql_data_helper:
                 logger.error(f"{table_name} table does not exist!")
                 return "table does not exist!!"
 
-
         except Exception as e:
-
             if 'Unknown database' in e.__str__():
                 logger.error(f"{self.database} database not found!")
                 return f"{self.database} database not found!"
@@ -223,7 +221,6 @@ class cassandra_connector:
             logger.info(f"Dataframe created from {table_name} table!")
             session.shutdown()
             logger.info("Cassandra session closed")
-            print("Cassandra session closed")
             dataframe.to_csv(download_path, index=False)
             logger.info(f"Dataframe pushed to {download_path}!")
             return 'Successful'
@@ -245,7 +242,6 @@ class cassandra_connector:
             logger.info(f"Dataframe retrived from Cassandra DB!")
             session.shutdown()
             logger.info("Cassandra session closed")
-            print("Cassandra session closed")
             return 'Successful'
 
         except Exception as e:
@@ -271,7 +267,6 @@ class cassandra_connector:
                 return "table does not exist!!"
 
         except Exception as e:
-
             if 'AuthenticationFailed' in e.__str__():
                 logger.error(f"Incorrect Cassandra DB User or Password!!")
                 return "Given client_id or client_secret is invalid"

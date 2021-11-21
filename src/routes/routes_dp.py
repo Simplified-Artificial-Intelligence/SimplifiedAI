@@ -1,14 +1,9 @@
 from flask import Blueprint, request, render_template, session, redirect, url_for
-from flask.wrappers import Response
-from src.utils.common.data_helper import load_data,update_data
+from src.utils.common.data_helper import load_data, update_data
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
-import numpy as np
 from src.eda.eda_helper import EDA
-from pandas_profiling import ProfileReport
-from src.constants.constants import TWO_D_GRAPH_TYPES, ProjectActions
-import plotly.figure_factory as ff
-from src.utils.common.common_helper import immutable_multi_dict_to_str
+from src.constants.constants import ProjectActions
 from src.utils.common.common_helper import read_config
 import os
 from loguru import logger
@@ -16,14 +11,12 @@ from from_root import from_root
 import pandas as pd
 import numpy as np
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, NUMERIC_MISSING_HANDLER, \
-    OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES
+from src.constants.constants import NUMERIC_MISSING_HANDLER, OBJECT_MISSING_HANDLER
 
 config_args = read_config("./config.yaml")
 
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
-
 
 app_dp = Blueprint('dp', __name__)
 
@@ -36,7 +29,7 @@ def data_preprocessing(action):
             if df is not None:
                 if action == "delete-columns":
                     col_lst = list(df.columns)
-                    if session['target_column'] != None:
+                    if session['target_column'] is not None:
                         col_lst.remove(session['target_column'])
                     logger.info('Redirect To Delete Columns!')
                     ProjectReports.insert_record_dp('Redirect To Delete Columns!')
@@ -68,41 +61,41 @@ def data_preprocessing(action):
                     return redirect('/dp/outlier')
 
                 elif action == "imbalance-data":
-                    
+
                     logger.info('Redirect To Handle Imbalance Data!')
                     ProjectReports.insert_record_dp('Redirect To Handle Imbalance Data!')
-                    
+
                     if session['project_type'] == 2 and session['target_column'] is None:
                         return redirect('/target-column')
-                    
+
                     if session['project_type'] != 2:
                         return render_template('dp/handle_imbalance.html', error="This section only for classification")
-                    
-                    target_column =session['target_column']
-                    cols_=[col for col in df.columns if col!=target_column]
-                    
-                    #Check data contain any categorical independent features
-                    Categorical_columns=Preprocessing.col_seperator(df.loc[:,cols_],"Categorical_columns")
-                    if len(Categorical_columns.columns)>0:
+
+                    target_column = session['target_column']
+                    cols_ = [col for col in df.columns if col != target_column]
+
+                    # Check data contain any categorical independent features
+                    Categorical_columns = Preprocessing.col_seperator(df.loc[:, cols_], "Categorical_columns")
+                    if len(Categorical_columns.columns) > 0:
                         return render_template('dp/handle_imbalance.html', action=action, columns=list(df.columns),
                                                error="Data contain some categorical indepedent features, please perform encoding first")
-                    
+
                     df_counts = pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
                     y = list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
-                    df_counts['Count']=df_counts[y]
+                    df_counts['Count'] = df_counts[y]
                     graphJSON = PlotlyHelper.barplot(df_counts, x=target_column, y=df_counts['Count'])
                     pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=target_column, values=y, title='')
-                    data={}
-                    
-                    for (key, val) in zip(df_counts[target_column],df_counts['Count']):
-                        data[str(key)]=val
-                            
+                    data = {}
+
+                    for (key, val) in zip(df_counts[target_column], df_counts['Count']):
+                        data[str(key)] = val
+
                     columns = list(df.columns)
                     return render_template('dp/handle_imbalance.html',
-                            target_column=target_column, action=action,
-                            pie_graphJSON=pie_graphJSON, graphJSON=graphJSON,
-                            data=data,
-                            perform_action=True)
+                                           target_column=target_column, action=action,
+                                           pie_graphJSON=pie_graphJSON, graphJSON=graphJSON,
+                                           data=data,
+                                           perform_action=True)
                 else:
                     return render_template('eda/help.html')
             else:
@@ -124,7 +117,7 @@ def data_preprocessing_post(action):
                 if action == "delete-columns":
                     logger.info('Redirect To Delete Columns!')
                     columns = request.form.getlist('columns')
-                    ProjectReports.insert_project_action_report(ProjectActions.DELETE_COLUMN.value,",".join(columns))
+                    ProjectReports.insert_project_action_report(ProjectActions.DELETE_COLUMN.value, ",".join(columns))
                     df = Preprocessing.delete_col(df, columns)
                     df = update_data(df)
                     return render_template('dp/delete_columns.html', columns=list(df.columns), action=action,
@@ -160,18 +153,18 @@ def data_preprocessing_post(action):
 
                 elif action == "outlier":
                     logger.info('Redirected to outlier POST API')
-                    
+
                     method = request.form['method']
                     column = request.form['columns']
-                    
+
                     lower = 25
-                    upper=75
+                    upper = 75
                     if 'lower' in request.form:
-                        lower=int(request.form['lower'])
-                        
+                        lower = int(request.form['lower'])
+
                     if 'upper' in request.form:
-                        upper=int(request.form['upper'])
-                    
+                        upper = int(request.form['upper'])
+
                     graphJSON = ""
                     pie_graphJSON = ""
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
@@ -243,7 +236,7 @@ def data_preprocessing_post(action):
                         df = update_data(df)
                         success = True
                         columns = list(df.columns)
-                        #print(selected_column)
+                        # print(selected_column)
                         columns.remove(selected_column)
                         logger.info('Sending Data on Front End')
                         return render_template('dp/missing_values.html', columns=columns, action=action,
@@ -281,12 +274,12 @@ def data_preprocessing_post(action):
                     values = request.form.getlist('columns')
                     selected_column = request.form['selected_column']
                     columns = Preprocessing.col_seperator(df, 'Numerical_columns')
-                    list_=[]
-                    if df[selected_column].dtype=='float':
-                        list_=[float(da) for da in list(values)]
+                    list_ = []
+                    if df[selected_column].dtype == 'float':
+                        list_ = [float(da) for da in list(values)]
                     else:
-                        list_=[int(da) for da in list(values)]
-                        
+                        list_ = [int(da) for da in list(values)]
+
                     df = df[~df[selected_column].isin(list_)]
                     df = update_data(df)
                     logger.info('Sending Data on Front End')
@@ -300,39 +293,38 @@ def data_preprocessing_post(action):
                             method = request.form['method']
                             logger.info(f'{target_column} {method} {range}')
 
-                            class_dict=[]
-                            
+                            class_dict = []
+
                             for label in list(df[target_column].unique()):
-                                class_dict.append([label,int(request.form[str(label)])])
-                                
+                                class_dict.append([label, int(request.form[str(label)])])
+
                             if method == 'OS':
                                 new_df = Preprocessing.over_sample(df, target_column, class_dict)
                             elif method == 'US':
                                 new_df = Preprocessing.under_sample(df, target_column, class_dict)
                             else:
                                 new_df = Preprocessing.smote_technique(df, target_column, class_dict)
-                            
-                                                            
+
                             df = update_data(new_df)
-                            
-                            target_column =session['target_column']
+
+                            target_column = session['target_column']
                             df_counts = pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0)
                             y = list(pd.DataFrame(df.groupby(target_column).count()).reset_index(level=0).columns)[-1]
-                            df_counts['Count']=df_counts[y]
+                            df_counts['Count'] = df_counts[y]
                             graphJSON = PlotlyHelper.barplot(df_counts, x=target_column, y=df_counts['Count'])
                             pie_graphJSON = PlotlyHelper.pieplot(df_counts, names=target_column, values=y, title='')
-                            data={}
-                            
-                            for (key, val) in zip(df_counts[target_column],df_counts['Count']):
-                                data[str(key)]=val
-                                    
+                            data = {}
+
+                            for (key, val) in zip(df_counts[target_column], df_counts['Count']):
+                                data[str(key)] = val
+
                             columns = list(df.columns)
                             return render_template('dp/handle_imbalance.html',
-                                    target_column=target_column, action=action,
-                                    pie_graphJSON=pie_graphJSON, graphJSON=graphJSON,
-                                    data=data,success=True,
-                                    perform_action=True)
-                
+                                                   target_column=target_column, action=action,
+                                                   pie_graphJSON=pie_graphJSON, graphJSON=graphJSON,
+                                                   data=data, success=True,
+                                                   perform_action=True)
+
                         else:
                             logger.info('perform_action was not found on request form')
                             target_column = request.form['target_column']
@@ -352,7 +344,6 @@ def data_preprocessing_post(action):
                         return render_template('dp/handle_imbalance.html', action=action, columns=list(df.columns),
                                                error=str(e))
 
-
                 else:
                     return redirect('dp/help.html')
             else:
@@ -363,4 +354,3 @@ def data_preprocessing_post(action):
     except Exception as e:
         logger.error(e)
         return render_template('500.html', exception=e)
-

@@ -161,5 +161,4 @@ class MongoHelper:
             end = time.time()
             print(f"Dropped {collection_name} collection from database. Total time taken: {end - begin} seconds.")
         except Exception as e:
-            print(e)
-
+            logger.error(e)

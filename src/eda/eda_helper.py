@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-from math import floor
 from src.utils.common.common_helper import read_config
 from loguru import logger
 import os
 from from_root import from_root
+
 config_args = read_config("./config.yaml")
 
 """[summary]
@@ -106,8 +106,8 @@ class EDA:
     def find_mode(df3):
         try:
             for i in df3.columns:
-                mode=df3[i].mode()
-                yield mode[0] if len(mode)>0 else '-'
+                mode = df3[i].mode()
+                yield mode[0] if len(mode) > 0 else '-'
             logger.info("Find Mode Implemented!")
         except Exception as e:
             logger.error(f"{e} occurred in Find Mode!")
@@ -214,7 +214,7 @@ class EDA:
     @staticmethod
     def outlier_detection(data, kind: str):
         try:
-            data=pd.Series(data)
+            data = pd.Series(data)
             if kind == 'Box':
                 pass
             elif kind == 'z-score':

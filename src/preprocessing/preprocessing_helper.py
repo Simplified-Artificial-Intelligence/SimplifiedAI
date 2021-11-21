@@ -1,4 +1,3 @@
-from io import RawIOBase
 import pandas as pd
 import numpy as np
 import category_encoders as ce
@@ -11,6 +10,7 @@ from src.utils.common.common_helper import read_config
 from loguru import logger
 import os
 from from_root import from_root
+
 config_args = read_config("./config.yaml")
 
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
@@ -309,10 +309,10 @@ class Preprocessing:
             X = dataframe.drop(columns=[target_col])
             y = dataframe[target_col]
 
-            dict_={}
+            dict_ = {}
             for item in class_dict:
-                dict_[item[0]]=item[1]
-                
+                dict_[item[0]] = item[1]
+
             ns = NearMiss(dict_)
             X_resampled, y_resampled = ns.fit_resample(X, y)
 
@@ -328,10 +328,10 @@ class Preprocessing:
         try:
             X = dataframe.drop(columns=[target_col])
             y = dataframe[target_col]
-            
-            dict_={}
+
+            dict_ = {}
             for item in class_dict:
-                dict_[item[0]]=item[1]
+                dict_[item[0]] = item[1]
             ros = RandomOverSampler(dict_)
             X_resampled, y_resampled = ros.fit_resample(X, y)
 
@@ -348,10 +348,10 @@ class Preprocessing:
             X = dataframe.drop(columns=[target_col])
             y = dataframe[target_col]
 
-            dict_={}
+            dict_ = {}
             for item in class_dict:
-                dict_[item[0]]=item[1]
-                
+                dict_[item[0]] = item[1]
+
             sm = SMOTE(dict_)
             X_resampled, y_resampled = sm.fit_resample(X, y)
 
