@@ -69,7 +69,7 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                  <button type="submit" class="btn btn-danger">Save Result</button>
+                  <button type="submit" id="submit" class="btn btn-danger">Save Result</button>
                 </div>
               </div>
             </div>
@@ -78,6 +78,10 @@
 </div>
 <script>
     $(document).ready(function() {
+
+        $("#submit").on('click',()=>{
+                  $("#loading").css('display', 'block');
+            })
         $("#selectall").on('change',()=>{
             if($("#selectall").prop('checked')){
                 $('select.js-example-basic-multiple option').attr('selected', true).parent().trigger('change')

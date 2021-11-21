@@ -45,7 +45,7 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                      <button type="submit" class="btn btn-danger">Delete Columns</button>
+                      <button type="submit" id="submit" class="btn btn-danger">Delete Columns</button>
                     </div>
                   </div>
                 </div>
@@ -58,6 +58,10 @@ Plotly.newPlot('myDiv',  graphs);
 </script>
 <script>
    $(document).ready(function() {
+
+    $("#submit").on('click',()=>{
+                  $("#loading").css('display', 'block');
+    })
     $("#delete-btn").hide()  
     $('.js-example-basic-multiple').select2();
     $('#columns').change(function(e) {

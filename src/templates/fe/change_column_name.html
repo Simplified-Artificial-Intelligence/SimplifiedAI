@@ -55,7 +55,7 @@
                         </div>
                         <div class="modal-footer">
                           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                          <button type="submit" class="btn btn-danger disabled">Change Column Name</button>
+                          <button type="submit" id="submit_btn" class="btn btn-danger disabled">Change Column Name</button>
                         </div>
                       </div>
                     </div>
@@ -64,6 +64,11 @@
 </div>
     <script>
         $(document).ready(function() {
+
+          
+          $("#submit_btn").on('click',()=>{
+                  $("#loading").css('display', 'block');
+                })
             $("#column_name").on('change',()=>{
                if($("#column_name").val().trim()){
                    $("#btn-submit").attr("data-toggle","modal")

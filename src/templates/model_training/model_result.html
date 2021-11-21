@@ -77,7 +77,7 @@
           <h5>If you are ok with this result then train model on complete data</h5>
          <div class="row">
              <div class="col-md-4 col-lg-4 col-sm-12">
-                <button type="submit" name="load_parameters" id="load_parameters" class="add-field btn btn-warning px-2">
+                <button type="submit" id="submit" name="load_parameters" id="load_parameters" class="add-field btn btn-success px-2">
                     Train and Save this Model
                   </button>
              </div>
@@ -100,4 +100,12 @@
     {% endif %}
 </div>
 
+<script>
+  $(document).ready(function() {
+
+    $("#submit").on('click',()=>{
+            $("#loading").css('display', 'block');
+      })
+    })
+  </script>
 {% endblock %}

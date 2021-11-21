@@ -35,9 +35,11 @@
 </div>
 
 <script>
+  $(document).ready(()=>{
     $("#submit").on('click',()=>{
-      $("div.load-wrapper").css('display', 'block');
+      $("#loading").css('display', 'block');
     })
+  })
 </script>
 
 {% endblock %}

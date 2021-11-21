@@ -28,14 +28,17 @@ Returns:
 def fe_feature_selection():
     try:
         df = load_data()
-        df_ = df.loc[:, df.columns != 'Label']
+        df_ = df.loc[:, df.columns != session['target_column']]
         method = request.json['method']
         d = {'success': True}
 
         if method == "Find Constant Features":
             threshold = request.json['threshold']
-            high_variance_columns = FeatureEngineering.feature_selection(df_, 'Label', method,
+            high_variance_columns = FeatureEngineering.feature_selection(df_, session['target_column'], method,
                                                                          threshold=float(threshold))
+            if high_variance_columns is None:
+                high_variance_columns=[]
+                
             high_variance_columns = list(high_variance_columns)
             low_variance_columns = [col for col in df_.columns
                                     if col not in high_variance_columns]
@@ -43,7 +46,7 @@ def fe_feature_selection():
             d['low_variance_columns'] = list(low_variance_columns)
 
         elif method == "Mutual Info Classification" or method == "Extra Trees Classifier":
-            df_ = FeatureEngineering.feature_selection(df_, df.loc[:, 'Label'], method)
+            df_ = FeatureEngineering.feature_selection(df_, df.loc[:, session['target_column']], method)
             graph = PlotlyHelper.barplot(df_, 'Feature', 'Value')
             d['graph'] = graph
 
@@ -53,7 +56,7 @@ def fe_feature_selection():
 
         elif method == "Forward Selection" or method == "Backward Elimination":
             n_features_to_select = request.json['n_features_to_select']
-            columns = FeatureEngineering.feature_selection(df_, df.loc[:, 'Label'], method,
+            columns = FeatureEngineering.feature_selection(df_, df.loc[:, session['target_column']], method,
                                                            n_features_to_select=int(n_features_to_select))
             selected_columns = columns
             not_selected_columns = [col for col in df_.columns
@@ -65,7 +68,7 @@ def fe_feature_selection():
 
     except Exception as e:
         print(e)
-        return jsonify({'success': False})
+        return jsonify({'success': False,'msg':str(e)})
 
 
 # APIS
@@ -194,7 +197,7 @@ def fe_pca():
             columns = [col for col in columns if col != session['target_column']]
                             
         df_=df.loc[:, columns]
-        df_, evr_ = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
+        df_, evr_,pca = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
         d = {'success': True}
 
         df_evr = pd.DataFrame()

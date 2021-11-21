@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, send_from_directory
+from flask import Flask, redirect, url_for, render_template, request, session, send_from_directory, flash
 from werkzeug.wrappers import Response
 import re
 from scheduler.scheduler import data_updater
@@ -7,6 +7,7 @@ from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
 import time
+from scheduler.training_scheduler import check_schedule_model
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
 from src.constants.constants import ALL_MODELS, TIMEZONE
@@ -33,7 +34,6 @@ import time
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
-
 # Yaml Config File
 config_args = read_config("./config.yaml")
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
@@ -50,13 +50,15 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
-#Scheduler
-# scheduler = BackgroundScheduler()
+# # Scheduler
+#scheduler = BackgroundScheduler()
 # scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
-# scheduler.start()
-
+#scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
+#scheduler.start()
+#
 # # Shut down the scheduler when exiting the app
-# atexit.register(lambda: scheduler.shutdown())
+#atexit.register(lambda: scheduler.shutdown())
+
 
 # DataBase Initilazation
 logger.info('Initializing Databases')
@@ -223,6 +225,7 @@ def project():
 
                         rowcount = mysql.insert_record(query)
                         if rowcount > 0:
+                            flash("Success!!")
                             return redirect(url_for('index'))
                         else:
                             message = "Error while creating new Project"
@@ -755,6 +758,7 @@ def exportFile(project_id, project_name):
 
             if fileType != "":
                 download_status, file_path = mongodb.download_collection_data(project_id, 'csv')
+                logger.info(f'Temporary File Created!!, {project_name}.csv')
                 if download_status != "Successful":
                     render_template('exportFile.html',
                                     data={"project_name": project_name, "project_id": project_id},
@@ -762,18 +766,24 @@ def exportFile(project_id, project_name):
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
+                os.remove(file_path)
+                logger.info(f'Temporary File Deleted!!, {project_name}.csv')
                 logger.info('Exported to CSV Sucessful')
                 return Response(content.to_csv(index=False), mimetype="text/csv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.csv"})
 
             elif fileType == 'tsv':
                 content = pd.read_csv(file_path)
+                os.remove(file_path)
+                logger.info(f'Temporary File Deleted!!, {project_name}.tsv')
                 logger.info('Exported to TSV Sucessful')
                 return Response(content.to_csv(sep='\t', index=False), mimetype="text/tsv",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.tsv"})
 
             elif fileType == 'xlsx':
                 content = pd.read_csv(file_path)
+                os.remove(file_path)
+                logger.info(f'Temporary File Deleted!!, {project_name}.xlsx')
                 content.to_excel(os.path.join(app.config["UPLOAD_FOLDER"], f'{project_name}.xlsx'), index=False)
                 logger.info('Exported to XLSX Sucessful')
                 return send_from_directory(directory=app.config["UPLOAD_FOLDER"], path=f'{project_name}.xlsx',
@@ -781,9 +791,12 @@ def exportFile(project_id, project_name):
 
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
+                os.remove(file_path)
+                logger.info(f'Temporary File Deleted!!, {project_name}.json')
                 logger.info('Exported to JSON Sucessful')
                 return Response(content.to_json(), mimetype="text/json",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.json"})
+
             else:
                 return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
                                        msg="Select Any File Type!!")
@@ -814,26 +827,32 @@ def exportCloudDatabaseFile(project_name, project_id):
                     file_type = request.form['fileTypeAws']
 
                     aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
+                    logger.info("Validating User AWS S3 Credentials")
                     conn_msg = aws_s3.check_connection(bucket_name, 'none')
 
                     if conn_msg != 'File does not exist!!':
-                        logger.info(conn_msg)
+                        logger.info("AWS S3 Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("AWS S3 Connection Successful!!")
+                    logger.info("Looking For User File!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
                     if download_status != "Successful":
+                        logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+                    logger.info(f"Trying to push {project_name}.{file_type} File to AWS {bucket_name} bucket!!")
                     timestamp = round(time.time() * 1000)
                     upload_status = aws_s3.push_file_to_s3(bucket_name, file_path,
                                                            f'{project_name}_{timestamp}.{file_type}')
                     if upload_status != 'Successful':
+                        logger.info("Could'nt Upload The File To s3 Bucket!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to AWS S3 {bucket_name} bucket")
                     return redirect(url_for('index'))
 
                 elif cloudType == 'azureStorage':
@@ -844,25 +863,27 @@ def exportCloudDatabaseFile(project_name, project_id):
                     conn_msg = azure_helper.check_connection(container_name, 'none')
 
                     if conn_msg != 'File does not exist!!':
-                        logger.info(conn_msg)
+                        logger.info("AzureStorage Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
-                    print(download_status, file_path)
+
                     if download_status != "Successful":
+                        logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
                     timestamp = round(time.time() * 1000)
                     upload_status = azure_helper.upload_file(file_path, container_name,
                                                              f'{project_name}_{timestamp}.{file_type}')
-                    print(upload_status)
+
                     if upload_status != 'Successful':
+                        logger.info("Could'nt Upload The File To Azure Container!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {container_name} container")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to Azure {container_name} container")
                     return redirect(url_for('index'))
 
                 elif cloudType == 'gcpStorage':
@@ -875,12 +896,13 @@ def exportCloudDatabaseFile(project_name, project_id):
                     gcp = gcp_browser_storage(credentials_file_path)
                     conn_msg = gcp.check_connection(bucket_name, 'none')
                     if conn_msg != 'File does not exist!!':
-                        logger.info(conn_msg)
+                        logger.info("GCPStorage Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
                     if download_status != "Successful":
+                        logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
@@ -889,10 +911,11 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                          bucket_name)
 
                     if upload_status != 'Successful':
+                        logger.info("Could'nt Upload The File To GCP Container!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to {bucket_name} bucket")
+                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to GCP Storage{bucket_name} bucket")
                     return redirect(url_for('index'))
 
                 else:
@@ -1127,7 +1150,7 @@ def stream(pid):
                 if info[0] != 3:
                     session['target_column'] = info[1]
                 else:
-                    session['target_column']=None
+                    session['target_column'] = None
 
             mongodb.get_collection_data(values[0])
             return redirect(url_for('module'))
@@ -1202,11 +1225,11 @@ def custom_script():
                 else:
                     df = load_data()
                     code = request.form['code']
-                    
+
                     ## Double quote is not allowed
                     if '"' in code:
-                       return render_template('custom-script.html',status="error", msg="Double quote is not allowed")
-        
+                        return render_template('custom-script.html', status="error", msg="Double quote is not allowed")
+
                     if code is not None:
                         exec(code)
                         update_data(df)

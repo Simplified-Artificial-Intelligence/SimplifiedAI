@@ -4,11 +4,11 @@ import pymongo
 from src.model.custom.classification_models import ClassificationModels
 from src.model.custom.regression_models import RegressionModels
 from src.model.custom.clustering_models import ClusteringModels
-from src.utils.common.project_report_helper import ProjectReports
 from src.utils.databases.mysql_helper import MySqlHelper
 import pandas as pd
 from from_root import from_root
 from emailSender.Sender import email_sender
+
 mysql = MySqlHelper.get_connection_obj()
 
 
@@ -21,15 +21,17 @@ def load_model(pid):
 def load_data(pid):
     path = os.path.join(from_root(), 'src', 'data', pid + '.csv')
     if os.path.exists(path):
+        print('taking data from local')
         df = pd.read_csv(path)
         return df
     else:
+        print('fetching data ')
         CONNECTION_URL = f"mongodb+srv://vishal:123@auto-neuron.euorq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
         client = pymongo.MongoClient(CONNECTION_URL)
         dataBase = client["Auto-neuron"]
         collection = dataBase[pid]
         df = pd.DataFrame(list(collection.find()))
-        df.drop(['_id', 'index'], axis=1, inplace=True)
+        df.drop(['_id'], axis=1, inplace=True)
         return df
 
 
@@ -156,7 +158,7 @@ def check_schedule_model():
             print(process)
             train_model(model_name=process[2], target=process[1], pid=process[0])
             print('Training Done')
-            email_check = email_sender(process[7])
+            email_check = email_sender(process[7],1)
             if email_check:
                 mysql.update_record(f"""DELETE FROM tblProject_scheduler WHERE ProjectID = '{process[0]}'""")
                 print('Email sent Done')

@@ -2,13 +2,14 @@ import pandas as pd
 import category_encoders as ce
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, PowerTransformer, MaxAbsScaler
-from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold, mutual_info_classif
+from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold, mutual_info_classif,mutual_info_regression
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.decomposition import PCA
-#from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from src.utils.common.common_helper import read_config
 from loguru import logger
+from flask import session
 import os
 import numpy as np
 from from_root import from_root
@@ -41,7 +42,7 @@ class FeatureEngineering:
             return df
         except Exception as e:
             logger.error(f"{e} occurred in Remaining Columns!")
-            raise e
+            raise Exception (e)
 
     @staticmethod
     def change_data_type(df, column, type_):
@@ -61,7 +62,8 @@ class FeatureEngineering:
             return df
         except Exception as e:
             logger.error(f"{e} occurred in Change Datatype!")
-            raise e
+            raise Exception (e)
+
 
     @staticmethod
     def train_test_Split(cleanedData, label, train_size, random_state):
@@ -72,6 +74,8 @@ class FeatureEngineering:
             return X_train, X_test, y_train, y_test
         except Exception as e:
             logger.error(f"{e} occurred in Train Test Split!")
+            raise Exception (e)
+
 
     @staticmethod
     def scaler(data, typ):
@@ -83,6 +87,8 @@ class FeatureEngineering:
                 return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Min Max Scaler!")
+            raise Exception (e)
+
         try:
             if typ == 'Standard Scaler':
                 scaler = StandardScaler()
@@ -91,6 +97,8 @@ class FeatureEngineering:
                 return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Standard Scaler!")
+            raise Exception (e)
+
         try:
             if typ == 'Robust Scaler':
                 scaler = RobustScaler()
@@ -99,6 +107,8 @@ class FeatureEngineering:
                 return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Robust Scaler")
+            raise Exception (e)
+
         try:
             if typ == 'Power Transformer Scaler':
                 scaler = PowerTransformer(method='yeo-johnson')
@@ -107,6 +117,8 @@ class FeatureEngineering:
                 return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Power Transformer Scaler!")
+            raise Exception (e)
+
         try:
             if typ == 'Max Abs Scaler':
                 scaler = MaxAbsScaler()
@@ -115,6 +127,8 @@ class FeatureEngineering:
                 return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Max Abs Scaler!")
+            raise Exception (e)
+
 
 
     @staticmethod
@@ -127,6 +141,8 @@ class FeatureEngineering:
                 return (label_df,label)
         except Exception as e:
             logger.error(f"{e} occurred in Label/Ordinal Encoder!")
+            raise Exception (e)
+
         try:
             if kind == 'One Hot Encoder':
                 onehot = ce.OneHotEncoder(cols=cols)
@@ -135,6 +151,8 @@ class FeatureEngineering:
                 return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in One Hot Encoder!")
+            raise Exception (e)
+
         try:
             if kind == 'Binary Encoder':
                 onehot = ce.BinaryEncoder(cols=cols, **kwargs)
@@ -143,6 +161,8 @@ class FeatureEngineering:
                 return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in Binary Encoder!")
+            raise Exception (e)
+
             
         try:
             if kind == 'Base N Encoder':
@@ -152,6 +172,8 @@ class FeatureEngineering:
                 return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in Base N Encoder!")
+            raise Exception (e)
+
         try:
             if kind == 'Hash Encoder':
                 hash_ = ce.HashingEncoder(cols=cols, **kwargs)
@@ -160,6 +182,8 @@ class FeatureEngineering:
                 return (hash_df,hash_)
         except Exception as e:
             logger.error(f"{e} occurred in Hash Encoder!")
+            raise Exception (e)
+
         try:
             if kind == 'Target Encoder':
                 target = ce.TargetEncoder(cols=cols)
@@ -168,6 +192,8 @@ class FeatureEngineering:
                 return (target_df,target)
         except Exception as e:
             logger.error(f"{e} occurred in Target Encoder!")
+            raise Exception (e)
+
 
 
     def handleDatetime(self, frame, cols):
@@ -191,6 +217,8 @@ class FeatureEngineering:
             return frame
         except Exception as e:
             logger.error(f"{e} occurred in Handle Date-Time Encoder!")
+            raise Exception (e)
+
 
     @staticmethod
     def feature_selection(features, target, typ, dclas=None, **kwargs):
@@ -204,21 +232,15 @@ class FeatureEngineering:
                 important_features['columns'] = features.columns
                 logger.info("SelectKBest implemented!")
                 return important_features.sort_values('scores', ascending=False)
-        except Exception as e:
-            logger.error(f"{e} occurred in SelectKBest!")
 
-        try:
-            if typ == 'Find Constant Features':
+            elif typ == 'Find Constant Features':
                 # chi2 + anova test
                 vari_thr = VarianceThreshold(**kwargs)
                 imp = vari_thr.fit(features)
                 logger.info("Find Constant Features implemented!")
                 return features.columns[imp.get_support()]
-        except Exception as e:
-            logger.error(f"{e} occurred in Find Constant Features!")
-
-        try:
-            if typ == 'Extra Trees Classifier':
+            
+            elif typ == 'Extra Trees Classifier':
 
                 best_features = ExtraTreesClassifier()
                 best_features.fit(features, target)
@@ -227,45 +249,60 @@ class FeatureEngineering:
                 df['Feature'] = features.columns
                 logger.info("Extra Trees Classifier implemented!")
                 return df.sort_values(by='Value', ascending=False)
-        except Exception as e:
-            logger.error(f"{e} occurred in Extra Trees Classifier!")
-
-        try:
-            if typ == 'Extra Trees Regressor':
+            
+            elif typ == 'Extra Trees Regressor':
                 best_features = ExtraTreesRegressor()
                 best_features.fit(features, target)
                 important_features['score'] = best_features.feature_importances_
                 important_features['columns'] = features.columns
                 logger.info("Extra Trees Regressor implemented!")
                 return important_features.sort_values('scores', ascending=False)
-        except Exception as e:
-            logger.error(f"{e} occurred in Extra Trees Regressor")
-
-        try:
-            if typ == 'Mutual Info Classification':
+            
+            elif typ == 'Mutual Info Classification':
                 importances = mutual_info_classif(features, target)
                 df = pd.DataFrame()
+                df['Feature'] = features.columns
                 df['Value'] = importances
-                importance = mutual_info_classif(features, target)
+                return df.sort_values('Value', ascending=False)
+            
+            elif typ == 'Mutual Info Regressor':
+                importances = mutual_info_regression(features, target)
                 df = pd.DataFrame()
-                df['Value'] = importance
+                df['Feature'] = features.columns
+                df['Value'] = importances
+                return df.sort_values('Value', ascending=False)
 
-                sfs = SequentialFeatureSelector(dclas, scoring='balanced_accuracy', **kwargs)
-                sfs.fit(features, target)
-                logger.info("Mutual Info Classification implemented!")
-                return list(features.columns[sfs.get_support()])
-        except Exception as e:
-            logger.error(f"{e} occurred in Mutual Info Classification!")
-
-        try:
-            if typ == 'Backward Elimination':
-                dclas = DecisionTreeClassifier()
-                sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwargs)
-                sfs.fit(features, target)
-                logger.info("Backward Elimination implemented!")
-                return list(features.columns[sfs.get_support()])
+            elif typ == 'Backward Elimination':
+                if session['project_type']==2:
+                    dclas = DecisionTreeClassifier()
+                    sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='balanced_accuracy', **kwargs)
+                    sfs.fit(features, target)
+                    logger.info("Backward Elimination implemented!")
+                    return list(features.columns[sfs.get_support()])
+                else:
+                    dclas = DecisionTreeRegressor()
+                    sfs = SequentialFeatureSelector(dclas, direction='backward', scoring='neg_mean_absolute_error', **kwargs)
+                    sfs.fit(features, target)
+                    logger.info("Backward Elimination implemented!")
+                    return list(features.columns[sfs.get_support()])
+            
+            elif typ == 'Forward Selection':
+                if session['project_type']==2:          
+                    dclas = DecisionTreeClassifier()
+                    sfs = SequentialFeatureSelector(dclas, direction='forward', scoring='balanced_accuracy', **kwargs)
+                    sfs.fit(features, target)
+                    logger.info("Backward Elimination implemented!")
+                    return list(features.columns[sfs.get_support()])
+                else:
+                    dclas = DecisionTreeRegressor()
+                    sfs = SequentialFeatureSelector(dclas, direction='forward', scoring='neg_mean_absolute_error', **kwargs)
+                    sfs.fit(features, target)
+                    logger.info("Backward Elimination implemented!")
+                    return list(features.columns[sfs.get_support()])
         except Exception as e:
             logger.error(f"{e} occurred in Backward Elimination!")
+            raise Exception (e)
+
 
     @staticmethod
     def dimenstion_reduction(data, comp):
@@ -273,6 +310,8 @@ class FeatureEngineering:
             model = PCA(n_components=comp)
             pca = model.fit_transform(data)
             logger.info("PCA implemented !")
-            return pca, np.cumsum(model.explained_variance_ratio_)
+            return pca, np.cumsum(model.explained_variance_ratio_),model
         except Exception as e:
             logger.error(f"{e} occurred in PCA!")
+            raise Exception (e)
+
