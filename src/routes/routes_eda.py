@@ -1,7 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect, url_for
 from flask.wrappers import Response
 from loguru import logger
-from pandas.core.frame import DataFrame
 from src.utils.common.data_helper import load_data
 from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
@@ -16,6 +15,7 @@ from src.utils.common.common_helper import immutable_multi_dict_to_str, get_nume
 import os
 from from_root import from_root
 import pandas as pd
+
 app_eda = Blueprint('eda', __name__)
 
 
@@ -49,19 +49,19 @@ def eda(action):
                 elif action == "missing":
                     ProjectReports.insert_record_eda('Redirect To Missing Value')
                     df = EDA.missing_cells_table(df)
-                    
+
                     if df is not None:
 
                         graphJSON = PlotlyHelper.barplot(df, x='Column', y='Missing values')
                         pie_graphJSON = PlotlyHelper.pieplot(df, names='Column', values='Missing values',
-                                                            title='Missing Values')
+                                                             title='Missing Values')
 
                         data = df.drop('Column', axis=1)
                         data = data.to_html()
                         return render_template('eda/missing_values.html', action=action, data=data, barplot=graphJSON,
-                                            pieplot=pie_graphJSON,contain_missing=True)
+                                               pieplot=pie_graphJSON, contain_missing=True)
                     else:
-                        return render_template('eda/missing_values.html', action=action,contain_missing=False)
+                        return render_template('eda/missing_values.html', action=action, contain_missing=False)
 
                 elif action == "outlier":
                     ProjectReports.insert_record_eda('Redirect To Outlier')
@@ -196,9 +196,8 @@ def eda_post(action):
                         col_no = len(df) - 1
 
                     pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df.columns)>10 else len(df.columns), :], names='Features',
+                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df.columns) > 10 else len(df.columns), :], names='Features',
                         values='Total outliers', title='Top 10 Outliers')
-
 
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
@@ -212,7 +211,7 @@ def eda_post(action):
                     ProjectReports.insert_record_eda('Plot', input=input_str)
                     num_cols, cat_cols = get_numeric_categorical_columns(df)
                     if len(cat_cols) == 0:
-                        graph_type_list =  TWO_D_GRAPH_TYPES_2
+                        graph_type_list = TWO_D_GRAPH_TYPES_2
                     else:
                         graph_type_list = TWO_D_GRAPH_TYPES
 
@@ -222,24 +221,24 @@ def eda_post(action):
                         graphJSON = PlotlyHelper.scatterplot(df, x=x_column, y=y_column, title='Scatter Plot')
 
                     elif selected_graph_type == "Pie Chart":
-                                                
+
                         x_column = request.form['xcolumn']
-                        new_df=df.groupby(x_column).count()
-                        temp_df=pd.DataFrame()
-                        
-                        temp_df[x_column]=list(new_df.index)
-                        temp_df['Count']=list(new_df.iloc[:,0])
-                        
-                        graphJSON = PlotlyHelper.pieplot(temp_df, names=x_column, values='Count',title='Pie Chart')
+                        new_df = df.groupby(x_column).count()
+                        temp_df = pd.DataFrame()
+
+                        temp_df[x_column] = list(new_df.index)
+                        temp_df['Count'] = list(new_df.iloc[:, 0])
+
+                        graphJSON = PlotlyHelper.pieplot(temp_df, names=x_column, values='Count', title='Pie Chart')
 
                     elif selected_graph_type == "Bar Graph":
                         x_column = request.form['xcolumn']
-                        new_df=df.groupby(x_column).count()
-                        temp_df=pd.DataFrame()
-                        
-                        temp_df[x_column]=list(new_df.index)
-                        temp_df['Count']=list(new_df.iloc[:,0])
-                        
+                        new_df = df.groupby(x_column).count()
+                        temp_df = pd.DataFrame()
+
+                        temp_df[x_column] = list(new_df.index)
+                        temp_df['Count'] = list(new_df.iloc[:, 0])
+
                         graphJSON = PlotlyHelper.barplot(temp_df, x=x_column, y='Count')
 
                     elif selected_graph_type == "Histogram":
@@ -259,12 +258,12 @@ def eda_post(action):
                     elif selected_graph_type == "Dist Plot":
                         x_column = request.form['xcolumn']
                         y_column = request.form['ycolumn']
-                        hist_data=[]
-                        category_list=list(df[y_column].unique())
+                        hist_data = []
+                        category_list = list(df[y_column].unique())
                         for category in category_list:
-                          hist_data.append(list(df[df[y_column]==category][x_column]))
-                        
-                        graphJSON = PlotlyHelper.create_distplot(hist_data,category_list)
+                            hist_data.append(list(df[df[y_column] == category][x_column]))
+
+                        graphJSON = PlotlyHelper.create_distplot(hist_data, category_list)
 
                     elif selected_graph_type == "Heat Map":
                         graphJSON = PlotlyHelper.heatmap(df)

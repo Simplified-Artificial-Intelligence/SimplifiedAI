@@ -7,7 +7,6 @@ from src.model.custom.clustering_models import ClusteringModels
 from src.utils.databases.mysql_helper import MySqlHelper
 import pandas as pd
 from from_root import from_root
-from emailSender.Sender import email_sender
 
 mysql = MySqlHelper.get_connection_obj()
 
@@ -164,4 +163,3 @@ def check_schedule_model():
             #     print('Email sent Done')
 
     return 'Done'
-

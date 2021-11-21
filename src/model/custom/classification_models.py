@@ -22,7 +22,6 @@ class ClassificationModels:
         else:
             return model
 
-
     @staticmethod
     def support_vector_classifier(X_train, y_train, fit_model=False, **kwargs):
         model = SVC(**kwargs)
@@ -76,4 +75,3 @@ class ClassificationModels:
             return model
         else:
             return model
-

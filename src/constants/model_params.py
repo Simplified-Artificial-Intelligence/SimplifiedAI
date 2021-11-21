@@ -267,7 +267,7 @@ DbscanClustering_Params = [
 
 AgglomerativeClustering_Params = [
     {"name": "n_clusters", "type": "input", "values": 2, "dtype": "int", "accept_none": True},
-    {"name": "affinity", "type": "select", "values": ["euclidean"],"dtype": "string", "accept_none": False},
+    {"name": "affinity", "type": "select", "values": ["euclidean"], "dtype": "string", "accept_none": False},
     {"name": "compute_full_tree", "type": "select", "values": ["auto"], "dtype": "string", "accept_none": False},
     {"name": "linkage", "type": "select", "values": ["ward", "complete", "average", "single"], "dtype": "string",
      "accept_none": False},

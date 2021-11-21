@@ -7,7 +7,6 @@ from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
-import time
 from scheduler.training_scheduler import check_schedule_model
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
