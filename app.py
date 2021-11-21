@@ -1106,9 +1106,6 @@ def stream(pid):
             session['pid'] = values[1]
             session['project_name'] = values[0]
             query_ = f"Select ProjectType, TargetColumn from tblProjects  where id={session['pid']}"
-            project_logger = logger.add(sink=f"./logger/projectlogs/{values[0]}.log",
-                                        format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}",
-                                        level="INFO")
             info = mysql.fetch_one(query_)
             if info:
                 session['project_type'] = info[0]

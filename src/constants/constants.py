@@ -10,6 +10,13 @@ scaling_list = ["Standard Scaler", "Min Max Scaler", "Max Abs Scaler", "Robust S
 FEATURE_SELECTION_METHODS_CLASSIFICATION = ["Find Constant Features", "Mutual Info Classification",
                                             "Extra Trees Classifier", "Correlation", "Forward Selection",
                                             "Backward Elimination"]
+
+FEATURE_SELECTION_METHODS_RGRESSOR = ["Find Constant Features", "Mutual Info Regressor",
+                                            "Extra Trees Regressor", "Correlation", "Forward Selection",
+                                            "Backward Elimination"]
+
+FEATURE_SELECTION_METHODS_CURSOR = ["Find Constant Features", "Correlation"]
+
 dimension_reduction_list = ["PCA"]
 
 NUMERIC_MISSING_HANDLER = ['Mean', 'Median', 'Arbitrary Value', 'Interpolate']
