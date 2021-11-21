@@ -86,6 +86,11 @@ df['Tax']=df['base']*100+df['Year']*0.7
 </div>
 <script>
         $(document).ready(function() {
+
+            $("#submit_btn").on('click',()=>{
+                  $("#loading").css('display', 'block');
+            })
+
         $('.dataframe').DataTable({
             "bScrollCollapse": true,
         });
@@ -99,6 +104,7 @@ df['Tax']=df['base']*100+df['Year']*0.7
         if($("#code").val().trim()){
             var data={"code":$("#code").val()}
             $("div.load-wrapper").css('display', 'block');
+            $("#loading").css('display', 'block');
                 $.ajax({
                         type: "POST",
                         url: `${window.location.origin}/api/custom-script`,
@@ -107,6 +113,7 @@ df['Tax']=df['base']*100+df['Year']*0.7
                         contentType:'application/json',
                         cache: false
                 }).done(function(data) {
+                    $("#loading").css('display', 'none');
                     if(data.success){
                         $("#result").show()
                         $("#data").empty()
@@ -121,6 +128,7 @@ df['Tax']=df['base']*100+df['Year']*0.7
                 })
                 .fail(function(err) {
                     // do stuff here
+                    $("#loading").css('display', 'none');
                     alert(err)
                     $("div.load-wrapper").css('display', 'none');
                     $("#submit_btn").hide()

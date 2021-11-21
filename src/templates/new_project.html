@@ -212,7 +212,12 @@
   </div> -->
 
   <script>
-    $(document).ready(function(){               //Make script DOM ready
+    $(document).ready(function(){     
+                //Make script DOM ready
+
+                $("#addProject").on('click',()=>{
+                  $("#loading").css('display', 'block');
+                })
       var opval = "" 
 
       function hideUploadOtherResource() {
