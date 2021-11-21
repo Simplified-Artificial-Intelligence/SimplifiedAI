@@ -3,6 +3,7 @@ from werkzeug.wrappers import Response
 import re
 from scheduler.scheduler import data_updater
 from src.constants.constants import PROJECT_TYPES, ProjectActions
+from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
@@ -999,8 +1000,19 @@ def projectReport(id):
     if 'loggedin' in session:
         logger.info('Redirect To Project Report Page')
         records, projectStatus = ProjectReports.get_record_by_pid(id, None)
+        
+        graphJSON=""
+        pie_graphJSON=""
+        
+        df=pd.DataFrame(records)
+        if df is not None:
+            df_counts = pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0)
+            y = list(pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0).columns)[-1]
+            df_counts['Count']=df_counts[y]
+            graphJSON = PlotlyHelper.barplot(df_counts, x='Module Name', y=df_counts['Count'])
+            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names='Module Name', values=y, title='')
         return render_template('projectReport.html', data={"id": id, "moduleId": None}, records=records.to_html(),
-                               projectStatus=projectStatus)
+                               projectStatus=projectStatus,graphJSON=graphJSON,pie_graphJSON=pie_graphJSON)
     else:
         return redirect(url_for('login'))
 
@@ -1032,7 +1044,8 @@ def setTargetColumn():
                 status = "success"
                 # add buttom here
                 if status == "success":
-                    return render_template('target_column.html', columns=columns)
+                   session['target_column']=target_column
+                   return redirect('/module')
                 else:
                     return redirect('/module')
 

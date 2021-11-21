@@ -11,7 +11,7 @@
     {% if status=="error" %}
     <div class="alert alert-danger">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <strong>Error!</strong> Something went wrong, Coudn't Perform Dimension Reduction
+        <strong>Error!</strong> {{msg}}
       </div>
     {% endif %}
     <div class="jumbotron text-center">
@@ -19,6 +19,10 @@
         <p>Dimensionality reduction refers to techniques for reducing the number of input variables in 
             training data. When dealing with high dimensional data, it is often useful to reduce the 
             dimensionality by projecting the data to a lower dimensional subspace which captures the essence of the data</p>
+
+        <div class="alert alert-success">
+            <strong>Note!</strong> You can perform Dimension Reduction only Once.
+        </div>
     </div>
     <div class="alert alert-info">
         <strong>Note!</strong> Please make sure your data in <strong>Standardize </strong>,
@@ -26,9 +30,12 @@
       </div>
     <h4 class="result">Current Data</h4>
     {{data | safe}}
+    {% if not not_allowed %}
     <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
         <button type="button" class="btn btn-warning" id="check_pca">Check Dimension Reduction Result</button>
     </div>
+    {% endif %}
+
     <form style="margin-top: 50px;" action="/fe/{{action}}" method="post" id="form">
         <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12 col-sm-12">
