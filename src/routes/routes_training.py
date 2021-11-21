@@ -151,8 +151,10 @@ def model_training_post(action):
                     try:
                         model = request.form['model']
                         range = int(request.form['range'])
-                        if model != "KNeighborsClassifier":
+
+                        if model != "KNeighborsClassifier" and model != "SVR":
                             random_state = int(request.form['random_state'])
+
                         logger.info('Submitted Custom Training Page')
                         ProjectReports.insert_record_ml('Submitted Custom Training Page',
                                                         f"Model:{model}; Range:{range}; Random_State: {random_state}")

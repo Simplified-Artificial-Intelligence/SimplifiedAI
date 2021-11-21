@@ -1,7 +1,7 @@
 import os
 from flask import session
-from pandas.core.tools.datetimes import Scalar
-from src.utils.common.common_helper import load_project_encdoing, load_project_model, load_project_pca, load_project_scaler, read_config
+from src.utils.common.common_helper import load_project_encdoing, load_project_model, load_project_pca, \
+    load_project_scaler, read_config
 from loguru import logger
 from from_root import from_root
 from src.utils.databases.mysql_helper import MySqlHelper
@@ -18,9 +18,11 @@ mysql = MySqlHelper.get_connection_obj()
 
 """[Function to make prediction]
 """
+
+
 def make_prediction(df):
     try:
-            
+
         logger.info(f"Started Prediction!!1")
         if df is None:
             logger.info(f"DataFrame is null")
@@ -31,55 +33,53 @@ def make_prediction(df):
                             where ProjectId={session['pid']}"""
             action_performed = mysql.fetch_all(query_)
             print(action_performed)
-            
-            feature_columns=[col for col in df.columns if col!=session['target_column']]
-            df=df.loc[:,feature_columns]
-            df_org=df
-            
-            if len(action_performed)>0:
+
+            feature_columns = [col for col in df.columns if col != session['target_column']]
+            df = df.loc[:, feature_columns]
+            df_org = df
+
+            if len(action_performed) > 0:
                 for action in action_performed:
-                    if action[0]=='Delete Column':
-                        df=Preprocessing.delete_col(df,action[1].split(","))
-                    elif action[0]=='Change Data Type':
-                        df=FeatureEngineering.change_data_type(df,action[1],action[2])
-                    elif action[0]=='Column Name Change':
-                        df=FeatureEngineering.change_column_name(df,action[1],action[2])
-                    elif action[0]=='Encdoing':
-                        cat_data=Preprocessing.col_seperator(df,'Categorical_columns')
-                        num_data=Preprocessing.col_seperator(df,'Numerical_columns')
-                        
-                        encoder=load_project_encdoing()
+                    if action[0] == 'Delete Column':
+                        df = Preprocessing.delete_col(df, action[1].split(","))
+                    elif action[0] == 'Change Data Type':
+                        df = FeatureEngineering.change_data_type(df, action[1], action[2])
+                    elif action[0] == 'Column Name Change':
+                        df = FeatureEngineering.change_column_name(df, action[1], action[2])
+                    elif action[0] == 'Encdoing':
+                        cat_data = Preprocessing.col_seperator(df, 'Categorical_columns')
+                        num_data = Preprocessing.col_seperator(df, 'Numerical_columns')
+
+                        encoder = load_project_encdoing()
                         # columns=action[1].split(",")
                         # df_=df.loc[:,columns]
-                        df_=encoder.transform(cat_data)
-                        df=pd.concat([df_,num_data],axis=1)
-                    elif action[0]=='Scalling':
-                        scalar=load_project_scaler()
-                        columns=df.columns
-                        df=scalar.transform(df)
-                        df=pd.DataFrame(df,columns=columns)
-                    elif action[0]=='PCA':
-                        pca=load_project_pca()
-                        columns=df.columns
-                        df_=pca.transform(df)
+                        df_ = encoder.transform(cat_data)
+                        df = pd.concat([df_, num_data], axis=1)
+                    elif action[0] == 'Scalling':
+                        scalar = load_project_scaler()
+                        columns = df.columns
+                        df = scalar.transform(df)
+                        df = pd.DataFrame(df, columns=columns)
+                    elif action[0] == 'PCA':
+                        pca = load_project_pca()
+                        columns = df.columns
+                        df_ = pca.transform(df)
                         df_ = df_[:, :int(action[1])]
                         df = pd.DataFrame(df_, columns=[f"Col_{col + 1}" for col in np.arange(0, df_.shape[1])])
-                    elif action[0]=='Custom Script':
+                    elif action[0] == 'Custom Script':
                         if action[1] is not None:
                             exec(action[1])
-                        
-                model=load_project_model()
-                result=model.predict(df)
+
+                model = load_project_model()
+                result = model.predict(df)
                 df_org.insert(loc=0, column=session['target_column'], value=result)
                 return df_org
-                    
+
             else:
                 pass
-            
-            
+
         return df
 
     except Exception as e:
-        logger.info('Error in Prediction '+str(e))
+        logger.info('Error in Prediction ' + str(e))
         raise Exception(e)
-    
