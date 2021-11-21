@@ -98,7 +98,8 @@ def index():
         if 'loggedin' in session:
             query = f'''
             select tp.Id,tp.Name,tp.Description,tp.Cassandra_Table_Name,
-            ts.Name,ts.Indetifier,tp.Pid,tp.TargetColumn,tpy.Name
+            (Select ts.Name from tblProjectReports join tblProjectStatus as ts on ts.Id=ModuleId   Where ProjectId=tp.Id  LIMIT 1) as ModuleName,
+            ts.Indetifier,tp.Pid,tp.TargetColumn,tpy.Name
             from tblProjects as tp
             join tblProjectType as tpy
                 on tpy.Id=tp.ProjecTtype
