@@ -68,8 +68,8 @@ def eda(action):
                     df = EDA.z_score_outlier_detection(df)
                     graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
                     pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[:10, :], names='Features',
-                        values='Total outliers', title='Top 10 Outliers')
+                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df) > 10 else len(df)-1, :],
+                        names='Features', values='Total outliers', title='Top 10 Outliers')
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method='zscore', action=action,
                                            barplot=graphJSON, pieplot=pie_graphJSON)
@@ -176,28 +176,26 @@ def eda_post(action):
 
                 elif action == "outlier":
                     method = request.form['method']
+                    print(method)
                     lower = 25
                     upper = 75
                     if method == "iqr":
                         lower = request.form['lower']
                         upper = request.form['upper']
                         df = EDA.outlier_detection_iqr(df, int(lower), int(upper))
+                        print(df)
                     else:
                         df = EDA.z_score_outlier_detection(df)
+                        print('missed')
 
                     input_str = immutable_multi_dict_to_str(request.form, True)
                     ProjectReports.insert_record_eda('Redirect To Outlier', input=input_str)
 
                     graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
 
-                    if len(df) > 10:
-                        col_no = 10
-                    else:
-                        col_no = len(df) - 1
-
                     pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df.columns) > 10 else len(df.columns), :], names='Features',
-                        values='Total outliers', title='Top 10 Outliers')
+                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df) > 10 else len(df)-1,:],
+                        names='Features', values='Total outliers', title='Top 10 Outliers')
 
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,
