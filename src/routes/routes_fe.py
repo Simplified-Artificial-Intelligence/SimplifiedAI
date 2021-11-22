@@ -162,9 +162,8 @@ def feature_engineering(action):
                         return render_template('fe/dimension_reduction.html',
                                                columns=[], status="error",
                                                not_allowed=True,
-                                               msg="You Already Performed Dimensionalty Reduction. Don't do this again")
-                        
-                        
+                                               msg="You Already Performed Dimensionalty Reduction. Don't do this again",data=df.to_html())
+
                     """ Check Feature Scaling  Performed or not"""
                     query_ = f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=5"
                     rows = mysql.fetch_all(query_)
@@ -173,6 +172,7 @@ def feature_engineering(action):
                                                columns=[], status="error",
                                                not_allowed=True,
                                                msg="Please Perform Feature Scaling First")
+
 
                     columns = list(df.columns)
                     if session['target_column']:
