@@ -849,7 +849,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
-                    logger.info(f"Trying to push {project_name}.{file_type} File to AWS {bucket_name} bucket!!")
+
                     timestamp = round(time.time() * 1000)
                     upload_status = aws_s3.push_file_to_s3(bucket_name, file_path,
                                                            f'{project_name}_{timestamp}.{file_type}')
@@ -861,8 +861,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                     message = f"{project_name}_{timestamp}.{file_type} pushed to AWS S3 {bucket_name} bucket"
                     logger.info(message)
                     return render_template('exportFile.html',
-                                               data={"project_name": project_name, "project_id": project_id},
-                                               msg=message)
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
 
                 elif cloudType == 'azureStorage':
                     azure_connection_string = request.form['azure_connection_string']
@@ -886,7 +885,6 @@ def exportCloudDatabaseFile(project_name, project_id):
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
 
-                    logger.info(f"Trying to push {project_name}.{file_type} File to Azure {container_name} container!!")
                     timestamp = round(time.time() * 1000)
                     upload_status = azure_helper.upload_file(file_path, container_name,
                                                              f'{project_name}_{timestamp}.{file_type}')
@@ -897,9 +895,9 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
                     message = f"{project_name}_{timestamp}.{file_type} pushed to Azure {container_name} container"
+                    logger.info(message)
                     return render_template('exportFile.html',
-                                           data={"project_name": project_name, "project_id": project_id},
-                                           msg=message)
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
 
                 elif cloudType == 'gcpStorage':
                     credentials_file = request.files['GCP_credentials_file']
@@ -909,30 +907,35 @@ def exportCloudDatabaseFile(project_name, project_id):
                     credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
                     credentials_file.save(credentials_file_path)
                     gcp = gcp_browser_storage(credentials_file_path)
+                    logger.info("Validating User Azure Credentials")
                     conn_msg = gcp.check_connection(bucket_name, 'none')
                     if conn_msg != 'File does not exist!!':
                         logger.info("GCPStorage Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("GCPStorage Connection Successful!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
+                    logger.info("Looking For User File!!")
                     if download_status != "Successful":
                         logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+
                     timestamp = round(time.time() * 1000)
-                    upload_status = gcp.upload_to_bucket(f'{project_name}_{timestamp}.{file_type}', file_path,
-                                                         bucket_name)
+                    upload_status = gcp.upload_to_bucket(f'{project_name}_{timestamp}.{file_type}',
+                                                         file_path, bucket_name)
 
                     if upload_status != 'Successful':
                         logger.info("Could'nt Upload The File To GCP Container!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to GCP Storage{bucket_name} bucket")
-                    return redirect(url_for('index'))
-
+                    message = f"{project_name}_{timestamp}.{file_type} pushed to GCP Storage{bucket_name} bucket"
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
                 else:
                     return render_template('exportFile.html',
                                            data={"project_name": project_name, "project_id": project_id},
@@ -949,26 +952,33 @@ def exportCloudDatabaseFile(project_name, project_id):
                     database = request.form['database']
 
                     mysql_data = mysql_data_helper(host, port, user, password, database)
+                    logger.info("Validating User Mysql Credentials")
                     conn_msg = mysql_data.check_connection('none')
-
                     if conn_msg != "table does not exist!!":
-                        logger.info(conn_msg)
+                        logger.info("Users Mysql Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("Users Mysql Connection Successful!!")
+                    logger.info("Looking For User File!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, "csv")
+
                     if download_status != "Successful":
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+
                     timestamp = round(time.time() * 1000)
                     upload_status = mysql_data.push_file_to_table(file_path, f'{project_name}_{timestamp}')
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f'{project_name}_{timestamp} table created in {database} database')
-                    return redirect(url_for('index'))
+
+                    message = f'{project_name}_{timestamp} table created in {database} database'
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
 
                 elif databaseType == 'cassandra':
                     secure_connect_bundle = request.files['secure_connect_bundle']
@@ -980,20 +990,25 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                                    secure_connect_bundle_filename)
                     secure_connect_bundle.save(secure_connect_bundle_file_path)
 
-                    cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret,
-                                                       keyspace)
+                    cassandra_db = cassandra_connector(secure_connect_bundle_file_path,
+                                                       client_id, client_secret, keyspace)
+
+                    logger.info("Validating User Cassandra Credentials")
                     conn_msg = cassandra_db.check_connection('none')
                     if conn_msg != 'table does not exist!!':
-                        logger.info(conn_msg)
+                        logger.info("Users Cassandra Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("Users Cassandra Connection Successful!!")
+                    logger.info("Looking For User File!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, "csv")
 
                     if download_status != "Successful":
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+
                     timestamp = round(time.time() * 1000)
                     upload_status = cassandra_db.push_dataframe_to_table(pd.read_csv(file_path),
                                                                          f'{project_name}_{timestamp}')
@@ -1001,33 +1016,40 @@ def exportCloudDatabaseFile(project_name, project_id):
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f'{project_name}_{timestamp} table created in {keyspace} keyspace')
-                    return redirect(url_for('index'))
+                    message = f'{project_name}_{timestamp} table created in {keyspace} keyspace'
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
 
                 elif databaseType == 'mongodb':
                     mongo_db_url = request.form['mongo_db_url']
                     mongo_database = request.form['mongo_database']
                     mongo_helper = mongo_data_helper(mongo_db_url)
                     conn_msg = mongo_helper.check_connection(mongo_database, 'none')
+                    logger.info("Validating User Cassandra Credentials")
                     if conn_msg != "collection does not exits!!":
-                        logger.info(conn_msg)
+                        logger.info("Users MongoDB Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("Users MongoDB Connection Successful!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, "csv")
                     if download_status != "Successful":
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+                    logger.info("Looking For User File!!")
                     timestamp = round(time.time() * 1000)
                     upload_status = mongo_helper.push_dataset(mongo_database, f'{project_name}_{timestamp}', file_path)
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f'{project_name}_{timestamp} collection created in {mongo_database} database')
-                    return redirect(url_for('index'))
 
+                    message = f'{project_name}_{timestamp} collection created in {mongo_database} database'
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
                 else:
                     return render_template('exportFile.html',
                                            data={"project_name": project_name, "project_id": project_id},
@@ -1040,7 +1062,7 @@ def exportCloudDatabaseFile(project_name, project_id):
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
+        return render_template('exportFile.html', data={"project_name": project_name}, msg="OOPS Something Went Wrong!!")
 
 
 @app.route('/projectReport/<id>', methods=['GET', 'POST'])

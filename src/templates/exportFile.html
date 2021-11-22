@@ -178,7 +178,12 @@
     </form>
 </div>
 <script>
-    $(document).ready(function(){               //Make script DOM ready
+    $(document).ready(function(){
+                //Make script DOM ready
+
+            $("#export").on('click',()=>{
+                $("#loading").css('display', 'block');
+                })
       
       function hideUploadOtherResource() {
         $('.upload-other-resource').each(function(i, obj) {
