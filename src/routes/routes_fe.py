@@ -163,7 +163,7 @@ def feature_engineering(action):
                         return render_template('fe/dimension_reduction.html',
                                                columns=[], status="error",
                                                not_allowed=True,
-                                               msg="You Already Performed Dimensionalty Reduction. Don't do this again")
+                                               msg="You Already Performed Dimensionalty Reduction. Don't do this again",data=df.to_html())
 
                     columns = list(df.columns)
                     if session['target_column']:
