@@ -138,16 +138,15 @@ def check_schedule_model():
     mysql = MySqlHelper.get_connection_obj()
     query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
                                 a.Model_Name ModelName, 
-                                b.Schedule_date, 
-                                b.schedule_time ,
+                                b.datetime_,
                                 a.Model_Trained, 
                                 b.train_status ,
                                 b.email, 
                                 b.deleted
                                 from tblProjects as a
                                join tblProject_scheduler as b on a.Pid = b.ProjectId
-                               where b.Schedule_date = current_date() and b.train_status = 0 and a.Model_Trained=0 and deleted = 0
-                               order by b.Schedule_date,schedule_time"""
+                               where b.datetime_ < NOW() and b.train_status = 0 and a.Model_Trained=0 and deleted = 0
+                               order by datetime_"""
 
     results = mysql.fetch_all(query)
     if len(results) == 0:

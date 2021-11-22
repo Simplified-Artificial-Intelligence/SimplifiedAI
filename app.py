@@ -1280,16 +1280,16 @@ def scheduler_get(action):
                                                    msg="Model is not selected, please select your model first",
                                                    target=session['target_column'])
                         
-                    query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
+                    query = f"""select a.pid ProjectId ,
+                        a.TargetColumn TargetName, 
                         a.Model_Name ModelName, 
-                        b.Schedule_date, 
-                        b.schedule_time ,
                         a.Model_Trained, 
                         b.train_status ,
                         b.email, 
-                        b.deleted
+                        b.datetime_,
+                        NOW()
                         from tblProjects as a
-                        join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{pid}' 
+                        join tblProject_scheduler as b on a.Pid = b.ProjectId where a.Id ={pid}
                         and b.deleted=0
                         """
                     result = mysql.fetch_one(query)
@@ -1298,10 +1298,10 @@ def scheduler_get(action):
                             "project_id": pid,
                             "mode_names": model_name,
                             "target_col_name": TargetColumn,
-                            "status": result[6],
-                            "date": result[3],
-                            "time": result[4],
-                            "email_send": result[7]
+                            "status": result[4],
+                            "DateTime": result[6],
+                            "email_send": result[5],
+                            "CurrentDateTime":result[7]
                         }]
 
                         return render_template('scheduler/Training_scheduler.html', action=action,
@@ -1351,15 +1351,14 @@ def scheduler_post(action):
                 return render_template('scheduler/help.html')
 
             if action == 'Create_scheduler':
-                date = request.form['date']
-                time = request.form['time']
+                time_after = int(request.form['time_after'])
                 email = request.form['email']
 
                 query = f''' INSERT INTO tblProject_scheduler 
-                             (ProjectId,Schedule_date,schedule_time,email,train_status,deleted)
-                            values('{pid}','{date}','{time}','{email}' ,0,0) '''
+                             (ProjectId,datetime_,email,train_status,deleted)
+                            values('{pid}',DATE_ADD(NOW(),INTERVAL {time_after} HOUR),'{email}' ,0,0) '''
 
-                mysql.update_record(query)
+                row_effected=mysql.update_record(query)
                 return redirect('/scheduler/Training_scheduler')
         else:
             return redirect(url_for('login'))
