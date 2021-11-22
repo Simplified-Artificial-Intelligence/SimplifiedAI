@@ -97,7 +97,7 @@ def data_preprocessing(action):
                                            data=data,
                                            perform_action=True)
                 else:
-                    return render_template('eda/help.html')
+                    return render_template('dp/help.html')
             else:
                 logger.critical('Data Frame is None')
 
