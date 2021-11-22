@@ -124,9 +124,8 @@ def feature_engineering(action):
 
                     logger.info('Redirect To Feature Secltion')
                     ProjectReports.insert_record_fe('Redirect To Feature Secltion')
-
                     methods = []
-
+                
                     if session['project_type'] == 1:
                         methods = FEATURE_SELECTION_METHODS_RGRESSOR
                     elif session['project_type'] == 2:
@@ -156,7 +155,7 @@ def feature_engineering(action):
 
                 elif action == 'dimension_reduction':
 
-                    """ Check Encoding Already Performed or not"""
+                    """ Check PCA Already Performed or not"""
                     query_ = f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=6"
                     rows = mysql.fetch_all(query_)
                     if len(rows) > 0:
@@ -164,6 +163,16 @@ def feature_engineering(action):
                                                columns=[], status="error",
                                                not_allowed=True,
                                                msg="You Already Performed Dimensionalty Reduction. Don't do this again",data=df.to_html())
+
+                    """ Check Feature Scaling  Performed or not"""
+                    query_ = f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=5"
+                    rows = mysql.fetch_all(query_)
+                    if len(rows)==0:
+                        return render_template('fe/dimension_reduction.html',
+                                               columns=[], status="error",
+                                               not_allowed=True,
+                                               msg="Please Perform Feature Scaling First")
+
 
                     columns = list(df.columns)
                     if session['target_column']:
@@ -249,8 +258,8 @@ def feature_engineering_post(action):
 
                         df_ = df.loc[:, columns]
                         encdoer_ = None
-                        cat_data = Preprocessing.col_seperator(df, 'Categorical_columns')
-                        num_data = Preprocessing.col_seperator(df, 'Numerical_columns')
+                        cat_data = Preprocessing.col_seperator(df_, 'Categorical_columns')
+                        num_data = Preprocessing.col_seperator(df_, 'Numerical_columns')
 
                         if encoding_type == "Base N Encoder":
                             (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
