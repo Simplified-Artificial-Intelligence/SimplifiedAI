@@ -1,4 +1,4 @@
 #!/bin/bash
-cd /home/ec2-user/app
+cd /home/ec2-user/Projectathon
 source environment/bin/activate
-supervisord -c supervisord.conf
+supervisord -c /home/ec2-user/Projectathon/supervisord.conf
