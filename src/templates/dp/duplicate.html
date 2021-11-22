@@ -62,7 +62,7 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                  <button type="submit" class="btn btn-danger">Delete Records</button>
+                  <button id="submit" type="submit" class="btn btn-danger">Delete Records</button>
                 </div>
               </div>
             </div>
@@ -83,5 +83,14 @@
         $("#columns").select2().val($("#selected_column").val().split(",")).trigger("change");
     }
 });
+</script>
+
+<script>
+     $(document).ready(()=>{
+        $("#submit").on('click',()=>{
+                  $("#loading").css('display', 'block');
+            })
+        $(".dataframe").attr("class","table table-hover")
+    })
 </script>
 {% endblock %}

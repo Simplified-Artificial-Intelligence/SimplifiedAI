@@ -38,7 +38,7 @@
                   </select>
             </div>
             <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
-                <button type="submit" class="btn btn-success margin-top-10">Show Result</button>
+                <button id="submit" type="submit" class="btn btn-success margin-top-10">Show Result</button>
             </div>
         </div>
       </form>
@@ -76,4 +76,13 @@ if($("#exampleFormControlSelect1").val()=='zscore'){
    Plotly.newPlot('pieplot',  pie_graphs);
 
    </script>
+
+<script>
+    $(document).ready(()=>{
+        $("#submit").on('click',()=>{
+                  $("#loading").css('display', 'block');
+            })
+        $(".dataframe").attr("class","table table-hover")
+    })
+</script>
 {% endblock %}
