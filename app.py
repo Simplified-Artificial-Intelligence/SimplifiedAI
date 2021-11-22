@@ -51,13 +51,13 @@ password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
 # # Scheduler
-#scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler()
 # scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
-#scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
-#scheduler.start()
+scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
+scheduler.start()
 #
 # # Shut down the scheduler when exiting the app
-#atexit.register(lambda: scheduler.shutdown())
+atexit.register(lambda: scheduler.shutdown())
 
 
 # DataBase Initilazation
@@ -1141,9 +1141,6 @@ def stream(pid):
             session['pid'] = values[1]
             session['project_name'] = values[0]
             query_ = f"Select ProjectType, TargetColumn from tblProjects  where id={session['pid']}"
-            project_logger = logger.add(sink=f"./logger/projectlogs/{values[0]}.log",
-                                        format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}",
-                                        level="INFO")
             info = mysql.fetch_one(query_)
             if info:
                 session['project_type'] = info[0]
@@ -1295,16 +1292,15 @@ def scheduler_get(action):
                             return render_template('scheduler/Training_scheduler.html', action=action,
                                                    responseData=responseData)
                         else:
-                            return "Error in card creation"
+                            return render_template('500.html', exception= "Error in card creation")
 
                     if Model_Trained == 1:
                         # Retrain for scheduler
                         if result is None:
                             return render_template('scheduler/retrain.html')
 
-                        # Send email
-                        if result is not None and result[6] == 1:
-                            return "Email Has to be sent here"
+                        if result is not None:
+                            return render_template('500.html', exception="Something Went Wrong!")
 
                     else:
                         return render_template('scheduler/add_new_scheduler.html', action=action, ALL_MODELS=ALL_MODELS)

@@ -100,6 +100,7 @@ class FeatureEngineering:
             raise Exception (e)
 
         try:
+
             if typ == 'Robust Scaler':
                 scaler = RobustScaler()
                 scaled_data = scaler.fit_transform(data)
@@ -114,6 +115,7 @@ class FeatureEngineering:
                 scaler = PowerTransformer(method='yeo-johnson')
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Power Transformer Scaler implemented!")
+
                 return scaled_data,scaler
         except Exception as e:
             logger.error(f"{e} occurred in Power Transformer Scaler!")
@@ -124,11 +126,10 @@ class FeatureEngineering:
                 scaler = MaxAbsScaler()
                 scaled_data = scaler.fit_transform(data)
                 logger.info("Max Abs Scaler implemented!")
-                return scaled_data,scaler
+                return scaled_data, scaler
         except Exception as e:
             logger.error(f"{e} occurred in Max Abs Scaler!")
             raise Exception (e)
-
 
 
     @staticmethod
@@ -139,6 +140,7 @@ class FeatureEngineering:
                 label_df = label.fit_transform(df)
                 logger.info("Label/Ordinal Encoder implemented!")
                 return (label_df,label)
+
         except Exception as e:
             logger.error(f"{e} occurred in Label/Ordinal Encoder!")
             raise Exception (e)
@@ -148,6 +150,11 @@ class FeatureEngineering:
                 onehot = ce.OneHotEncoder(cols=cols)
                 onehot_df = onehot.fit_transform(df)
                 logger.info("One Hot Encoder implemented!")
+                
+                #  onehot_df=pd.get_dummies(df, cols, drop_first=True)
+                # logger.info("One Hot Encoder implemented!")
+                # return (onehot_df,None)  
+            
                 return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in One Hot Encoder!")
@@ -169,31 +176,34 @@ class FeatureEngineering:
                 onehot = ce.BaseNEncoder(cols=cols)
                 onehot_df = onehot.fit_transform(df)
                 logger.info("Base N Encoder implemented !")
+
                 return (onehot_df,onehot)
         except Exception as e:
             logger.error(f"{e} occurred in Base N Encoder!")
             raise Exception (e)
 
         try:
+
             if kind == 'Hash Encoder':
                 hash_ = ce.HashingEncoder(cols=cols, **kwargs)
                 hash_df = hash_.fit_transform(df)
                 logger.info("Hash Encoder implemented!")
+
                 return (hash_df,hash_)
         except Exception as e:
             logger.error(f"{e} occurred in Hash Encoder!")
             raise Exception (e)
 
         try:
+
             if kind == 'Target Encoder':
                 target = ce.TargetEncoder(cols=cols)
                 target_df = target.fit_transform(df, **kwargs)
                 logger.info("Target Encoder implemented!")
-                return (target_df,target)
+                return (target_df, target)
         except Exception as e:
             logger.error(f"{e} occurred in Target Encoder!")
             raise Exception (e)
-
 
 
     def handleDatetime(self, frame, cols):
@@ -234,6 +244,7 @@ class FeatureEngineering:
                 return important_features.sort_values('scores', ascending=False)
 
             elif typ == 'Find Constant Features':
+
                 # chi2 + anova test
                 vari_thr = VarianceThreshold(**kwargs)
                 imp = vari_thr.fit(features)
@@ -249,16 +260,18 @@ class FeatureEngineering:
                 df['Feature'] = features.columns
                 logger.info("Extra Trees Classifier implemented!")
                 return df.sort_values(by='Value', ascending=False)
-            
+
             elif typ == 'Extra Trees Regressor':
+
                 best_features = ExtraTreesRegressor()
                 best_features.fit(features, target)
                 important_features['score'] = best_features.feature_importances_
                 important_features['columns'] = features.columns
                 logger.info("Extra Trees Regressor implemented!")
                 return important_features.sort_values('scores', ascending=False)
-            
+
             elif typ == 'Mutual Info Classification':
+
                 importances = mutual_info_classif(features, target)
                 df = pd.DataFrame()
                 df['Feature'] = features.columns
@@ -268,6 +281,7 @@ class FeatureEngineering:
             elif typ == 'Mutual Info Regressor':
                 importances = mutual_info_regression(features, target)
                 df = pd.DataFrame()
+
                 df['Feature'] = features.columns
                 df['Value'] = importances
                 return df.sort_values('Value', ascending=False)
@@ -299,6 +313,7 @@ class FeatureEngineering:
                     sfs.fit(features, target)
                     logger.info("Backward Elimination implemented!")
                     return list(features.columns[sfs.get_support()])
+
         except Exception as e:
             logger.error(f"{e} occurred in Backward Elimination!")
             raise Exception (e)
@@ -310,7 +325,7 @@ class FeatureEngineering:
             model = PCA(n_components=comp)
             pca = model.fit_transform(data)
             logger.info("PCA implemented !")
-            return pca, np.cumsum(model.explained_variance_ratio_),model
+            return pca, np.cumsum(model.explained_variance_ratio_), model
         except Exception as e:
             logger.error(f"{e} occurred in PCA!")
             raise Exception (e)

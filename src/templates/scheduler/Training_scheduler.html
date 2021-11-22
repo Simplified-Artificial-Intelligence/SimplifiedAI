@@ -13,9 +13,9 @@
 			{% endif %}
 		{% endwith %}
 	</div>
-	
-	<a href="/scheduler/add_scheduler"><button type="button" class="btn btn-success add-button" style="margin-top: 40px;">Add Scheduler</button></a>
-	
+	{% if responseData|length == 0%}
+			<a href="/scheduler/add_scheduler"><button type="button" class="btn btn-success add-button" style="margin-top: 40px;">Add Scheduler</button></a>
+	{% endif %}
 	<div class="row">
 
 		{% for item in responseData %}
