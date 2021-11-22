@@ -191,7 +191,7 @@ def feature_engineering(action):
                 else:
                     return 'Non-Implemented Action'
             else:
-                return 'No Data'
+                return redirect('/')
         else:
             return redirect('/')
     except Exception as e:
@@ -351,7 +351,7 @@ def feature_engineering_post(action):
                 else:
                     return 'Non-Implemented Action'
             else:
-                return 'No Data'
+                return redirect('/')
         else:
             return redirect(url_for('/'))
 

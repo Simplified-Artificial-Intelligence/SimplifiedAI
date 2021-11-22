@@ -46,10 +46,12 @@
   <ul class="navbar-nav">
     <li class="nav-item active">
       <a class="nav-link" href="/">Home</a></li>
+      
   </ul>
   <div>
      {% if loggedin %}
        <form action="/logout" method="post" class="logout-form">
+         <!-- {{session['project_name']}} -->
           <button type="submit" class="btn btn-info logout">Logout</button>
        </form>
      {% endif %}
@@ -61,6 +63,9 @@
   <nav id="sidebar">
       <div class="sidebar-header">
         <a href="/" class="article"><h3>Dashboard</h3></a>
+        {% if session['project_type']!=3 and  (not session['target_column'])  %}
+        <a href="/target-column"><button type="button" class="download" style="background: #fff;border-radius: 5px;; color: #17A2B8;padding-top:10px;padding-bottom: 10px;">Set Target Column</button></a>
+        {% endif %}
       </div>
 
       <ul class="list-unstyled components">

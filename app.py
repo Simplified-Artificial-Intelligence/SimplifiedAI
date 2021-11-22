@@ -1085,7 +1085,7 @@ def setTargetColumn():
 
         else:
             logger.info('Redirect To Home Page')
-            return redirect('/')
+            return redirect('/module')
     except Exception as e:
         logger.error(f'{e}, Occur occurred in target-columns.')
         return render_template('500.html', exception=e)
@@ -1152,10 +1152,10 @@ def stream(pid):
         if data:
             values = data.split("&")
             session['pid'] = values[1]
-            session['project_name'] = values[0]
-            query_ = f"Select ProjectType, TargetColumn from tblProjects  where id={session['pid']}"
+            query_ = f"Select ProjectType, TargetColumn,Name from tblProjects  where id={session['pid']}"
             info = mysql.fetch_one(query_)
             if info:
+                session['project_name'] = values[0]
                 session['project_type'] = info[0]
                 if info[0] != 3:
                     session['target_column'] = info[1]
@@ -1269,43 +1269,46 @@ def scheduler_get(action):
                 if action == 'Training_scheduler':
                     # To get the trained
                     Model_Trained, model_name, TargetColumn, pid = mysql.fetch_one(
-                        f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
-                    query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
-                                a.Model_Name ModelName, 
-                                b.Schedule_date, 
-                                b.schedule_time ,
-                                a.Model_Trained, 
-                                b.train_status ,
-                                b.email, 
-                                b.deleted
-                                from tblProjects as a
-                                join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{pid}' 
-                                and b.deleted=0
-                                """
-                    result = mysql.fetch_one(query)
-                    if Model_Trained == 0:
-                        # Create Scheduler
-                        if result is None:
-                            return render_template('scheduler/add_new_scheduler.html',
+                        f"""select Model_Trained, Model_Name,TargetColumn, Id  from tblProjects Where Id={session.get('pid')}""")
+                    
+                    
+                    if model_name is None:
+                        return render_template('scheduler/add_new_scheduler.html',
                                                    action=action,
                                                    model_name=model_name,
+                                                   status="error",
+                                                   msg="Model is not selected, please select your model first",
                                                    target=session['target_column'])
-                        # Show created scheduler
-                        if result is not None:
-                            responseData = [{
-                                "project_id": pid,
-                                "mode_names": model_name,
-                                "target_col_name": TargetColumn,
-                                "status": result[6],
-                                "date": result[3],
-                                "time": result[4],
-                                "email_send": result[7]
-                            }]
+                        
+                    query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
+                        a.Model_Name ModelName, 
+                        b.Schedule_date, 
+                        b.schedule_time ,
+                        a.Model_Trained, 
+                        b.train_status ,
+                        b.email, 
+                        b.deleted
+                        from tblProjects as a
+                        join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{pid}' 
+                        and b.deleted=0
+                        """
+                    result = mysql.fetch_one(query)
+                    if result is not None:
+                        responseData = [{
+                            "project_id": pid,
+                            "mode_names": model_name,
+                            "target_col_name": TargetColumn,
+                            "status": result[6],
+                            "date": result[3],
+                            "time": result[4],
+                            "email_send": result[7]
+                        }]
 
-                            return render_template('scheduler/Training_scheduler.html', action=action,
-                                                   responseData=responseData)
-                        else:
-                            return render_template('500.html', exception= "Error in card creation")
+                        return render_template('scheduler/Training_scheduler.html', action=action,
+                                                responseData=responseData)
+                    else:
+                        return render_template('scheduler/add_new_scheduler.html',model_name=model_name,TargetColumn=TargetColumn, action=action, ALL_MODELS=ALL_MODELS,
+                                           TIMEZONE=TIMEZONE)
 
                     if Model_Trained == 1:
                         # Retrain for scheduler
@@ -1329,7 +1332,7 @@ def scheduler_get(action):
                     print('Scheduled Process deleted')
                     return redirect('/scheduler/Training_scheduler')
             else:
-                return "No data"
+                return redirect('/')
         else:
             return redirect(url_for('login'))
 

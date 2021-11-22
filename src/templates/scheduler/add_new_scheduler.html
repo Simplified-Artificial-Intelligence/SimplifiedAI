@@ -1,7 +1,19 @@
 {% extends 'project_base.html' %}
 {% block content %}
 
-<form action="/scheduler/Create_scheduler" enctype="multipart/form-data" method="POST">
+<div class="table2">
+{% if status=="error" %}
+<div class="alert alert-danger">
+    <strong>Error!</strong> {{msg}}
+  </div>
+{% endif %}
+<div class="jumbotron text-center">
+  <h1>Create Scheduler</h1>
+  <p>If you don't wanna train your model now. No issue just create a scheduler later and your model will train at given time.
+    You will be notifed via email </p>
+</div>
+{% if status!="error" %}
+<form action="/scheduler/Create_scheduler" style="margin-bottom: 50px;" enctype="multipart/form-data" method="POST">
   <div class="container_scheduler">
     <div class="card">
         <div class="form__name">
@@ -56,7 +68,8 @@
     </div>
   </div>
 </form>
-
+{% endif %}
+</div>
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.js"></script>
 
