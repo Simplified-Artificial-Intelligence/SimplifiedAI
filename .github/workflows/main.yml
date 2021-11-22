@@ -28,7 +28,7 @@ jobs:
   continuous-deployment:
     runs-on: ubuntu-latest
     needs: [continuous-integration]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/cicd'
     steps:
      # Step 1
       - name: Configure AWS credentials
