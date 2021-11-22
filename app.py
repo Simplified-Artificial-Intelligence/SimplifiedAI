@@ -8,7 +8,7 @@ from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
 from scheduler.training_scheduler import check_schedule_model
-from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
+from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt, remove_temp_files
 from src.utils.databases.mongo_helper import MongoHelper
 from src.constants.constants import ALL_MODELS, TIMEZONE
 from src.utils.common.data_helper import load_data, update_data
@@ -214,6 +214,7 @@ def project():
                         logger.info(message)
                         return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
 
+                    remove_temp_files([file_path])
                     project_id = unique_id_generator()
                     logger.info(f'Pushing {filename} to mongodb')
                     inserted_rows = mongodb.create_new_project(project_id, df)
@@ -291,6 +292,7 @@ def project():
                         gcp = gcp_browser_storage(credentials_file_path)
                         logger.info("Validating User's GCP Credentials!!")
                         conn_msg = gcp.check_connection(bucket_name, file_name)
+                        remove_temp_files([credentials_file_path])
                         logger.info(conn_msg)
                         if conn_msg != 'Successful':
                             logger.info("GCP Connection Not Successful")
@@ -334,6 +336,7 @@ def project():
                                                            client_id, client_secret,keyspace)
                         logger.info("Validating User's Cassandra Credentials!!")
                         conn_msg = cassandra_db.check_connection(table_name)
+                        remove_temp_files([secure_connect_bundle_file_path])
                         if conn_msg != 'Successful':
                             logger.info("User's Cassandra Connection Not Successful")
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
@@ -345,6 +348,7 @@ def project():
                         elif data_in_tabular == 'false':
                             download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
                             logger.info(download_status)
+                        remove_temp_files([secure_connect_bundle_file_path])
 
                     elif resource_type == "mongodb":
                         mongo_db_url = request.form['mongo_db_url']
@@ -403,7 +407,7 @@ def project():
                             logger.info(msg)
                             return render_template('new_project.html', msg=msg)
 
-
+                        remove_temp_files([file_path])
                         project_id = unique_id_generator()
                         logger.info(f'Pushing user dataset to mongodb')
                         inserted_rows = mongodb.create_new_project(project_id, df)
@@ -774,7 +778,7 @@ def exportFile(project_id, project_name):
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
-                os.remove(file_path)
+                remove_temp_files([file_path])
                 logger.info(f'Temporary File Deleted!!, {project_name}.csv')
                 logger.info('Exported to CSV Sucessful')
                 return Response(content.to_csv(index=False), mimetype="text/csv",
@@ -782,7 +786,7 @@ def exportFile(project_id, project_name):
 
             elif fileType == 'tsv':
                 content = pd.read_csv(file_path)
-                os.remove(file_path)
+                remove_temp_files([file_path])
                 logger.info(f'Temporary File Deleted!!, {project_name}.tsv')
                 logger.info('Exported to TSV Sucessful')
                 return Response(content.to_csv(sep='\t', index=False), mimetype="text/tsv",
@@ -790,7 +794,7 @@ def exportFile(project_id, project_name):
 
             elif fileType == 'xlsx':
                 content = pd.read_csv(file_path)
-                os.remove(file_path)
+                remove_temp_files([file_path])
                 logger.info(f'Temporary File Deleted!!, {project_name}.xlsx')
                 content.to_excel(os.path.join(app.config["UPLOAD_FOLDER"], f'{project_name}.xlsx'), index=False)
                 logger.info('Exported to XLSX Sucessful')
@@ -799,7 +803,7 @@ def exportFile(project_id, project_name):
 
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
-                os.remove(file_path)
+                remove_temp_files([file_path])
                 logger.info(f'Temporary File Deleted!!, {project_name}.json')
                 logger.info('Exported to JSON Sucessful')
                 return Response(content.to_json(), mimetype="text/json",
@@ -853,6 +857,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                     timestamp = round(time.time() * 1000)
                     upload_status = aws_s3.push_file_to_s3(bucket_name, file_path,
                                                            f'{project_name}_{timestamp}.{file_type}')
+                    remove_temp_files([file_path])
                     if upload_status != 'Successful':
                         logger.info("Could'nt Upload The File To s3 Bucket!!")
                         return render_template('exportFile.html',
@@ -888,7 +893,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                     timestamp = round(time.time() * 1000)
                     upload_status = azure_helper.upload_file(file_path, container_name,
                                                              f'{project_name}_{timestamp}.{file_type}')
-
+                    remove_temp_files([file_path])
                     if upload_status != 'Successful':
                         logger.info("Could'nt Upload The File To Azure Container!!")
                         return render_template('exportFile.html',
@@ -909,6 +914,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                     gcp = gcp_browser_storage(credentials_file_path)
                     logger.info("Validating User Azure Credentials")
                     conn_msg = gcp.check_connection(bucket_name, 'none')
+                    remove_temp_files([credentials_file_path])
                     if conn_msg != 'File does not exist!!':
                         logger.info("GCPStorage Connection Not Successful!!")
                         return render_template('exportFile.html',
@@ -926,7 +932,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                     timestamp = round(time.time() * 1000)
                     upload_status = gcp.upload_to_bucket(f'{project_name}_{timestamp}.{file_type}',
                                                          file_path, bucket_name)
-
+                    remove_temp_files([file_path])
                     if upload_status != 'Successful':
                         logger.info("Could'nt Upload The File To GCP Container!!")
                         return render_template('exportFile.html',
@@ -970,6 +976,7 @@ def exportCloudDatabaseFile(project_name, project_id):
 
                     timestamp = round(time.time() * 1000)
                     upload_status = mysql_data.push_file_to_table(file_path, f'{project_name}_{timestamp}')
+                    remove_temp_files([file_path])
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
@@ -995,6 +1002,7 @@ def exportCloudDatabaseFile(project_name, project_id):
 
                     logger.info("Validating User Cassandra Credentials")
                     conn_msg = cassandra_db.check_connection('none')
+                    remove_temp_files([secure_connect_bundle_file_path])
                     if conn_msg != 'table does not exist!!':
                         logger.info("Users Cassandra Connection Not Successful!!")
                         return render_template('exportFile.html',
@@ -1012,6 +1020,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                     timestamp = round(time.time() * 1000)
                     upload_status = cassandra_db.push_dataframe_to_table(pd.read_csv(file_path),
                                                                          f'{project_name}_{timestamp}')
+                    remove_temp_files([file_path])
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
@@ -1041,6 +1050,7 @@ def exportCloudDatabaseFile(project_name, project_id):
                     logger.info("Looking For User File!!")
                     timestamp = round(time.time() * 1000)
                     upload_status = mongo_helper.push_dataset(mongo_database, f'{project_name}_{timestamp}', file_path)
+                    remove_temp_files([file_path])
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
