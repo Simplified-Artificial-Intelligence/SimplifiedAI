@@ -157,7 +157,7 @@ def check_schedule_model():
             print(process)
             train_model(model_name=process[2], target=process[1], pid=process[0])
             print('Training Done')
-            email_check = email_sender(process[7],1)
+            email_check = email_sender(process[6],1)
             if email_check:
                 mysql.update_record(f"""DELETE FROM tblProject_scheduler WHERE ProjectID = '{process[0]}'""")
                 print('Email sent Done')
