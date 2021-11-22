@@ -50,14 +50,14 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
-# # Scheduler
-# scheduler = BackgroundScheduler()
-# # scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
-# scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
-# scheduler.start()
-# #
-# # # Shut down the scheduler when exiting the app
-# atexit.register(lambda: scheduler.shutdown())
+# Scheduler
+scheduler = BackgroundScheduler()
+# scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
+scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
+scheduler.start()
+#
+# # Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 
 # DataBase Initilazation
