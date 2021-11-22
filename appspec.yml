@@ -1,8 +1,8 @@
 version: 0.0
-os: ubuntu
+os: linux
 files:
  - source: .
-   destination: /home/ubuntu/Projectathon
+   destination: /home/ec2-user/Projectathon
 hooks:
   AfterInstall:
    - location: scripts/install_app_dependencies
