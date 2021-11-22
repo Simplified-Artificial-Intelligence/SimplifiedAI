@@ -45,4 +45,5 @@ jobs:
             --application-name application-name \
             --deployment-group-name AppDeploymentGroupName \
             --deployment-config-name CodeDeployDefault.OneAtATime \
-            --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
+            --github-location repository=${{ github.repository }},commitId=${{ github.sha }} \
+            --region us-east-1
