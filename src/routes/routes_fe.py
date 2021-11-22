@@ -274,6 +274,9 @@ def feature_engineering_post(action):
                         else:
                             (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type)
 
+                        if session['target_column'] is not None:
+                            df_[session['target_column']]=df.loc[:,session['target_column']]
+                            
                         df = pd.concat([df_, num_data], axis=1)
                         df = update_data(df)
 
