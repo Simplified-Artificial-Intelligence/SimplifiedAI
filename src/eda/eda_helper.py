@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-from math import floor
 from src.utils.common.common_helper import read_config
 from loguru import logger
 import os
 from from_root import from_root
+
 config_args = read_config("./config.yaml")
 
 """[summary]
@@ -106,8 +106,8 @@ class EDA:
     def find_mode(df3):
         try:
             for i in df3.columns:
-                mode=df3[i].mode()
-                yield mode[0] if len(mode)>0 else '-'
+                mode = df3[i].mode()
+                yield mode[0] if len(mode) > 0 else '-'
             logger.info("Find Mode Implemented!")
         except Exception as e:
             logger.error(f"{e} occurred in Find Mode!")
@@ -186,14 +186,13 @@ class EDA:
             try:
                 upper_outlier = 0
                 lower_outlier = 0
-                col_mean = np.mean(dataframe[column].fillna(dataframe[column].mean()))
-                col_std = np.std(dataframe[column].fillna(dataframe[column].mean()))
+                col_mean = np.mean(dataframe[column])
+                col_std = np.std(dataframe[column])
 
-                for element in dataframe[column].fillna(dataframe[column].mean()):
+                for element in dataframe[column]:
                     z = (element - col_mean) / col_std
                     if z > 3:
                         upper_outlier += 1
-                        continue
                     elif z < -3:
                         lower_outlier += 1
 
@@ -215,17 +214,20 @@ class EDA:
     @staticmethod
     def outlier_detection(data, kind: str):
         try:
+            data = pd.Series(data)
             if kind == 'Box':
                 pass
             elif kind == 'z-score':
                 outliers = []
-                threshold = 3
+                # threshold = 3
                 mean = np.mean(data)
                 std = np.std(data)
                 data = np.array(data)
                 for da in data:
                     val = (da - mean) / std
-                    if abs(val) > threshold:
+                    if val > 3:
+                        outliers.append(da)
+                    elif val < -3:
                         outliers.append(da)
                 return outliers
             elif kind == 'iqr':

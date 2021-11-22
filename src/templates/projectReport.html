@@ -18,36 +18,35 @@
         <div class="jumbotron text-center jumbtron">
             <h1>Report</h1>
             <p>Find all project report activity here, this project report is contain all action with their input and output.
-            
             </p>
         </div>
-
-        <!-- <div class="row justify-content-between">
-            <div class="col-4">
-                <div class="form-group">
-                    <label for="exampleFormControlSelect1">Select Columns</label>
-                    <select class="js-example-basic-multiple form-control" name="columns" multiple="multiple">
-                        {% for obj in projectStatus %}
-                            <option value="{{obj.key}}">{{obj.value}}</option>
-                        {% endfor %}
-                    </select>
-                  </div>
-            </div>
-            
-            <div class="col-4" style="padding-top: 20px;">
-                <button type="submit" class="btn btn-default">Show Result</button>
-            </div>
-        </div> -->
+        <h3 style="margin-top: 30px;">How Much Time Spend On Each Module</h3>
+        <div class="row">
+          <div class="col-lg-6 col-md-6 col-sm-21 col-sm-12">
+           <div id='barChart'></div>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-21 col-sm-12">
+              <div id='pieDiv'></div>
+          </div>
+          </div>
     </form>
     
     <h3 class="result">Result</h3>
     <div style="overflow:auto;">
         {{records | safe}}
       </div>
+      
 </div>
 
 <script>
     $(document).ready(function() {
+
+        var graphs = {{graphJSON | safe}};
+        Plotly.newPlot('pieDiv',  graphs);
+
+        var pie_graphJSON = {{pie_graphJSON | safe}};
+        Plotly.newPlot('barChart',  pie_graphJSON);
+
         $('.dataframe').DataTable({
             "scrollCollapse": true,
         });

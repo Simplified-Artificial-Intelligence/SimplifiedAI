@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, session
-from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params, Ridge_Params, \
-    Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, SVR_params, AdabootRegressor_Params, \
-    GradientBoostRegressor_Params
+from src.constants.model_params import Ridge_Params, Lasso_Params, ElasticNet_Params, RandomForestRegressor_Params, \
+    SVR_params, AdabootRegressor_Params, GradientBoostRegressor_Params
 from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, \
     DecisionTreeClassifier_Params, RandomForestClassifier_Params, AdaBoostClassifier_Params, \
     GradientBoostingClassifier_Params
@@ -37,8 +36,8 @@ def fe_feature_selection():
             high_variance_columns = FeatureEngineering.feature_selection(df_, session['target_column'], method,
                                                                          threshold=float(threshold))
             if high_variance_columns is None:
-                high_variance_columns=[]
-                
+                high_variance_columns = []
+
             high_variance_columns = list(high_variance_columns)
             low_variance_columns = [col for col in df_.columns
                                     if col not in high_variance_columns]
@@ -68,7 +67,7 @@ def fe_feature_selection():
 
     except Exception as e:
         print(e)
-        return jsonify({'success': False,'msg':str(e)})
+        return jsonify({'success': False, 'msg': str(e)})
 
 
 # APIS
@@ -83,7 +82,7 @@ def missing_data():
             before = {}
             after = {}
             list_ = list(df[~df.loc[:, selected_column].isnull()][selected_column])
-            before['graph'] = PlotlyHelper.distplot(list_, selected_column)
+            before['graph'] = PlotlyHelper.create_distplot([list_], [selected_column])
             before['skewness'] = Preprocessing.find_skewness(list_)
             before['kurtosis'] = Preprocessing.find_kurtosis(list_)
 
@@ -100,7 +99,7 @@ def missing_data():
 
             new_list = list(new_df.loc[:, selected_column])
 
-            after['graph'] = PlotlyHelper.distplot(new_list, selected_column)
+            after['graph'] = PlotlyHelper.create_distplot([new_list], [selected_column])
             after['skewness'] = Preprocessing.find_skewness(new_list)
             after['kurtosis'] = Preprocessing.find_kurtosis(new_list)
 
@@ -166,24 +165,26 @@ def fe_encoding():
 
         if session['target_column'] is not None:
             columns = list(df.columns[df.columns != session['target_column']])
-            
-        df=df.loc[:,columns]
+
+        df = df.loc[:, columns]
 
         d = {'success': True}
-        cat_data=Preprocessing.col_seperator(df,'Categorical_columns')
-        num_data=Preprocessing.col_seperator(df,'Numerical_columns')
-        
+        cat_data = Preprocessing.col_seperator(df, 'Categorical_columns')
+        num_data = Preprocessing.col_seperator(df, 'Numerical_columns')
+
         if encoding_type == "Base N Encoder":
             df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type, base=request.json['base'])
         elif encoding_type == "Target Encoder":
-            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns,encoding_type, n_components=request.json['target'])
+            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
+                                                 n_components=request.json['target'])
         elif encoding_type == "Hash Encoder":
             """This is remaining to handle"""
-            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns,encoding_type, n_components=request.json['hash'])
+            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
+                                                 n_components=request.json['hash'])
         else:
-            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns,encoding_type)
-            
-        df=pd.concat([df,num_data],axis=1)
+            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type)
+
+        df = pd.concat([df, num_data], axis=1)
         data = df.head(200).to_html()
         d['data'] = data
         return jsonify(d)
@@ -197,13 +198,13 @@ def fe_encoding():
 def fe_pca():
     try:
         df = load_data()
-        columns=df.columns
-        
+        columns = df.columns
+
         if session['target_column']:
             columns = [col for col in columns if col != session['target_column']]
-                            
-        df_=df.loc[:, columns]
-        df_, evr_,pca = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
+
+        df_ = df.loc[:, columns]
+        df_, evr_, pca = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
         d = {'success': True}
 
         df_evr = pd.DataFrame()
@@ -229,23 +230,22 @@ def fe_script():
         df = load_data()
         d = {'success': True}
         code = request.json['code']
-        
-        ## Double quote is not allowed
+        # Double quote is not allowed
         if '"' in code:
-            return jsonify({'success': False,'error':"Double quote is not allowed"})
-        
+            return jsonify({'success': False, 'error': "Double quote is not allowed"})
+
         if code is not None:
             exec(code)
             data = df.head(1000).to_html()
-            d['data']=data
+            d['data'] = data
 
         return jsonify(d)
 
     except Exception as e:
         print(e)
-        return jsonify({'success': False,'error':str(e)})
-    
-    
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app_api.route('/api/get_params', methods=['POST'])
 def get_params():
     try:

@@ -117,4 +117,3 @@ def data_updater(path=os.path.join(from_root(), 'src', 'data')):
     except Exception as e:
         logger.error(e.__str__())
         return e.__str__()
-

@@ -1,14 +1,8 @@
 from flask import Blueprint, request, render_template, session, redirect, url_for
-from flask.wrappers import Response
 from src.utils.common.data_helper import load_data, update_data
-from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.common.project_report_helper import ProjectReports
-import numpy as np
-from src.eda.eda_helper import EDA
-from pandas_profiling import ProfileReport
 from src.utils.databases.mysql_helper import MySqlHelper
-import plotly.figure_factory as ff
-from src.utils.common.common_helper import immutable_multi_dict_to_str, save_project_encdoing, save_project_model, save_project_pca, save_project_scaler
+from src.utils.common.common_helper import save_project_encdoing, save_project_pca, save_project_scaler
 from src.utils.common.common_helper import read_config
 import os
 from loguru import logger
@@ -16,10 +10,10 @@ from from_root import from_root
 import pandas as pd
 import numpy as np
 from src.preprocessing.preprocessing_helper import Preprocessing
-from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, FEATURE_SELECTION_METHODS_CURSOR, FEATURE_SELECTION_METHODS_RGRESSOR, ProjectActions, \
-    OBJECT_MISSING_HANDLER, PROJECT_TYPES, SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES
+from src.constants.constants import ENCODING_TYPES, FEATURE_SELECTION_METHODS_CLASSIFICATION, \
+    FEATURE_SELECTION_METHODS_CURSOR, FEATURE_SELECTION_METHODS_RGRESSOR, ProjectActions, \
+    SUPPORTED_DATA_TYPES, SUPPORTED_SCALING_TYPES
 from src.feature_engineering.feature_engineering_helper import FeatureEngineering
-from pickle import dump, load
 
 mysql = MySqlHelper.get_connection_obj()
 
@@ -59,7 +53,6 @@ def feature_engineering(action):
                                                status="error",
                                                msg=f'{e}')
 
-
                 elif action == 'encoding':
 
                     logger.info('Redirect To Encoding')
@@ -81,7 +74,7 @@ def feature_engineering(action):
                                                allowed_operation="not",
                                                columns=[], status="error",
                                                msg="You Already Performed Encoding. Don't do this again")
-                    return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,status="success",
+                    return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES, status="success",
                                            columns=list(df.columns[df.dtypes == 'object']), action=action)
 
                 elif action == 'change-column-name':
@@ -109,12 +102,12 @@ def feature_engineering(action):
                                                    allowed_operation="not",
                                                    columns=[], status="error",
                                                    msg="You Already Performed Scaling. Don't do this again")
-                        columns=df.columns    
+                        columns = df.columns
                         if session['target_column']:
                             columns = [col for col in columns if col != session['target_column']]
-                            
-                        df=df.loc[:,columns]
-                            
+
+                        df = df.loc[:, columns]
+
                         if len(df.columns[df.dtypes == 'category']) > 0 or len(df.columns[df.dtypes == 'object']) > 0:
                             return render_template('fe/scaling.html', scaler_types=SUPPORTED_SCALING_TYPES,
                                                    allowed_operation="not",
@@ -131,48 +124,56 @@ def feature_engineering(action):
 
                     logger.info('Redirect To Feature Secltion')
                     ProjectReports.insert_record_fe('Redirect To Feature Secltion')
-                    
-                    methods=[]    
-                    
-                    if session['project_type']==1:
-                        methods=FEATURE_SELECTION_METHODS_RGRESSOR
-                    elif session['project_type']==2:
-                        methods=FEATURE_SELECTION_METHODS_CLASSIFICATION
-                    elif session['project_type']==3:
-                        methods=FEATURE_SELECTION_METHODS_CURSOR
-                               
+
+                    methods = []
+
+                    if session['project_type'] == 1:
+                        methods = FEATURE_SELECTION_METHODS_RGRESSOR
+                    elif session['project_type'] == 2:
+                        methods = FEATURE_SELECTION_METHODS_CLASSIFICATION
+                    elif session['project_type'] == 3:
+                        methods = FEATURE_SELECTION_METHODS_CURSOR
+
                     elif session['target_column'] is None:
                         return redirect('/target-column')
-                        
-                    target_column =session['target_column']
-                    cols_=[col for col in df.columns if col!=target_column]
-                    
-                    df=df.loc[:,cols_]
-                        
+
+                    target_column = session['target_column']
+                    cols_ = [col for col in df.columns if col != target_column]
+
+                    df = df.loc[:, cols_]
+
                     if len(df.columns[df.dtypes == 'category']) > 0 or len(df.columns[df.dtypes == 'object']) > 0:
                         return render_template('fe/feature_selection.html',
-                                                methods=methods,
-                                                status="error",
-                                                columns_len=df.shape[1] - 1,
-                                                msg="Feature Selection can't be performed at this point, data contain categorical data. Please perform encoding first")
+                                               methods=methods,
+                                               status="error",
+                                               columns_len=df.shape[1] - 1,
+                                               msg="Feature Selection can't be performed at this point, data contain categorical data. Please perform encoding first")
 
-                    
-                        
                     return render_template('fe/feature_selection.html',
                                            methods=methods,
                                            project_type=session['project_type'],
                                            columns_len=df.shape[1] - 1)
 
                 elif action == 'dimension_reduction':
+
+                    """ Check Encoding Already Performed or not"""
+                    query_ = f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=6"
+                    rows = mysql.fetch_all(query_)
+                    if len(rows) > 0:
+                        return render_template('fe/dimension_reduction.html',
+                                               columns=[], status="error",
+                                               not_allowed=True,
+                                               msg="You Already Performed Dimensionalty Reduction. Don't do this again")
+
                     columns = list(df.columns)
                     if session['target_column']:
-                            columns = [col for col in columns if col != session['target_column']]
-                            
-                    df=df.loc[:, columns]
+                        columns = [col for col in columns if col != session['target_column']]
+
+                    df = df.loc[:, columns]
 
                     logger.info('Redirect To Dimention Reduction')
                     ProjectReports.insert_record_fe('Redirect To Dimention Reduction')
-                    ### Check this remove target column
+                    # Check this remove target column
                     data = df.head(200).to_html()
                     return render_template('fe/dimension_reduction.html', action=action, data=data)
 
@@ -248,8 +249,8 @@ def feature_engineering_post(action):
 
                         df_ = df.loc[:, columns]
                         encdoer_ = None
-                        cat_data=Preprocessing.col_seperator(df,'Categorical_columns')
-                        num_data=Preprocessing.col_seperator(df,'Numerical_columns')
+                        cat_data = Preprocessing.col_seperator(df, 'Categorical_columns')
+                        num_data = Preprocessing.col_seperator(df, 'Numerical_columns')
 
                         if encoding_type == "Base N Encoder":
                             (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
@@ -264,7 +265,7 @@ def feature_engineering_post(action):
                         else:
                             (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type)
 
-                        df=pd.concat([df_,num_data],axis=1)
+                        df = pd.concat([df_, num_data], axis=1)
                         df = update_data(df)
 
                         save_project_encdoing(encdoer_)
@@ -301,10 +302,8 @@ def feature_engineering_post(action):
                         save_project_scaler(scaler)
                         ProjectReports.insert_record_fe('Perform Scaling')
                         ProjectReports.insert_project_action_report(ProjectActions.SCALING.value)
-                        
+
                         return redirect('/eda/show')
-
-
                     except:
                         return render_template('fe/scaling.html', status="error", scaler_types=SUPPORTED_SCALING_TYPES,
                                                columns=list(df.columns[df.dtypes != 'object']))
@@ -315,21 +314,21 @@ def feature_engineering_post(action):
                     try:
                         columns = list(df.columns)
                         if session['target_column']:
-                                columns = [col for col in columns if col != session['target_column']]
-                            
-                        df_=df.loc[:, columns]
+                            columns = [col for col in columns if col != session['target_column']]
+
+                        df_ = df.loc[:, columns]
                         no_pca_selected = request.form['range']
-                        df_, evr_,pca = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
+                        df_, evr_, pca = FeatureEngineering.dimenstion_reduction(df_, len(df_.columns))
                         save_project_pca(pca)
                         ProjectReports.insert_record_fe('Dimention Reduction')
-                        ProjectReports.insert_project_action_report(ProjectActions.PCA.value,no_pca_selected)
+                        ProjectReports.insert_project_action_report(ProjectActions.PCA.value, no_pca_selected)
                         df_ = df_[:, :int(no_pca_selected)]
                         df_evr = pd.DataFrame()
                         data = pd.DataFrame(df_, columns=[f"Col_{col + 1}" for col in np.arange(0, df_.shape[1])])
-                        
+
                         if session['target_column']:
                             data[session['target_column']] = df.loc[:, session['target_column']]
-                            
+
                         df = update_data(data)
                         data = df.head(200).to_html()
                         return render_template('fe/dimension_reduction.html', status="success", action=action,

@@ -129,7 +129,6 @@ class MySqlHelper:
 
         finally:
             self.close(conn, cursor)
-            logger.info("MySQL connection is closed")
 
     def fetch_one(self, query):
         """
@@ -154,7 +153,7 @@ class MySqlHelper:
 
         finally:
             self.close(conn, cursor)
-            logger.info("MySQL connection is closed")
+
 
     def delete_record(self, query):
         """
@@ -179,8 +178,6 @@ class MySqlHelper:
         except connector.Error as error:
             logger.error("Error: {}".format(error))
 
-        finally:
-            logger.info("MySQL connection is closed")
             
     def update_record(self, query):
         """
@@ -206,7 +203,6 @@ class MySqlHelper:
         finally:
             conn.commit()
             self.close(conn, cursor)
-            logger.info("MySQL connection is closed")
 
     def insert_record(self, query):
         """
@@ -232,4 +228,3 @@ class MySqlHelper:
 
         finally:
             self.close(conn, cursor)
-            logger.info("MySQL connection is closed")

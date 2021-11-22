@@ -7,7 +7,6 @@ from src.model.custom.clustering_models import ClusteringModels
 from src.utils.databases.mysql_helper import MySqlHelper
 import pandas as pd
 from from_root import from_root
-from emailSender.Sender import email_sender
 
 mysql = MySqlHelper.get_connection_obj()
 
@@ -158,10 +157,9 @@ def check_schedule_model():
             print(process)
             train_model(model_name=process[2], target=process[1], pid=process[0])
             print('Training Done')
-            email_check = email_sender(process[7],1)
-            if email_check:
-                mysql.update_record(f"""DELETE FROM tblProject_scheduler WHERE ProjectID = '{process[0]}'""")
-                print('Email sent Done')
+            # email_check = email_sender(process[7],1)
+            # if email_check:
+            #     mysql.update_record(f"""DELETE FROM tblProject_scheduler WHERE ProjectID = '{process[0]}'""")
+            #     print('Email sent Done')
 
     return 'Done'
-

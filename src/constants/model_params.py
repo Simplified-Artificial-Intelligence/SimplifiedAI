@@ -167,11 +167,11 @@ KNeighborsClassifier_Params = [
     {"name": "weights", "type": "select", "values": ['uniform', 'distance'], "dtype": "string", "accept_none": False},
     {"name": "algorithm", "type": "select", "values": ["auto", "ball_tree", "kd_tree", "brute"], "dtype": "string",
      "accept_none": False},
-    {"name": "leaf_size", "type": "input", "values": "30", "dtype": "int", "accept_none": False},
-    {"name": "p", "type": "input", "values": "2", "dtype": "int", "accept_none": True},
+    {"name": "leaf_size", "type": "input", "values": 30, "dtype": "int", "accept_none": False},
+    {"name": "p", "type": "input", "values": 2, "dtype": "int", "accept_none": True},
     {"name": "metric", "type": "select", "values": ['minkowski', 'euclidean', 'manhattan', 'chebyshev', 'mahalanobis'],
      "dtype": "string", "accept_none": False},
-    {"name": "n_jobs", "type": "input", "values": "", "dtype": "int", "accept_none": True}
+    {"name": "n_jobs", "type": "input", "values": -1, "dtype": "int", "accept_none": True}
 ]
 
 DecisionTreeClassifier_Params = [
@@ -267,7 +267,7 @@ DbscanClustering_Params = [
 
 AgglomerativeClustering_Params = [
     {"name": "n_clusters", "type": "input", "values": 2, "dtype": "int", "accept_none": True},
-    {"name": "affinity", "type": "select", "values": ["euclidean"],"dtype": "string", "accept_none": False},
+    {"name": "affinity", "type": "select", "values": ["euclidean"], "dtype": "string", "accept_none": False},
     {"name": "compute_full_tree", "type": "select", "values": ["auto"], "dtype": "string", "accept_none": False},
     {"name": "linkage", "type": "select", "values": ["ward", "complete", "average", "single"], "dtype": "string",
      "accept_none": False},

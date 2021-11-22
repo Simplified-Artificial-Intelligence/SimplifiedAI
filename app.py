@@ -3,10 +3,10 @@ from werkzeug.wrappers import Response
 import re
 from scheduler.scheduler import data_updater
 from src.constants.constants import PROJECT_TYPES, ProjectActions
+from src.utils.common.plotly_helper import PlotlyHelper
 from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
-import time
 from scheduler.training_scheduler import check_schedule_model
 from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
 from src.utils.databases.mongo_helper import MongoHelper
@@ -133,7 +133,8 @@ def index():
         if 'loggedin' in session:
             query = f'''
             select tp.Id,tp.Name,tp.Description,tp.Cassandra_Table_Name,
-            ts.Name,ts.Indetifier,tp.Pid,tp.TargetColumn,tpy.Name
+            (Select ts.Name from tblProjectReports join tblProjectStatus as ts on ts.Id=ModuleId   Where ProjectId=tp.Id  LIMIT 1) as ModuleName,
+            ts.Indetifier,tp.Pid,tp.TargetColumn,tpy.Name
             from tblProjects as tp
             join tblProjectType as tpy
                 on tpy.Id=tp.ProjecTtype
@@ -1033,8 +1034,19 @@ def projectReport(id):
     if 'loggedin' in session:
         logger.info('Redirect To Project Report Page')
         records, projectStatus = ProjectReports.get_record_by_pid(id, None)
+        
+        graphJSON=""
+        pie_graphJSON=""
+        
+        df=pd.DataFrame(records)
+        if df is not None:
+            df_counts = pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0)
+            y = list(pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0).columns)[-1]
+            df_counts['Total Actions']=df_counts[y]
+            graphJSON = PlotlyHelper.barplot(df_counts, x='Module Name', y=df_counts['Total Actions'])
+            pie_graphJSON = PlotlyHelper.pieplot(df_counts, names='Module Name', values='Total Actions', title='')
         return render_template('projectReport.html', data={"id": id, "moduleId": None}, records=records.to_html(),
-                               projectStatus=projectStatus)
+                               projectStatus=projectStatus,graphJSON=graphJSON,pie_graphJSON=pie_graphJSON)
     else:
         return redirect(url_for('login'))
 
@@ -1066,7 +1078,8 @@ def setTargetColumn():
                 status = "success"
                 # add buttom here
                 if status == "success":
-                    return render_template('target_column.html', columns=columns)
+                   session['target_column']=target_column
+                   return redirect('/module')
                 else:
                     return redirect('/module')
 

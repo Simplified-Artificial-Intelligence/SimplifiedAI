@@ -181,7 +181,7 @@
             else if($("#selectcategory_div").is(':visible')){
                 data['selectcategory']=$("#selectcategory").val()
             }
-
+            $("#loading").css('display', 'block');
             $.ajax({
                 type: "POST",
                 url: `${window.location.origin}/api/missing-data`,
@@ -190,6 +190,7 @@
                 contentType:'application/json',
                 cache: false
         }).done(function(data) {
+            $("#loading").css('display', 'none');
             $("#submit").show()
             $("#show-result").show()
             var earlier_graph = data?.before?.graph
@@ -206,7 +207,7 @@
      
         })
         .fail(function(err) {
-            // do stuff here
+            $("#loading").css('display', 'none');
         })
         .always(function(info) {
             // do stuff here
