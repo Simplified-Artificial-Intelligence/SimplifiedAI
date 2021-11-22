@@ -1,3 +1,4 @@
+#
 FROM python:3.8
 COPY . /usr/app/
 EXPOSE 5000
