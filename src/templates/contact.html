@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+  <link rel="stylesheet" href="{{url_for('static', filename='/css/contact.css')}}">
+
+    
+</head>
+<body>
+
+    <header>
+        <div class="overlay">
+            <h1>Simply The Best</h1>
+            <h3>Reasons for Choosing US</h3>
+            <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Vero nostrum quis, odio veniam itaque ullam debitis qui magnam consequatur ab. Vero nostrum quis, odio veniam itaque ullam debitis qui magnam consequatur ab.</p>
+            <br>
+            <button>READ MORE</button>
+        </div>
+    </header>
+
+    <div class="container" style="margin-top: 5%;">
+        <div class="card__collection clear-fix" style="padding: 0px 75px;">
+        {% for developer in developers %}
+            <!-- <div class="card{{developer.id}}">
+                <img src="/static/css/{{developer.src}}" alt="{{developer.name}}">
+                <h3>Pyramids</h3>
+                <p>The Egyptian pyramids are ancient pyramid-shaped masonry structures located in Egypt. As of November 2008, sources cite either 118 or 138 as the number of identified Egyptian pyramids.</p>
+            </div> -->
+        
+            {% if developer.id == 'two' %}
+            <div class="cards cards--{{developer.id}}">
+                <img src="/static/css/{{developer.src}}" class="img-responsive" alt="Cards Image">
+                <span class="cards--{{developer.id}}__rect"></span>
+                <span class="cards--{{developer.id}}__tri"></span>
+                <p>{{developer.name}}</p>
+                <ul class="cards__list" style="margin-bottom: 5px;">
+                <li><i class="fab fa-facebook-f"></i></li>
+                <li><i class="fab fa-twitter"></i></li>
+                <li><i class="fab fa-instagram"></i></li>
+                <li><i class="fab fa-linkedin-in"></i></li>
+                </ul>
+            </div>
+            {% elif developer.id == 'three' %}
+            <div class="cards cards--{{developer.id}}">
+                <img src="/static/css/{{developer.src}}" class="img-responsive" alt="">
+                <span class="cards--{{developer.id}}__rect-1">
+                <span class="shadow-1"></span>
+                <p>{{developer.name}}</p>
+                </span>
+                <span class="cards--{{developer.id}}__rect-2">
+                <span class="shadow-2"></span>
+                </span>
+                <span class="cards--{{developer.id}}__circle"></span>
+                <ul class="cards--{{developer.id}}__list">
+                <li><i class="fab fa-facebook-f"></i></li>
+                <li><i class="fab fa-twitter"></i></li>
+                <li><i class="fab fa-linkedin-in"></i></li>
+                </ul>
+            </div>
+            {% endif %}              
+
+            {% endfor %}
+        </div>
+    </div>
+      
+    <div class='container-div'>
+        <ul>
+          <li style="list-style-type: none;">
+            <a class='animated-arrow' href='https://google.com'>
+              <span class='the-arrow -left'>
+                <span class='shaft'></span>
+              </span>
+              <span class='main'>
+                <span class='text'>
+                  Project
+                </span>
+                <span class='the-arrow -right'>
+                  <span class='shaft'></span>
+                </span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    
+</body>
+</html>
+
+
