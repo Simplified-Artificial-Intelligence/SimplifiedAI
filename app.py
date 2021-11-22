@@ -8,7 +8,8 @@ from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
 from scheduler.training_scheduler import check_schedule_model
-from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt, remove_temp_files
+from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt, \
+    remove_temp_files
 from src.utils.databases.mongo_helper import MongoHelper
 from src.constants.constants import ALL_MODELS, TIMEZONE
 from src.utils.common.data_helper import load_data, update_data
@@ -52,13 +53,12 @@ database = config_args['secrets']['database']
 
 # Scheduler
 scheduler = BackgroundScheduler()
-# scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
-scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=900)
+scheduler.add_job(func=data_updater, trigger="interval", hour=24)
+scheduler.add_job(func=check_schedule_model, trigger="interval", hour=1)
 scheduler.start()
 #
 # # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
-
 
 # DataBase Initilazation
 logger.info('Initializing Databases')
@@ -253,7 +253,7 @@ def project():
                         message = 'Please enter project description'
                         logger.info(message)
                         return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
-                        
+
                     if resource_type == "awsS3bucket":
                         region_name = request.form['region_name']
                         aws_access_key_id = request.form['aws_access_key_id']
@@ -283,7 +283,7 @@ def project():
                         if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
                             message = 'This file format is not allowed, please select mentioned one'
                             return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
-                        
+
                         credentials_filename = secure_filename(credentials_file.filename)
                         credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
                         credentials_file.save(credentials_file_path)
@@ -333,7 +333,7 @@ def project():
                         secure_connect_bundle.save(secure_connect_bundle_file_path)
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], (table_name + ".csv"))
                         cassandra_db = cassandra_connector(secure_connect_bundle_file_path,
-                                                           client_id, client_secret,keyspace)
+                                                           client_id, client_secret, keyspace)
                         logger.info("Validating User's Cassandra Credentials!!")
                         conn_msg = cassandra_db.check_connection(table_name)
                         remove_temp_files([secure_connect_bundle_file_path])
@@ -818,6 +818,7 @@ def exportFile(project_id, project_name):
         return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
                                msg=e.__str__())
 
+
 @app.route('/exportProject/<project_name>/<project_id>', methods=['GET', 'POST'])
 def exportCloudDatabaseFile(project_name, project_id):
     try:
@@ -1072,7 +1073,8 @@ def exportCloudDatabaseFile(project_name, project_id):
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', data={"project_name": project_name}, msg="OOPS Something Went Wrong!!")
+        return render_template('exportFile.html', data={"project_name": project_name},
+                               msg="OOPS Something Went Wrong!!")
 
 
 @app.route('/projectReport/<id>', methods=['GET', 'POST'])
@@ -1080,19 +1082,19 @@ def projectReport(id):
     if 'loggedin' in session:
         logger.info('Redirect To Project Report Page')
         records, projectStatus = ProjectReports.get_record_by_pid(id, None)
-        
-        graphJSON=""
-        pie_graphJSON=""
-        
-        df=pd.DataFrame(records)
+
+        graphJSON = ""
+        pie_graphJSON = ""
+
+        df = pd.DataFrame(records)
         if df is not None:
             df_counts = pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0)
             y = list(pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0).columns)[-1]
-            df_counts['Total Actions']=df_counts[y]
+            df_counts['Total Actions'] = df_counts[y]
             graphJSON = PlotlyHelper.barplot(df_counts, x='Module Name', y=df_counts['Total Actions'])
             pie_graphJSON = PlotlyHelper.pieplot(df_counts, names='Module Name', values='Total Actions', title='')
         return render_template('projectReport.html', data={"id": id, "moduleId": None}, records=records.to_html(),
-                               projectStatus=projectStatus,graphJSON=graphJSON,pie_graphJSON=pie_graphJSON)
+                               projectStatus=projectStatus, graphJSON=graphJSON, pie_graphJSON=pie_graphJSON)
     else:
         return redirect(url_for('login'))
 
@@ -1124,8 +1126,8 @@ def setTargetColumn():
                 status = "success"
                 # add buttom here
                 if status == "success":
-                   session['target_column']=target_column
-                   return redirect('/module')
+                    session['target_column'] = target_column
+                    return redirect('/module')
                 else:
                     return redirect('/module')
 
@@ -1281,8 +1283,7 @@ def custom_script():
                 else:
                     df = load_data()
                     code = request.form['code']
-
-                    ## Double quote is not allowed
+                    # Double quote is not allowed
                     if '"' in code:
                         return render_template('custom-script.html', status="error", msg="Double quote is not allowed")
 
@@ -1330,9 +1331,7 @@ def scheduler_get(action):
                                             and b.deleted=0
                                            """
 
-                    print(query)
                     result = mysql.fetch_one(query)
-                    print(result)
 
                     if Model_Trained == 0:
                         if result is None:
@@ -1380,7 +1379,6 @@ def scheduler_get(action):
                     pid = mysql.fetch_one(f"""select pid from tblProjects Where Id={session.get('pid')}""")
                     query = f'DELETE FROM tblProject_scheduler WHERE ProjectId = "{pid[0]}" '
                     mysql.delete_record(query)
-                    print('Scheduled Process deleted')
                     return redirect('/scheduler/Training_scheduler')
             else:
                 return redirect('/')
@@ -1409,7 +1407,7 @@ def scheduler_post(action):
                              (ProjectId,datetime_,email,train_status,deleted)
                             values('{pid}',DATE_ADD(NOW(),INTERVAL {time_after} HOUR),'{email}' ,0,0) '''
 
-                row_effected=mysql.update_record(query)
+                row_effected = mysql.update_record(query)
                 return redirect('/scheduler/Training_scheduler')
         else:
             return redirect(url_for('login'))
