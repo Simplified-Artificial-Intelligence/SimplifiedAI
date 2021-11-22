@@ -53,7 +53,7 @@ database = config_args['secrets']['database']
 # Scheduler
 scheduler = BackgroundScheduler()
 # scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
-scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
+scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=900)
 scheduler.start()
 #
 # # Shut down the scheduler when exiting the app
@@ -1315,46 +1315,51 @@ def scheduler_get(action):
                 if action == 'Training_scheduler':
                     # To get the trained
                     Model_Trained, model_name, TargetColumn, pid = mysql.fetch_one(
-                        f"""select Model_Trained, Model_Name,TargetColumn, Id  from tblProjects Where Id={session.get('pid')}""")
-                    
-                    
-                    if model_name is None:
-                        return render_template('scheduler/add_new_scheduler.html',
+                        f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
+
+                    query = f"""select a.pid ProjectId ,
+                                            a.TargetColumn TargetName, 
+                                            a.Model_Name ModelName, 
+                                            a.Model_Trained, 
+                                            b.train_status ,
+                                            b.email, 
+                                            b.datetime_,
+                                            NOW()
+                                            from tblProjects as a
+                                            join tblProject_scheduler as b on a.Pid = b.ProjectId where a.pid ="{pid}"
+                                            and b.deleted=0
+                                           """
+
+                    print(query)
+                    result = mysql.fetch_one(query)
+                    print(result)
+
+                    if Model_Trained == 0:
+                        if result is None:
+                            return render_template('scheduler/add_new_scheduler.html',
                                                    action=action,
                                                    model_name=model_name,
-                                                   status="error",
+                                                   status="Success",
                                                    msg="Model is not selected, please select your model first",
-                                                   target=session['target_column'])
-                        
-                    query = f"""select a.pid ProjectId ,
-                        a.TargetColumn TargetName, 
-                        a.Model_Name ModelName, 
-                        a.Model_Trained, 
-                        b.train_status ,
-                        b.email, 
-                        b.datetime_,
-                        NOW()
-                        from tblProjects as a
-                        join tblProject_scheduler as b on a.Pid = b.ProjectId where a.Id ={pid}
-                        and b.deleted=0
-                        """
-                    result = mysql.fetch_one(query)
-                    if result is not None:
-                        responseData = [{
-                            "project_id": pid,
-                            "mode_names": model_name,
-                            "target_col_name": TargetColumn,
-                            "status": result[4],
-                            "DateTime": result[6],
-                            "email_send": result[5],
-                            "CurrentDateTime":result[7]
-                        }]
+                                                   TargetColumn=TargetColumn)
 
-                        return render_template('scheduler/Training_scheduler.html', action=action,
-                                                responseData=responseData)
-                    else:
-                        return render_template('scheduler/add_new_scheduler.html',model_name=model_name,TargetColumn=TargetColumn, action=action, ALL_MODELS=ALL_MODELS,
-                                           TIMEZONE=TIMEZONE)
+                        if result is not None:
+                            responseData = [{
+                                "project_id": pid,
+                                "mode_names": model_name,
+                                "target_col_name": TargetColumn,
+                                "status": result[4],
+                                "DateTime": result[6],
+                                "email_send": result[5],
+                                "CurrentDateTime": result[7]
+                            }]
+
+                            return render_template('scheduler/Training_scheduler.html', action=action,
+                                                   responseData=responseData)
+                        else:
+                            return render_template('scheduler/add_new_scheduler.html', model_name=model_name,
+                                                   TargetColumn=TargetColumn, action=action, ALL_MODELS=ALL_MODELS,
+                                                   TIMEZONE=TIMEZONE)
 
                     if Model_Trained == 1:
                         # Retrain for scheduler
@@ -1396,7 +1401,7 @@ def scheduler_post(action):
             if action == 'help':
                 return render_template('scheduler/help.html')
 
-            if action == 'Create_scheduler':
+            if action == 'Training_scheduler':
                 time_after = int(request.form['time_after'])
                 email = request.form['email']
 
