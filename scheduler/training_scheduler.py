@@ -7,6 +7,7 @@ from src.model.custom.clustering_models import ClusteringModels
 from src.utils.databases.mysql_helper import MySqlHelper
 import pandas as pd
 from from_root import from_root
+from emailSender.Sender import email_sender
 
 mysql = MySqlHelper.get_connection_obj()
 
@@ -138,16 +139,15 @@ def check_schedule_model():
     mysql = MySqlHelper.get_connection_obj()
     query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
                                 a.Model_Name ModelName, 
-                                b.Schedule_date, 
-                                b.schedule_time ,
+                                b.datetime_,
                                 a.Model_Trained, 
                                 b.train_status ,
                                 b.email, 
                                 b.deleted
                                 from tblProjects as a
                                join tblProject_scheduler as b on a.Pid = b.ProjectId
-                               where b.Schedule_date = current_date() and b.train_status = 0 and a.Model_Trained=0 and deleted = 0
-                               order by b.Schedule_date,schedule_time"""
+                               where b.datetime_ < NOW() and b.train_status = 0 and a.Model_Trained=0 and deleted = 0
+                               order by datetime_"""
 
     results = mysql.fetch_all(query)
     if len(results) == 0:
@@ -157,9 +157,9 @@ def check_schedule_model():
             print(process)
             train_model(model_name=process[2], target=process[1], pid=process[0])
             print('Training Done')
-            # email_check = email_sender(process[7],1)
-            # if email_check:
-            #     mysql.update_record(f"""DELETE FROM tblProject_scheduler WHERE ProjectID = '{process[0]}'""")
-            #     print('Email sent Done')
+            email_check = email_sender(process[7],1)
+            if email_check:
+                mysql.update_record(f"""DELETE FROM tblProject_scheduler WHERE ProjectID = '{process[0]}'""")
+                print('Email sent Done')
 
     return 'Done'
