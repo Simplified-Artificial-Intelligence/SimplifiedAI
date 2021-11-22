@@ -53,8 +53,8 @@ database = config_args['secrets']['database']
 
 # Scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=data_updater, trigger="interval", hour=24)
-scheduler.add_job(func=check_schedule_model, trigger="interval", hour=1)
+scheduler.add_job(func=data_updater, trigger="interval", hours=24)
+scheduler.add_job(func=check_schedule_model, trigger="interval", hours=1)
 scheduler.start()
 #
 # # Shut down the scheduler when exiting the app
@@ -1420,4 +1420,4 @@ if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
-        app.run(host="127.0.0.1", port=8000, debug=True)
+        app.run(host="0.0.0.0", port=8080)
