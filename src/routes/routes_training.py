@@ -118,7 +118,7 @@ def model_training(action):
                 else:
                     return 'Non-Implemented Action'
             else:
-                return 'No Data'
+                return redirect('/')
         else:
             return redirect(url_for('/'))
     except Exception as e:
@@ -469,6 +469,7 @@ def model_training_post(action):
                     return "Non Implemented Method"
         else:
             logger.critical('DataFrame has no data')
+            return redirect('/')
     except Exception as e:
         logger.error('Error in Model Training Submit')
         ProjectReports.insert_record_ml('Error in Model Training', '', '', 0, str(e))

@@ -22,7 +22,12 @@
     $(document).ready(function() {
     $('.dataframe').DataTable();
     jQuery('.dataTable').wrap('<div class="dataTables_scroll" />');
-} );
+    $(document).ready(function() {
+    $('p:contains("INFO")').css('color', 'aliceblue');
+    $('p:contains("ERROR")').css('color', '#e0122f');
+    })});
+
+
 </script>
 {% endblock %}
 

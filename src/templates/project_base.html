@@ -46,10 +46,12 @@
   <ul class="navbar-nav">
     <li class="nav-item active">
       <a class="nav-link" href="/">Home</a></li>
+      
   </ul>
   <div>
      {% if loggedin %}
        <form action="/logout" method="post" class="logout-form">
+         <!-- {{session['project_name']}} -->
           <button type="submit" class="btn btn-info logout">Logout</button>
        </form>
      {% endif %}
@@ -61,6 +63,9 @@
   <nav id="sidebar">
       <div class="sidebar-header">
         <a href="/" class="article"><h3>Dashboard</h3></a>
+        {% if session['project_type']!=3 and  (not session['target_column'])  %}
+        <a href="/target-column"><button type="button" class="download" style="background: #fff;border-radius: 5px;; color: #17A2B8;padding-top:10px;padding-bottom: 10px;">Set Target Column</button></a>
+        {% endif %}
       </div>
 
       <ul class="list-unstyled components">
@@ -75,7 +80,7 @@
                   <li><a href="/eda/correlation">Correlation Report</a></li>
                   <li><a href="/eda/outlier">Outlier Report</a></li>
                   <li><a href="/eda/plots">Plots</a></li>
-                  <li><a href="/eda/profiler">Profiler Report</a></li>
+<!--                  <li><a href="/eda/profiler">Profiler Report</a></li>-->
               </ul>
           </li>
           <li class="active">
@@ -83,10 +88,10 @@
             <ul class="collapse list-unstyled" id="homeSubmenu">
                 <li><a href="/dp/help">Help</a></li>
                 <li><a href="/dp/delete-columns">Delete Columns</a></li>
-                <li><a href="/dp/outlier">Handler Outliers</a></li>
+                <li><a href="/dp/outlier">Handle Outliers</a></li>
                 <li><a href="/dp/duplicate-data">Handle Duplicate Data</a></li>
                 <li><a href="/dp/missing-values">Handle Missing Data</a></li>
-                <li><a href="/dp/imbalance-data">Handle Imbalance Data</a></li>
+                <li><a href="/dp/imbalance-data">Handle Imbalanced Data</a></li>
             </ul>
         </li>
         <li class="active">

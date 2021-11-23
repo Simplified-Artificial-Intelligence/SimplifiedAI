@@ -1,7 +1,19 @@
 {% extends 'project_base.html' %}
 {% block content %}
 
-<form action="/scheduler/Create_scheduler" enctype="multipart/form-data" method="POST">
+<div class="table2">
+{% if status=="error" %}
+<div class="alert alert-danger">
+    <strong>Error!</strong> {{msg}}
+  </div>
+{% endif %}
+<div class="jumbotron text-center">
+  <h1>Create Scheduler</h1>
+  <p>If you don't wanna train your model now. No issue just create a scheduler later and your model will train at given time.
+    You will be notifed via email </p>
+</div>
+{% if status!="error" %}
+<form action="/scheduler/Training_scheduler" style="margin-bottom: 50px;" enctype="multipart/form-data" method="POST">
   <div class="container_scheduler">
     <div class="card">
         <div class="form__name">
@@ -11,29 +23,59 @@
             <div class="section">
                 <div class="box">
                     1
-                </div><span>Date &amp; Time</span>
+                </div><span>Current Date &amp; Time</span>
             </div>
             <div class="form__time">
                 <div class="date">
                   <label for="date">Date</label> 
-                  <input id="date" name="date" type="date" required>
+                  <input id="date" name="date" type="text" required disabled>
               </div>
               <div class="date" style="position: absolute; right: 50px;">
                   <label for="time">Time</label> 
-                  <input id="time" name="time" type="time" required>
+                  <input id="time" name="time" type="text" required disabled>
               </div>
 
                 <div class="row margin-bottom-20 margin-top-20">
                   <div class="col-sm-12 sol-md-12 col-lg-12">
-                    <label for="model_name"><b>Select Model Name:</b></label>
+                    <label for="model_name"><b> Model Name:</b></label>
                         <input type="text" name="model_name" id="model_name" value={{model_name}} disabled>
                   </div>
                 </div>
             
                 <div class="">
                   <label for="target_col_name"><b>Target Column:</b></label>
-                  <input type="text" name="target_col_name" id="target_col_name" value="{{target}}" disabled>
+                  <input type="text" name="target_col_name" id="target_col_name" value="{{TargetColumn}}" disabled>
 
+                </div>
+                <div class="row margin-bottom-20 margin-top-20">
+                  <div class="col-sm-12 sol-md-12 col-lg-12">
+                    <label for="time_after" id="time_after" name="time_after"><b> Select Timer For Scheduling:</b></label>
+                    <select class="form-control"  name="time_after" id="time_after">
+                      <option value="3">After 2 Hours</option>
+                      <option value="3">After 3 Hours</option>
+                      <option value="4">After 4 Hours</option>
+                      <option value="5">After 5 Hours</option>
+                      <option value="6">After 6 Hours</option>
+                      <option value="7">After 7 Hours</option>
+                      <option value="8">After 8 Hours</option>
+                      <option value="9">After 9 Hours</option>
+                      <option value="10">After 10 Hours</option>
+                      <option value="11">After 11 Hours</option>
+                      <option value="12">After 12 Hours</option>
+                      <option value="13">After 13 Hours</option>
+                      <option value="14">After 14 Hours</option>
+                      <option value="15">After 15 Hours</option>
+                      <option value="16">After 16 Hours</option>
+                      <option value="17">After 17 Hours</option>
+                      <option value="18">After 18 Hours</option>
+                      <option value="19">After 19 Hours</option>
+                      <option value="20">After 20 Hours</option>
+                      <option value="21">After 21 Hours</option>
+                      <option value="22">After 22 Hours</option>
+                      <option value="23">After 23 Hours</option>
+                      <option value="24">After 24 Hours</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -56,21 +98,16 @@
     </div>
   </div>
 </form>
-
+{% endif %}
+</div>
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.js"></script>
 
 <script type="text/javascript">
 
   $(document).ready(function() {
-    $('#datetimepicker').datetimepicker({
-      format:'d/m/Y H:i',
-      inline: false,
-      theme:'dark',
-      onSelectDate:function(ct, $i){
-        // alert(ct.dateFormat('d/m/Y H:i'))
-      }
-    });
+    $("#date").val(new Date().dateFormat("d-m-Y"))
+    $("#time").val(new Date().dateFormat(`${new Date().getHours()}:${new Date().getMinutes()}`))
   });
 
 </script>

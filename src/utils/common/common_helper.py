@@ -201,3 +201,19 @@ def check_file_presence(project_id):
 
     except Exception as e:
         return False, None
+
+
+def remove_temp_files(list_of_path):
+    """
+    remove_temp_files
+    removes temp files from the specified paths
+    params : list of paths
+
+    """
+    try:
+        for path in list_of_path:
+            os.remove(path)
+            print('removed', path)
+
+    except Exception as e:
+        print(e)

@@ -180,16 +180,14 @@ class cassandra_connector:
                     column_names.append(f'data{i * "1"}')
 
                 else:
-                    create_query += f'data{i * "1"} text ,'
-                    column_names.append(f'data{i * "1"}')
+                    create_query += f'd{i * "1"} text ,'
+                    column_names.append(f'd{i * "1"}')
 
             create_query = create_query.strip(" ,") + ");"
-            print(create_query)
             session = self.connect_to_cluster()
             session.execute(create_query, timeout=None)
 
             insert_query = f'insert into {table_name}({", ".join(column_names)}) values ({"? ," * len(column_names)}'.strip(", ") + ");"
-            print(insert_query)
             prepared_query = session.prepare(insert_query)
             session.execute(prepared_query, data, timeout=None)
             session.shutdown()

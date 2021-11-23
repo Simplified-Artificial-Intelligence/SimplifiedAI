@@ -97,7 +97,7 @@ def data_preprocessing(action):
                                            data=data,
                                            perform_action=True)
                 else:
-                    return render_template('eda/help.html')
+                    return render_template('dp/help.html')
             else:
                 logger.critical('Data Frame is None')
 
@@ -193,7 +193,7 @@ def data_preprocessing_post(action):
                         level=0)
                     if len(df_outliers) > 0:
                         pie_graphJSON = PlotlyHelper.pieplot(df_outliers, names='index', values='value',
-                                                             title='Missing Values Count')
+                                                             title='Outlier Value Count')
 
                     logger.info('Sending Data on the front end')
                     return render_template('dp/outliers.html', columns=columns, method=method, selected_column=column,
@@ -348,6 +348,7 @@ def data_preprocessing_post(action):
                     return redirect('dp/help.html')
             else:
                 logger.critical('DataFrame has no Data')
+                return redirect('/')
 
         else:
             return redirect(url_for('/'))

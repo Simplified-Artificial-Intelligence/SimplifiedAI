@@ -32,9 +32,9 @@ def eda(action):
                     dtypes = EDA.data_dtype_info(df)
                     return render_template('eda/5point.html', data=data, dtypes=dtypes.to_html(), count=len(df),
                                            column_count=df.shape[1])
-                elif action == "profiler":
-                    ProjectReports.insert_record_eda('Redirect To Profile Report')
-                    return render_template('eda/profiler.html', action=action)
+                # elif action == "profiler":
+                #     ProjectReports.insert_record_eda('Redirect To Profile Report')
+                #     return render_template('eda/profiler.html', action=action)
 
                 elif action == "show":
                     ProjectReports.insert_record_eda('Redirect To Show Dataset')
@@ -68,8 +68,8 @@ def eda(action):
                     df = EDA.z_score_outlier_detection(df)
                     graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
                     pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[:10, :], names='Features',
-                        values='Total outliers', title='Top 10 Outliers')
+                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df) > 10 else len(df)-1, :],
+                        names='Features', values='Total outliers', title='Top 10 Outliers')
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method='zscore', action=action,
                                            barplot=graphJSON, pieplot=pie_graphJSON)
@@ -133,21 +133,21 @@ def eda_post(action):
                     return render_template('eda/showdataset.html', data=data, length=len(df),
                                            bottomSelected=bottomSelected, topselected=topselected, action=action,
                                            selectedCount=range, columns=columns_for_list)
-                elif action == "profiler":
-                    ProjectReports.insert_record_eda('Download  Profile Report')
-
-                    pr = ProfileReport(df, explorative=True, minimal=True,
-                                       correlations={"cramers": {"calculate": False}})
-
-                    report_path = os.path.join(from_root(), "artifacts", f"{session.get('id')}_report.html")
-                    pr.to_file(report_path)
-                    with open(report_path) as fp:
-                        content = fp.read()
-
-                    return Response(
-                        content,
-                        mimetype="text/csv",
-                        headers={"Content-disposition": "attachment; filename=report.html"})
+                # elif action == "profiler":
+                #     ProjectReports.insert_record_eda('Download  Profile Report')
+                #
+                #     pr = ProfileReport(df, explorative=True, minimal=True,
+                #                        correlations={"cramers": {"calculate": False}})
+                #
+                #     report_path = os.path.join(from_root(), "artifacts", f"{session.get('id')}_report.html")
+                #     pr.to_file(report_path)
+                #     with open(report_path) as fp:
+                #         content = fp.read()
+                #
+                #     return Response(
+                #         content,
+                #         mimetype="text/csv",
+                #         headers={"Content-disposition": "attachment; filename=report.html"})
 
                 elif action == "correlation":
                     method = request.form['method']
@@ -176,28 +176,26 @@ def eda_post(action):
 
                 elif action == "outlier":
                     method = request.form['method']
+                    print(method)
                     lower = 25
                     upper = 75
                     if method == "iqr":
                         lower = request.form['lower']
                         upper = request.form['upper']
                         df = EDA.outlier_detection_iqr(df, int(lower), int(upper))
+                        print(df)
                     else:
                         df = EDA.z_score_outlier_detection(df)
+                        print('missed')
 
                     input_str = immutable_multi_dict_to_str(request.form, True)
                     ProjectReports.insert_record_eda('Redirect To Outlier', input=input_str)
 
                     graphJSON = PlotlyHelper.barplot(df, x='Features', y='Total outliers')
 
-                    if len(df) > 10:
-                        col_no = 10
-                    else:
-                        col_no = len(df) - 1
-
                     pie_graphJSON = PlotlyHelper.pieplot(
-                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df.columns) > 10 else len(df.columns), :], names='Features',
-                        values='Total outliers', title='Top 10 Outliers')
+                        df.sort_values(by='Total outliers', ascending=False).loc[: 10 if len(df) > 10 else len(df)-1,:],
+                        names='Features', values='Total outliers', title='Top 10 Outliers')
 
                     data = df.to_html()
                     return render_template('eda/outliers.html', data=data, method=method, action=action, lower=lower,

@@ -8,7 +8,8 @@ from src.utils.databases.mysql_helper import MySqlHelper
 from werkzeug.utils import secure_filename
 import os
 from scheduler.training_scheduler import check_schedule_model
-from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt
+from src.utils.common.common_helper import decrypt, read_config, unique_id_generator, Hashing, encrypt, \
+    remove_temp_files
 from src.utils.databases.mongo_helper import MongoHelper
 from src.constants.constants import ALL_MODELS, TIMEZONE
 from src.utils.common.data_helper import load_data, update_data
@@ -50,15 +51,14 @@ user = config_args['secrets']['user']
 password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
-# # Scheduler
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
-# scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
-# scheduler.start()
+# Scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=data_updater, trigger="interval", hours=24)
+scheduler.add_job(func=check_schedule_model, trigger="interval", hours=1)
+scheduler.start()
 #
 # # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
-
 
 # DataBase Initilazation
 logger.info('Initializing Databases')
@@ -214,7 +214,9 @@ def project():
                         logger.info(message)
                         return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
 
+                    remove_temp_files([file_path])
                     project_id = unique_id_generator()
+                    logger.info(f'Pushing {filename} to mongodb')
                     inserted_rows = mongodb.create_new_project(project_id, df)
 
                     if inserted_rows > 0:
@@ -226,6 +228,7 @@ def project():
 
                         rowcount = mysql.insert_record(query)
                         if rowcount > 0:
+                            logger.info('Project Created!!')
                             flash("Success!!")
                             return redirect(url_for('index'))
                         else:
@@ -242,7 +245,6 @@ def project():
                     description = request.form['project_desc']
                     resource_type = request.form['resource_type']
 
-
                     if not name.strip():
                         message = 'Please enter project name'
                         logger.info(message)
@@ -251,7 +253,7 @@ def project():
                         message = 'Please enter project description'
                         logger.info(message)
                         return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
-                        
+
                     if resource_type == "awsS3bucket":
                         region_name = request.form['region_name']
                         aws_access_key_id = request.form['aws_access_key_id']
@@ -260,17 +262,19 @@ def project():
                         file_name = request.form['file_name']
                         if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
                             message = 'This file format is not allowed, please select mentioned one'
+                            logger.info(message)
                             return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
 
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
                         aws_s3 = aws_s3_helper(region_name, aws_access_key_id, aws_secret_access_key)
+                        logger.info("Validating User's AWS Credentials!!")
                         conn_msg = aws_s3.check_connection(bucket_name, file_name)
                         if conn_msg != 'Successful':
-                            logger.info(conn_msg)
+                            logger.info("AWS Connection Not Successful")
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
-
+                        logger.info("AWS Connection Successful!!")
                         download_status = aws_s3.download_file_from_s3(bucket_name, file_name, file_path)
-                        logger.info(name, description, resource_type, download_status, file_path)
+                        logger.info(download_status)
 
                     elif resource_type == "gcpStorage":
                         credentials_file = request.files['GCP_credentials_file']
@@ -279,19 +283,21 @@ def project():
                         if file_name.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
                             message = 'This file format is not allowed, please select mentioned one'
                             return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
-                        
+
                         credentials_filename = secure_filename(credentials_file.filename)
                         credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
                         credentials_file.save(credentials_file_path)
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
                         logger.info(credentials_file_path, file_path, file_name, bucket_name)
                         gcp = gcp_browser_storage(credentials_file_path)
+                        logger.info("Validating User's GCP Credentials!!")
                         conn_msg = gcp.check_connection(bucket_name, file_name)
+                        remove_temp_files([credentials_file_path])
                         logger.info(conn_msg)
                         if conn_msg != 'Successful':
-                            logger.info(conn_msg)
+                            logger.info("GCP Connection Not Successful")
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
-
+                        logger.info("GCP Connection Successful")
                         download_status = gcp.download_file_from_bucket(file_name, file_path, bucket_name)
                         logger.info(download_status)
 
@@ -303,17 +309,16 @@ def project():
                         database = request.form['database']
                         table_name = request.form['table_name']
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], (table_name + ".csv"))
-                        logger.info(file_path)
 
                         mysql_data = mysql_data_helper(host, port, user, password, database)
+                        logger.info("Validating User's Mysql Credentials!!")
                         conn_msg = mysql_data.check_connection(table_name)
-                        logger.info(conn_msg)
                         if conn_msg != 'Successful':
-                            logger.info(conn_msg)
+                            logger.info("User's Msql Connection Not Successful")
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
-
+                        logger.info("User's Msql Connection Successful")
                         download_status = mysql_data.retrive_dataset_from_table(table_name, file_path)
-                        logger.info(conn_msg)
+                        logger.info(download_status)
 
                     elif resource_type == "cassandra":
                         secure_connect_bundle = request.files['secure_connect_bundle']
@@ -327,22 +332,23 @@ def project():
                                                                        secure_connect_bundle_filename)
                         secure_connect_bundle.save(secure_connect_bundle_file_path)
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], (table_name + ".csv"))
-                        logger.info(secure_connect_bundle_file_path, file_path)
-
-                        cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret,
-                                                           keyspace)
+                        cassandra_db = cassandra_connector(secure_connect_bundle_file_path,
+                                                           client_id, client_secret, keyspace)
+                        logger.info("Validating User's Cassandra Credentials!!")
                         conn_msg = cassandra_db.check_connection(table_name)
-                        logger.info(conn_msg)
+                        remove_temp_files([secure_connect_bundle_file_path])
                         if conn_msg != 'Successful':
-                            logger.info(conn_msg)
+                            logger.info("User's Cassandra Connection Not Successful")
                             return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
 
+                        logger.info("User's Cassandra Connection Successful")
                         if data_in_tabular == 'true':
                             download_status = cassandra_db.retrive_table(table_name, file_path)
                             logger.info(download_status)
                         elif data_in_tabular == 'false':
                             download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
                             logger.info(download_status)
+                        remove_temp_files([secure_connect_bundle_file_path])
 
                     elif resource_type == "mongodb":
                         mongo_db_url = request.form['mongo_db_url']
@@ -350,13 +356,14 @@ def project():
                         collection = request.form['collection']
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], (collection + ".csv"))
                         mongo_helper = mongo_data_helper(mongo_db_url)
+                        logger.info("Validating User's MongoDB Credentials!!")
                         conn_msg = mongo_helper.check_connection(mongo_database, collection)
                         if conn_msg != 'Successful':
-                            logger.info(conn_msg)
-                            return render_template('new_project.html', msg=conn_msg)
-
+                            logger.info("User's MongoDB Connection Not Successful")
+                            return render_template('new_project.html', msg=conn_msg, project_types=PROJECT_TYPES)
+                        logger.info("User's MongoDB Connection Successful")
                         download_status = mongo_helper.retrive_dataset(mongo_database, collection, file_path)
-                        logger.info(name, description, resource_type, download_status, file_path)
+                        logger.info(download_status)
 
                     elif resource_type == "azureStorage":
                         azure_connection_string = request.form['azure_connection_string']
@@ -369,16 +376,18 @@ def project():
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
                         azure_helper = azure_data_helper(azure_connection_string)
                         conn_msg = azure_helper.check_connection(container_name, file_name)
-
+                        logger.info("Validating User's Azure Credentials!!")
                         if conn_msg != 'Successful':
-                            logger.info(conn_msg)
+                            logger.info("User's Azure Connection Not Successful")
                             return render_template('new_project.html', msg=conn_msg)
 
+                        logger.info("User's Azure Connection Successful")
                         download_status = azure_helper.download_file(container_name, file_name, file_path)
-                        logger.info(name, description, resource_type, download_status, file_path)
+                        logger.info(download_status)
 
                     else:
-                        return render_template('new_project.html', msg="Select Any Various Resource Type!!")
+                        return render_template('new_project.html', msg="Select Any Various Resource Type!!",
+                                               project_types=PROJECT_TYPES)
 
                     if download_status == 'Successful':
                         timestamp = round(time.time() * 1000)
@@ -398,12 +407,12 @@ def project():
                             logger.info(msg)
                             return render_template('new_project.html', msg=msg)
 
-                        print(df)
+                        remove_temp_files([file_path])
                         project_id = unique_id_generator()
+                        logger.info(f'Pushing user dataset to mongodb')
                         inserted_rows = mongodb.create_new_project(project_id, df)
 
                         if inserted_rows > 0:
-                            logger.info('Project Created')
                             userId = session.get('id')
                             status = 1
                             query = f"""INSERT INTO tblProjects (UserId, Name, Description, Status, 
@@ -412,6 +421,8 @@ def project():
 
                             rowcount = mysql.insert_record(query)
                             if rowcount > 0:
+                                logger.info('Project Created!!')
+                                flash("Success!!")
                                 return redirect(url_for('index'))
                             else:
                                 message = "Error while creating new Project"
@@ -420,7 +431,7 @@ def project():
                         else:
                             message = "Error while creating new Project"
                             logger.error(message)
-                            return render_template('new_project.html', msg=message)
+                            return render_template('new_project.html', msg=message, project_types=PROJECT_TYPES)
                     else:
                         message = "Error while creating new Project"
                         logger.error(message)
@@ -767,7 +778,7 @@ def exportFile(project_id, project_name):
 
             if fileType == 'csv':
                 content = pd.read_csv(file_path)
-                os.remove(file_path)
+                remove_temp_files([file_path])
                 logger.info(f'Temporary File Deleted!!, {project_name}.csv')
                 logger.info('Exported to CSV Sucessful')
                 return Response(content.to_csv(index=False), mimetype="text/csv",
@@ -775,7 +786,7 @@ def exportFile(project_id, project_name):
 
             elif fileType == 'tsv':
                 content = pd.read_csv(file_path)
-                os.remove(file_path)
+                remove_temp_files([file_path])
                 logger.info(f'Temporary File Deleted!!, {project_name}.tsv')
                 logger.info('Exported to TSV Sucessful')
                 return Response(content.to_csv(sep='\t', index=False), mimetype="text/tsv",
@@ -783,7 +794,7 @@ def exportFile(project_id, project_name):
 
             elif fileType == 'xlsx':
                 content = pd.read_csv(file_path)
-                os.remove(file_path)
+                remove_temp_files([file_path])
                 logger.info(f'Temporary File Deleted!!, {project_name}.xlsx')
                 content.to_excel(os.path.join(app.config["UPLOAD_FOLDER"], f'{project_name}.xlsx'), index=False)
                 logger.info('Exported to XLSX Sucessful')
@@ -792,12 +803,11 @@ def exportFile(project_id, project_name):
 
             elif fileType == 'json':
                 content = pd.read_csv(file_path)
-                os.remove(file_path)
+                remove_temp_files([file_path])
                 logger.info(f'Temporary File Deleted!!, {project_name}.json')
                 logger.info('Exported to JSON Sucessful')
                 return Response(content.to_json(), mimetype="text/json",
                                 headers={"Content-disposition": f"attachment; filename={project_name}.json"})
-
             else:
                 return render_template('exportFile.html', data={"project_name": project_name, "project_id": project_id},
                                        msg="Select Any File Type!!")
@@ -844,48 +854,56 @@ def exportCloudDatabaseFile(project_name, project_id):
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
-                    logger.info(f"Trying to push {project_name}.{file_type} File to AWS {bucket_name} bucket!!")
+
                     timestamp = round(time.time() * 1000)
                     upload_status = aws_s3.push_file_to_s3(bucket_name, file_path,
                                                            f'{project_name}_{timestamp}.{file_type}')
+                    remove_temp_files([file_path])
                     if upload_status != 'Successful':
                         logger.info("Could'nt Upload The File To s3 Bucket!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to AWS S3 {bucket_name} bucket")
-                    return redirect(url_for('index'))
+                    message = f"{project_name}_{timestamp}.{file_type} pushed to AWS S3 {bucket_name} bucket"
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
 
                 elif cloudType == 'azureStorage':
                     azure_connection_string = request.form['azure_connection_string']
                     container_name = request.form['container_name']
                     file_type = request.form['fileTypeAzure']
                     azure_helper = azure_data_helper(azure_connection_string)
+                    logger.info("Validating User Azure Credentials")
                     conn_msg = azure_helper.check_connection(container_name, 'none')
-
                     if conn_msg != 'File does not exist!!':
                         logger.info("AzureStorage Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("AzureStorage Connection Successful!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
 
+                    logger.info("Looking For User File!!")
                     if download_status != "Successful":
                         logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+
                     timestamp = round(time.time() * 1000)
                     upload_status = azure_helper.upload_file(file_path, container_name,
                                                              f'{project_name}_{timestamp}.{file_type}')
-
+                    remove_temp_files([file_path])
                     if upload_status != 'Successful':
                         logger.info("Could'nt Upload The File To Azure Container!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to Azure {container_name} container")
-                    return redirect(url_for('index'))
+                    message = f"{project_name}_{timestamp}.{file_type} pushed to Azure {container_name} container"
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
 
                 elif cloudType == 'gcpStorage':
                     credentials_file = request.files['GCP_credentials_file']
@@ -895,30 +913,36 @@ def exportCloudDatabaseFile(project_name, project_id):
                     credentials_file_path = os.path.join(app.config['UPLOAD_FOLDER'], credentials_filename)
                     credentials_file.save(credentials_file_path)
                     gcp = gcp_browser_storage(credentials_file_path)
+                    logger.info("Validating User Azure Credentials")
                     conn_msg = gcp.check_connection(bucket_name, 'none')
+                    remove_temp_files([credentials_file_path])
                     if conn_msg != 'File does not exist!!':
                         logger.info("GCPStorage Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("GCPStorage Connection Successful!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, file_type)
+                    logger.info("Looking For User File!!")
                     if download_status != "Successful":
                         logger.info("Could'nt Download The File!!")
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
-                    timestamp = round(time.time() * 1000)
-                    upload_status = gcp.upload_to_bucket(f'{project_name}_{timestamp}.{file_type}', file_path,
-                                                         bucket_name)
 
+                    timestamp = round(time.time() * 1000)
+                    upload_status = gcp.upload_to_bucket(f'{project_name}_{timestamp}.{file_type}',
+                                                         file_path, bucket_name)
+                    remove_temp_files([file_path])
                     if upload_status != 'Successful':
                         logger.info("Could'nt Upload The File To GCP Container!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f"{project_name}_{timestamp}.{file_type} pushed to GCP Storage{bucket_name} bucket")
-                    return redirect(url_for('index'))
-
+                    message = f"{project_name}_{timestamp}.{file_type} pushed to GCP Storage{bucket_name} bucket"
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
                 else:
                     return render_template('exportFile.html',
                                            data={"project_name": project_name, "project_id": project_id},
@@ -935,26 +959,34 @@ def exportCloudDatabaseFile(project_name, project_id):
                     database = request.form['database']
 
                     mysql_data = mysql_data_helper(host, port, user, password, database)
+                    logger.info("Validating User Mysql Credentials")
                     conn_msg = mysql_data.check_connection('none')
-
                     if conn_msg != "table does not exist!!":
-                        logger.info(conn_msg)
+                        logger.info("Users Mysql Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("Users Mysql Connection Successful!!")
+                    logger.info("Looking For User File!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, "csv")
+
                     if download_status != "Successful":
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+
                     timestamp = round(time.time() * 1000)
                     upload_status = mysql_data.push_file_to_table(file_path, f'{project_name}_{timestamp}')
+                    remove_temp_files([file_path])
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f'{project_name}_{timestamp} table created in {database} database')
-                    return redirect(url_for('index'))
+
+                    message = f'{project_name}_{timestamp} table created in {database} database'
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
 
                 elif databaseType == 'cassandra':
                     secure_connect_bundle = request.files['secure_connect_bundle']
@@ -966,54 +998,69 @@ def exportCloudDatabaseFile(project_name, project_id):
                                                                    secure_connect_bundle_filename)
                     secure_connect_bundle.save(secure_connect_bundle_file_path)
 
-                    cassandra_db = cassandra_connector(secure_connect_bundle_file_path, client_id, client_secret,
-                                                       keyspace)
+                    cassandra_db = cassandra_connector(secure_connect_bundle_file_path,
+                                                       client_id, client_secret, keyspace)
+
+                    logger.info("Validating User Cassandra Credentials")
                     conn_msg = cassandra_db.check_connection('none')
+                    remove_temp_files([secure_connect_bundle_file_path])
                     if conn_msg != 'table does not exist!!':
-                        logger.info(conn_msg)
+                        logger.info("Users Cassandra Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("Users Cassandra Connection Successful!!")
+                    logger.info("Looking For User File!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, "csv")
 
                     if download_status != "Successful":
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+
                     timestamp = round(time.time() * 1000)
                     upload_status = cassandra_db.push_dataframe_to_table(pd.read_csv(file_path),
                                                                          f'{project_name}_{timestamp}')
+                    remove_temp_files([file_path])
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f'{project_name}_{timestamp} table created in {keyspace} keyspace')
-                    return redirect(url_for('index'))
+                    message = f'{project_name}_{timestamp} table created in {keyspace} keyspace'
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
 
                 elif databaseType == 'mongodb':
                     mongo_db_url = request.form['mongo_db_url']
                     mongo_database = request.form['mongo_database']
                     mongo_helper = mongo_data_helper(mongo_db_url)
                     conn_msg = mongo_helper.check_connection(mongo_database, 'none')
+                    logger.info("Validating User Cassandra Credentials")
                     if conn_msg != "collection does not exits!!":
-                        logger.info(conn_msg)
+                        logger.info("Users MongoDB Connection Not Successful!!")
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=conn_msg)
+                    logger.info("Users MongoDB Connection Successful!!")
                     download_status, file_path = mongodb.download_collection_data(project_id, "csv")
                     if download_status != "Successful":
                         render_template('exportFile.html',
                                         data={"project_name": project_name, "project_id": project_id},
                                         msg="OOPS something went wrong!!")
+                    logger.info("Looking For User File!!")
                     timestamp = round(time.time() * 1000)
                     upload_status = mongo_helper.push_dataset(mongo_database, f'{project_name}_{timestamp}', file_path)
+                    remove_temp_files([file_path])
                     if download_status != 'Successful' or upload_status != 'Successful':
                         return render_template('exportFile.html',
                                                data={"project_name": project_name, "project_id": project_id},
                                                msg=upload_status)
-                    logger.info(f'{project_name}_{timestamp} collection created in {mongo_database} database')
-                    return redirect(url_for('index'))
 
+                    message = f'{project_name}_{timestamp} collection created in {mongo_database} database'
+                    logger.info(message)
+                    return render_template('exportFile.html',
+                                           data={"project_name": project_name, "project_id": project_id}, msg=message)
                 else:
                     return render_template('exportFile.html',
                                            data={"project_name": project_name, "project_id": project_id},
@@ -1026,7 +1073,8 @@ def exportCloudDatabaseFile(project_name, project_id):
             return redirect(url_for('login'))
     except Exception as e:
         logger.info(e)
-        return render_template('exportFile.html', data={"project_name": project_name}, msg=e.__str__())
+        return render_template('exportFile.html', data={"project_name": project_name},
+                               msg="OOPS Something Went Wrong!!")
 
 
 @app.route('/projectReport/<id>', methods=['GET', 'POST'])
@@ -1034,19 +1082,19 @@ def projectReport(id):
     if 'loggedin' in session:
         logger.info('Redirect To Project Report Page')
         records, projectStatus = ProjectReports.get_record_by_pid(id, None)
-        
-        graphJSON=""
-        pie_graphJSON=""
-        
-        df=pd.DataFrame(records)
+
+        graphJSON = ""
+        pie_graphJSON = ""
+
+        df = pd.DataFrame(records)
         if df is not None:
             df_counts = pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0)
             y = list(pd.DataFrame(df.groupby('Module Name').count()).reset_index(level=0).columns)[-1]
-            df_counts['Total Actions']=df_counts[y]
+            df_counts['Total Actions'] = df_counts[y]
             graphJSON = PlotlyHelper.barplot(df_counts, x='Module Name', y=df_counts['Total Actions'])
             pie_graphJSON = PlotlyHelper.pieplot(df_counts, names='Module Name', values='Total Actions', title='')
         return render_template('projectReport.html', data={"id": id, "moduleId": None}, records=records.to_html(),
-                               projectStatus=projectStatus,graphJSON=graphJSON,pie_graphJSON=pie_graphJSON)
+                               projectStatus=projectStatus, graphJSON=graphJSON, pie_graphJSON=pie_graphJSON)
     else:
         return redirect(url_for('login'))
 
@@ -1078,14 +1126,14 @@ def setTargetColumn():
                 status = "success"
                 # add buttom here
                 if status == "success":
-                   session['target_column']=target_column
-                   return redirect('/module')
+                    session['target_column'] = target_column
+                    return redirect('/module')
                 else:
                     return redirect('/module')
 
         else:
             logger.info('Redirect To Home Page')
-            return redirect('/')
+            return redirect('/module')
     except Exception as e:
         logger.error(f'{e}, Occur occurred in target-columns.')
         return render_template('500.html', exception=e)
@@ -1152,10 +1200,10 @@ def stream(pid):
         if data:
             values = data.split("&")
             session['pid'] = values[1]
-            session['project_name'] = values[0]
-            query_ = f"Select ProjectType, TargetColumn from tblProjects  where id={session['pid']}"
+            query_ = f"Select ProjectType, TargetColumn,Name from tblProjects  where id={session['pid']}"
             info = mysql.fetch_one(query_)
             if info:
+                session['project_name'] = values[0]
                 session['project_type'] = info[0]
                 if info[0] != 3:
                     session['target_column'] = info[1]
@@ -1235,8 +1283,7 @@ def custom_script():
                 else:
                     df = load_data()
                     code = request.form['code']
-
-                    ## Double quote is not allowed
+                    # Double quote is not allowed
                     if '"' in code:
                         return render_template('custom-script.html', status="error", msg="Double quote is not allowed")
 
@@ -1270,42 +1317,48 @@ def scheduler_get(action):
                     # To get the trained
                     Model_Trained, model_name, TargetColumn, pid = mysql.fetch_one(
                         f"""select Model_Trained, Model_Name,TargetColumn, pid  from tblProjects Where Id={session.get('pid')}""")
-                    query = f""" select a.pid ProjectId , a.TargetColumn TargetName, 
-                                a.Model_Name ModelName, 
-                                b.Schedule_date, 
-                                b.schedule_time ,
-                                a.Model_Trained, 
-                                b.train_status ,
-                                b.email, 
-                                b.deleted
-                                from tblProjects as a
-                                join tblProject_scheduler as b on a.Pid = b.ProjectId where b.ProjectId = '{pid}' 
-                                and b.deleted=0
-                                """
+
+                    query = f"""select a.pid ProjectId ,
+                                            a.TargetColumn TargetName, 
+                                            a.Model_Name ModelName, 
+                                            a.Model_Trained, 
+                                            b.train_status ,
+                                            b.email, 
+                                            b.datetime_,
+                                            NOW()
+                                            from tblProjects as a
+                                            join tblProject_scheduler as b on a.Pid = b.ProjectId where a.pid ="{pid}"
+                                            and b.deleted=0
+                                           """
+
                     result = mysql.fetch_one(query)
+
                     if Model_Trained == 0:
-                        # Create Scheduler
                         if result is None:
                             return render_template('scheduler/add_new_scheduler.html',
                                                    action=action,
                                                    model_name=model_name,
-                                                   target=session['target_column'])
-                        # Show created scheduler
+                                                   status="Success",
+                                                   msg="Model is not selected, please select your model first",
+                                                   TargetColumn=TargetColumn)
+
                         if result is not None:
                             responseData = [{
                                 "project_id": pid,
                                 "mode_names": model_name,
                                 "target_col_name": TargetColumn,
-                                "status": result[6],
-                                "date": result[3],
-                                "time": result[4],
-                                "email_send": result[7]
+                                "status": result[4],
+                                "DateTime": result[6],
+                                "email_send": result[5],
+                                "CurrentDateTime": result[7]
                             }]
 
                             return render_template('scheduler/Training_scheduler.html', action=action,
                                                    responseData=responseData)
                         else:
-                            return render_template('500.html', exception= "Error in card creation")
+                            return render_template('scheduler/add_new_scheduler.html', model_name=model_name,
+                                                   TargetColumn=TargetColumn, action=action, ALL_MODELS=ALL_MODELS,
+                                                   TIMEZONE=TIMEZONE)
 
                     if Model_Trained == 1:
                         # Retrain for scheduler
@@ -1326,10 +1379,9 @@ def scheduler_get(action):
                     pid = mysql.fetch_one(f"""select pid from tblProjects Where Id={session.get('pid')}""")
                     query = f'DELETE FROM tblProject_scheduler WHERE ProjectId = "{pid[0]}" '
                     mysql.delete_record(query)
-                    print('Scheduled Process deleted')
                     return redirect('/scheduler/Training_scheduler')
             else:
-                return "No data"
+                return redirect('/')
         else:
             return redirect(url_for('login'))
 
@@ -1347,16 +1399,15 @@ def scheduler_post(action):
             if action == 'help':
                 return render_template('scheduler/help.html')
 
-            if action == 'Create_scheduler':
-                date = request.form['date']
-                time = request.form['time']
+            if action == 'Training_scheduler':
+                time_after = int(request.form['time_after'])
                 email = request.form['email']
 
                 query = f''' INSERT INTO tblProject_scheduler 
-                             (ProjectId,Schedule_date,schedule_time,email,train_status,deleted)
-                            values('{pid}','{date}','{time}','{email}' ,0,0) '''
+                             (ProjectId,datetime_,email,train_status,deleted)
+                            values('{pid}',DATE_ADD(NOW(),INTERVAL {time_after} HOUR),'{email}' ,0,0) '''
 
-                mysql.update_record(query)
+                row_effected = mysql.update_record(query)
                 return redirect('/scheduler/Training_scheduler')
         else:
             return redirect(url_for('login'))
@@ -1369,4 +1420,4 @@ if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
-        app.run(host="127.0.0.1", port=8000, debug=True)
+        app.run(host="0.0.0.0", port=8080)
