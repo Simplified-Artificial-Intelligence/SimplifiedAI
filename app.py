@@ -51,10 +51,10 @@ password = config_args['secrets']['password']
 database = config_args['secrets']['database']
 
 # # Scheduler
-scheduler = BackgroundScheduler()
+# scheduler = BackgroundScheduler()
 # scheduler.add_job(func=data_updater, trigger="interval", seconds=60)
-scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
-scheduler.start()
+# scheduler.add_job(func=check_schedule_model, trigger="interval", seconds=60)
+# scheduler.start()
 #
 # # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
@@ -117,7 +117,7 @@ def contact():
         }, {
             'id': "two",
             'name': 'Anshu',
-            'src': 'dev2.jfif',
+            'src': 'dev5.jpg',
             'desc': '',
         }]
         return render_template('contact.html', developers=developers)
