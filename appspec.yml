@@ -1,7 +1,6 @@
 version: 0.0
 os: linux
 files:
-file_exists_behavior: OVERWRITE
  - source: .
    destination: /home/ec2-user/Projectathon
 hooks:
