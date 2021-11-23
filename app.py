@@ -99,26 +99,41 @@ def contact():
             'name': 'Pankaj',
             'src': 'dev1.jfif',
             'desc': '',
+            'twitter': '',
+            'linkedin': '',
+            'github': ''
         }, {
             'id': "three",
             'name': 'Ketan',
             'src': 'dev2.jfif',
             'desc': '',
+            'twitter': '',
+            'linkedin': '',
+            'github': ''
         }, {
             'id': "two",
             'name': 'Vishal',
             'src': 'dev3.jpg',
             'desc': '',
+            'twitter': '',
+            'linkedin': '',
+            'github': ''
         }, {
             'id': "three",
             'name': 'Supreeth',
             'src': 'dev1.jfif',
             'desc': '',
+            'twitter': '',
+            'linkedin': '',
+            'github': ''
         }, {
             'id': "two",
             'name': 'Anshu',
             'src': 'dev5.jpg',
             'desc': '',
+            'twitter': 'https://twitter.com/narayan_anshu',
+            'linkedin': 'www.linkedin.com/in/anshu-narayan-36235791',
+            'github': 'https://github.com/anshyan'
         }]
         return render_template('contact.html', developers=developers)
     except Exception as e:

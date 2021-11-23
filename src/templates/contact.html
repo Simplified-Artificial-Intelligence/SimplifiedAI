@@ -40,10 +40,10 @@
                 <span class="cards--{{developer.id}}__tri"></span>
                 <p>{{developer.name}}</p>
                 <ul class="cards__list" style="margin-bottom: 5px;">
-                <li><i class="fab fa-facebook-f"></i></li>
-                <li><i class="fab fa-twitter"></i></li>
-                <li><i class="fab fa-instagram"></i></li>
-                <li><i class="fab fa-linkedin-in"></i></li>
+                <!-- <li><i class="fab fa-facebook-f"><a href="{{}}"></a></i></li> -->
+                <li><i class="fab fa-twitter"><a href="{{developer.twitter}}"></a></i></li>
+                <li><i class="fab fa-github"><a href="{{developer.github}}"></a></i></li>
+                <li><i class="fab fa-linkedin-in"><a href="{{developer.linkedin}}"></a></i></li>
                 </ul>
             </div>
             {% elif developer.id == 'three' %}
@@ -58,9 +58,10 @@
                 </span>
                 <span class="cards--{{developer.id}}__circle"></span>
                 <ul class="cards--{{developer.id}}__list">
-                <li><i class="fab fa-facebook-f"></i></li>
-                <li><i class="fab fa-twitter"></i></li>
-                <li><i class="fab fa-linkedin-in"></i></li>
+                <!-- <li><i class="fab fa-facebook-f"></i></li> -->
+                <li><i class="fab fa-twitter"><a href="{{developer.twitter}}"></a></i></li>
+                <li><i class="fab fa-github"><a href="{{developer.github}}"></a></i></li>
+                <li><i class="fab fa-linkedin-in"><a href="{{developer.linkedin}}"></a></i></li>
                 </ul>
             </div>
             {% endif %}              
