@@ -1,8 +1,6 @@
 #!/bin/bash
 set -xe
 
-sudo rm -rf /home/ec2-user/Projectathon
-
 PYTHON_PROCESS_COUNT=`ps -ef | grep 'app.py\|supervisord' | grep -v grep | awk {'print $2'} | wc -l`
 
 if [[ $PYTHON_PROCESS_COUNT -gt 0 ]]; then
