@@ -168,7 +168,7 @@ def index():
             logger.info("Project Initilazation Completed")
             return render_template('index.html', projects=project_lists)
         else:
-            return redirect(url_for('login'))
+            return redirect(url_for('contact'))
     except Exception as e:
         logger.error(e)
         return render_template('500.html', exception=e)
@@ -363,7 +363,6 @@ def project():
                         elif data_in_tabular == 'false':
                             download_status = cassandra_db.retrive_uploded_dataset(table_name, file_path)
                             logger.info(download_status)
-                        remove_temp_files([secure_connect_bundle_file_path])
 
                     elif resource_type == "mongodb":
                         mongo_db_url = request.form['mongo_db_url']
@@ -1196,7 +1195,7 @@ def logout():
     session.pop('project_type', None)
     session.pop('target_column', None)
     logger.info('Thanks For Using System!')
-    return redirect(url_for('login'))
+    return redirect(url_for('contact'))
 
 
 """[summary]
