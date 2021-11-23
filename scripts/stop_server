@@ -12,3 +12,5 @@ if [[ $PYTHON_PROCESS_COUNT -gt 0 ]]; then
 else
     echo "No Python Process Is running"
 fi
+
+sudo rm -rf /home/ec2-user/Projectathon
