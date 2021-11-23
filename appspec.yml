@@ -1,6 +1,6 @@
 version: 0.0
 os: linux
-files:
+files: overwrite: true
  - source: .
    destination: /home/ec2-user/Projectathon
 hooks:
