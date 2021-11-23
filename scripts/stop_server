@@ -1,0 +1,14 @@
+#!/bin/bash
+set -xe
+
+PYTHON_PROCESS_COUNT=`ps -ef | grep 'app.py\|supervisord' | grep -v grep | awk {'print $2'} | wc -l`
+
+if [[ $PYTHON_PROCESS_COUNT -gt 0 ]]; then
+    echo "Python process are running. So killing them"
+    for i in `ps -ef | grep 'app.py\|supervisord' | grep -v grep | awk {'print $2'}`
+    do
+    sudo kill -9 $i
+    done
+else
+    echo "No Python Process Is running"
+fi
