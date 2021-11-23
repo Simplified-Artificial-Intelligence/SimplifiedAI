@@ -40,30 +40,12 @@
                 <span class="cards--{{developer.id}}__tri"></span>
                 <p>{{developer.name}}</p>
                 <ul class="cards__list" style="margin-bottom: 5px;">
-                <li><i class="fab fa-facebook-f"></i></li>
-                <li><i class="fab fa-twitter"></i></li>
-                <li><i class="fab fa-instagram"></i></li>
+                <li><i class="fab fa-github"></i></li>
+                 <li><i class="fab fa-twitter"></i></li>
                 <li><i class="fab fa-linkedin-in"></i></li>
                 </ul>
             </div>
-            {% elif developer.id == 'three' %}
-            <div class="cards cards--{{developer.id}}">
-                <img src="/static/css/{{developer.src}}" class="img-responsive" alt="">
-                <span class="cards--{{developer.id}}__rect-1">
-                <span class="shadow-1"></span>
-                <p>{{developer.name}}</p>
-                </span>
-                <span class="cards--{{developer.id}}__rect-2">
-                <span class="shadow-2"></span>
-                </span>
-                <span class="cards--{{developer.id}}__circle"></span>
-                <ul class="cards--{{developer.id}}__list">
-                <li><i class="fab fa-facebook-f"></i></li>
-                <li><i class="fab fa-twitter"></i></li>
-                <li><i class="fab fa-linkedin-in"></i></li>
-                </ul>
-            </div>
-            {% endif %}              
+            {% endif %}
 
             {% endfor %}
         </div>

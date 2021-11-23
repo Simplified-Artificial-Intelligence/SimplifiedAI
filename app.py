@@ -90,6 +90,17 @@ def context_processor():
         loggedin = True
     return dict(loggedin=loggedin)
 
+# https://twitter.com/pankajmalhan30
+# https://github.com/pankajmalhan
+# https://www.linkedin.com/in/pankaj-kumar-choudhary-a2b930a8/
+
+#https://github.com/ketangangal
+#https://www.linkedin.com/in/ketan-gangal/
+#https://twitter.com/ketan_gangal
+
+#https://www.linkedin.com/in/vishalsingh1719/
+#https://github.com/vishalsingh17
+#https://twitter.com/17VishalSingh
 
 @app.route('/contact', methods=['GET'], )
 def contact():
@@ -100,7 +111,7 @@ def contact():
             'src': 'dev1.jfif',
             'desc': '',
         }, {
-            'id': "three",
+            'id': "two",
             'name': 'Ketan',
             'src': 'dev2.jfif',
             'desc': '',
@@ -110,9 +121,9 @@ def contact():
             'src': 'dev3.jpg',
             'desc': '',
         }, {
-            'id': "three",
+            'id': "two",
             'name': 'Supreeth',
-            'src': 'dev1.jfif',
+            'src': 'pp.jpg',
             'desc': '',
         }, {
             'id': "two",
@@ -1420,4 +1431,4 @@ if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
-        app.run(host="0.0.0.0", port=8080)
+        app.run(host="0.0.0.0", port=8080,debug=True)
