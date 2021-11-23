@@ -18,3 +18,4 @@ cd /home/ec2-user/Projectathon
 source environment/bin/activate
 sudo mkdir -p /home/ec2-user/Projectathon/.project-root
 /usr/local/bin/supervisord -c /home/ec2-user/Projectathon/supervisord.conf
+
