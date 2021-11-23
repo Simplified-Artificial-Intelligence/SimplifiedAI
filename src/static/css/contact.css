@@ -570,8 +570,7 @@ header .overlay{
 	padding: 50px;
 	color: #FFF;
 	text-shadow: 1px 1px 1px #333;
-    background-image: linear-gradient( 135deg, #12b0c4 10%, #6beeff 100%);
-	
+    background-image: linear-gradient( 135deg, #2b30c8 10%, #ff6b6b 100%);
 }
 
 h1 {

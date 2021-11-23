@@ -16,7 +16,7 @@
 
     <header>
         <div class="overlay">
-            <h1>Simplified AI</h1>
+            <h1>SimplifiedAI</h1>
             <!-- <h3>Reasons for Choosing US</h3>
             <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Vero nostrum quis, odio veniam itaque ullam debitis qui magnam consequatur ab. Vero nostrum quis, odio veniam itaque ullam debitis qui magnam consequatur ab.</p>
             <br> -->
@@ -27,50 +27,25 @@
     <div class="container" style="margin-top: 5%;">
         <div class="card__collection clear-fix" style="padding: 0px 75px;">
         {% for developer in developers %}
-            <!-- <div class="card{{developer.id}}">
-                <img src="/static/css/{{developer.src}}" alt="{{developer.name}}">
-                <h3>Pyramids</h3>
-                <p>The Egyptian pyramids are ancient pyramid-shaped masonry structures located in Egypt. As of November 2008, sources cite either 118 or 138 as the number of identified Egyptian pyramids.</p>
-            </div> -->
-        
             {% if developer.id == 'two' %}
             <div class="cards cards--{{developer.id}}">
                 <img src="/static/css/{{developer.src}}" class="img-responsive" alt="Cards Image">
                 <span class="cards--{{developer.id}}__rect"></span>
                 <span class="cards--{{developer.id}}__tri"></span>
-                <p>{{developer.name}}</p>
-                <ul class="cards__list" style="margin-bottom: 5px;">
-                <!-- <li><i class="fab fa-facebook-f"><a href="{{}}"></a></i></li> -->
-                <li><i class="fab fa-twitter"><a href="{{developer.twitter}}"></a></i></li>
-                <li><i class="fab fa-github"><a href="{{developer.github}}"></a></i></li>
-                <li><i class="fab fa-linkedin-in"><a href="{{developer.linkedin}}"></a></i></li>
+                <div><p>{{developer.name}}</p></div>
+                <p style="padding: 19px;margin-left: 55px;font-size: 15px;font-style: italic;font-variant-caps: all-small-caps;">Development Contributer</p>
+                <ul class="cards__list" style="margin-bottom: -4px;">
+                <li><a href="{{developer.twitter}}"><i class="fab fa-twitter"></i></a></li>
+                <li><a href="{{developer.github}}"><i class="fab fa-github"></i></a></li>
+                <li><a href="{{developer.linkedin}}"><i class="fab fa-linkedin-in"></i></a></li>
                 </ul>
             </div>
-            {% elif developer.id == 'three' %}
-            <div class="cards cards--{{developer.id}}">
-                <img src="/static/css/{{developer.src}}" class="img-responsive" alt="">
-                <span class="cards--{{developer.id}}__rect-1">
-                <span class="shadow-1"></span>
-                <p>{{developer.name}}</p>
-                </span>
-                <span class="cards--{{developer.id}}__rect-2">
-                <span class="shadow-2"></span>
-                </span>
-                <span class="cards--{{developer.id}}__circle"></span>
-                <ul class="cards--{{developer.id}}__list">
-                <!-- <li><i class="fab fa-facebook-f"></i></li> -->
-                <li><i class="fab fa-twitter"><a href="{{developer.twitter}}"></a></i></li>
-                <li><i class="fab fa-github"><a href="{{developer.github}}"></a></i></li>
-                <li><i class="fab fa-linkedin-in"><a href="{{developer.linkedin}}"></a></i></li>
-                </ul>
-            </div>
-            {% endif %}              
-
+            {% endif %}
             {% endfor %}
         </div>
     </div>
       
-    <div class='container-div'>
+    <div class="container-div" style="background-image: linear-gradient( 135deg, #2b30c8 10%, #ff6b6b 100%);">
         <ul>
           <li style="list-style-type: none;">
             <a class='animated-arrow' href='/'>
@@ -78,8 +53,8 @@
                 <span class='shaft'></span>
               </span>
               <span class='main'>
-                <span class='text'>
-                  Project
+                <span class="text" style="font-size: 64px;color: antiquewhite;">
+                  Start Project
                 </span>
                 <span class='the-arrow -right'>
                   <span class='shaft'></span>

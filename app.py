@@ -90,61 +90,50 @@ def context_processor():
         loggedin = True
     return dict(loggedin=loggedin)
 
-# https://twitter.com/pankajmalhan30
-# https://github.com/pankajmalhan
-# https://www.linkedin.com/in/pankaj-kumar-choudhary-a2b930a8/
-
-#https://github.com/ketangangal
-#https://www.linkedin.com/in/ketan-gangal/
-#https://twitter.com/ketan_gangal
-
-#https://www.linkedin.com/in/vishalsingh1719/
-#https://github.com/vishalsingh17
-#https://twitter.com/17VishalSingh
 
 @app.route('/contact', methods=['GET'], )
 def contact():
     try:
         developers = [{
             'id': "two",
-            'name': 'Pankaj',
+            'name': 'Pankaj Malhan',
             'src': 'dev1.jfif',
-            'desc': '',
-            'twitter': '',
-            'linkedin': '',
-            'github': ''
+            'desc': 'DEVELOPMENT CONTRIBUTER',
+            'twitter': 'https://twitter.com/pankajmalhan30',
+            'linkedin': 'https://www.linkedin.com/in/pankaj-kumar-choudhary-a2b930a8/',
+            'github': 'https://github.com/pankajmalhan'
         }, {
             'id': "two",
-            'name': 'Ketan',
+            'name': 'Ketan Gangal',
             'src': 'dev2.jfif',
-            'desc': '',
-            'twitter': '',
-            'linkedin': '',
-            'github': ''
+            'desc': 'DEVELOPMENT CONTRIBUTER',
+            'twitter': 'https://twitter.com/ketan_gangal',
+            'linkedin': 'https://www.linkedin.com/in/ketan-gangal/',
+            'github': 'https://github.com/ketangangal'
         }, {
             'id': "two",
-            'name': 'Vishal',
+            'name': 'Vishal Singh',
             'src': 'dev3.jpg',
-            'desc': '',
-            'twitter': '',
-            'linkedin': '',
-            'github': ''
+            'desc': 'DEVELOPMENT CONTRIBUTER',
+            'twitter': 'https://twitter.com/17VishalSingh',
+            'linkedin': 'https://www.linkedin.com/in/vishalsingh1719/',
+            'github': 'https://github.com/vishalsingh17'
         }, {
             'id': "two",
-            'name': 'Supreeth',
+            'name': 'Supreeth Shetty',
             'src': 'pp.jpg',
-            'desc': '',
-            'twitter': '',
-            'linkedin': '',
-            'github': ''
+            'desc': 'DEVELOPMENT CONTRIBUTER',
+            'twitter': 'https://twitter.com/Supreet09657830',
+            'linkedin': 'https://www.linkedin.com/in/supreeth-s-shetty-302268170/',
+            'github': 'https://github.com/Supreeth-Shetty'
         }, {
             'id': "two",
-            'name': 'Anshu',
+            'name': 'Anshu_Narayan',
             'src': 'dev5.jpg',
-            'desc': '',
+            'desc': 'DEVELOPMENT CONTRIBUTER',
             'twitter': 'https://twitter.com/narayan_anshu',
             'linkedin': 'www.linkedin.com/in/anshu-narayan-36235791',
-            'github': 'https://github.com/anshyan'
+            'github': "https://github.com/anshyan"
         }]
         return render_template('contact.html', developers=developers)
     except Exception as e:
