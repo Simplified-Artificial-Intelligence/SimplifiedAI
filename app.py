@@ -128,12 +128,20 @@ def contact():
             'github': 'https://github.com/Supreeth-Shetty'
         }, {
             'id': "two",
-            'name': 'Anshu_Narayan',
+            'name': 'Anshu Narayan',
             'src': 'dev5.jpg',
             'desc': 'DEVELOPMENT CONTRIBUTER',
             'twitter': 'https://twitter.com/narayan_anshu',
             'linkedin': 'www.linkedin.com/in/anshu-narayan-36235791',
             'github': "https://github.com/anshyan"
+        }, {
+            'id': "two",
+            'name': 'Rohan Bagulwar',
+            'src': 'rohan.jpg',
+            'desc': 'DEVELOPMENT CONTRIBUTER',
+            'twitter': 'https://www.linkedin.com/in/rohan-bagulwar',
+            'linkedin': 'https://www.linkedin.com/in/rohan-bagulwar',
+            'github': "https://github.com/Rohanbagulwar"
         }]
         return render_template('contact.html', developers=developers)
     except Exception as e:
@@ -1252,7 +1260,8 @@ def systemlogs(action):
     try:
         if action == 'terminal':
             lines = []
-            with open(r"logger\logs\logs.log") as file_in:
+            path = os.path.join(from_root(),'logger','logs','logs.log')
+            with open(path) as file_in:
                 for line in file_in:
                     lines.append(line)
             file_in.close()
@@ -1348,6 +1357,9 @@ def scheduler_get(action):
                     result = mysql.fetch_one(query)
 
                     if Model_Trained == 0:
+                        if model_name is None:
+                            return render_template('scheduler/retrain.html')
+
                         if result is None:
                             return render_template('scheduler/add_new_scheduler.html',
                                                    action=action,
