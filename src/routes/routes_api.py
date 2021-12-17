@@ -244,7 +244,7 @@ def fe_script():
                 data = df.head(1000).to_html()
                 d['data'] = data
             except Exception as e:
-                return jsonify({'success': False, 'error': "Avnish Detected"})
+                return jsonify({'success': False, 'error': "Error Detected"})
 
         return jsonify(d)
 
