@@ -1307,14 +1307,23 @@ def custom_script():
                     df = load_data()
                     code = request.form['code']
                     # Double quote is not allowed
+                    if 'import' in code:
+                        return render_template('custom-script.html', status="error", msg="Import is not allowed")
                     if '"' in code:
                         return render_template('custom-script.html', status="error", msg="Double quote is not allowed")
 
                     if code is not None:
-                        exec(code)
-                        update_data(df)
-                        ProjectReports.insert_project_action_report(ProjectActions.CUSTOM_SCRIPT.value, code)
-                        return redirect('/eda/show')
+                        try:
+                            globalsParameter = {'os': None, 'pd': pd, 'np': np}
+                            localsParameter = {'df': df}
+                            exec(code, globalsParameter, localsParameter)
+                            update_data(df)
+                            ProjectReports.insert_project_action_report(ProjectActions.CUSTOM_SCRIPT.value, code)
+                            return redirect('/eda/show')
+                        except Exception as e:
+                            return render_template('custom-script.html', status="error",
+                                                   msg="Error Detected")
+
                     else:
                         return render_template('custom-script.html', status="error", msg="Code snippets is not valid")
             else:
