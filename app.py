@@ -1322,7 +1322,7 @@ def custom_script():
                             return redirect('/eda/show')
                         except Exception as e:
                             return render_template('custom-script.html', status="error",
-                                                   msg="Error Detected")
+                                                   msg="Code snippets is not valid")
 
                     else:
                         return render_template('custom-script.html', status="error", msg="Code snippets is not valid")
