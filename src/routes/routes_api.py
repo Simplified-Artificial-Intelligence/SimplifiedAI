@@ -231,18 +231,24 @@ def fe_script():
         d = {'success': True}
         code = request.json['code']
         # Double quote is not allowed
+        if 'import' in code:
+            return jsonify({'success': False, 'error': "Import is not allowed"})
         if '"' in code:
             return jsonify({'success': False, 'error': "Double quote is not allowed"})
 
         if code is not None:
-            exec(code)
-            data = df.head(1000).to_html()
-            d['data'] = data
+            try:
+                globalsParameter = {'os': None, 'pd': pd, 'np': np}
+                localsParameter = {'df': df}
+                exec(code,globalsParameter,localsParameter)
+                data = df.head(1000).to_html()
+                d['data'] = data
+            except Exception as e:
+                return jsonify({'success': False, 'error': "Avnish Detected"})
 
         return jsonify(d)
 
     except Exception as e:
-        print(e)
         return jsonify({'success': False, 'error': str(e)})
 
 
