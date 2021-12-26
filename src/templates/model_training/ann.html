@@ -48,22 +48,25 @@
 <script>
       let layerUnits=[]
       let lines=[]
+      var ann=[]
       const editUnit=(id)=>{
-       var dummy=[{type: 'input', id: 'input', units: 24, activation: 'Relu'},
-       {type: 'linear', id: 'linear_1', units: 36, activation: 'Relu'},
-       {type: 'batch_normalize', id: 'batch_normalize_1'},
-       {type: 'dropout', id: 'dropout_1', perecent: 0.4},
-       {type: 'linear', id: 'linear_2', units: 42, activation:  'Relu'},
-       {type: 'batch_normalize', id: 'batch_normalize_2'},
-       {type: 'dropout', id: 'dropout_2', perecent: 0.5},
-       {type: 'linear', id: 'linear_3', units: 12, activation: 'Relu'},
-       {type: 'output', id: 'output', units:1},
-    ]
+        ann=[
+          {type: 'input', id: 'input', units: 24, activation: 'Relu'},
+          {type: 'linear', id: 'linear_1', units: 36, activation: 'Relu'},
+          {type: 'batch_normalize', id: 'batch_normalize_1'},
+          {type: 'dropout', id: 'dropout_1', perecent: 0.4},
+          {type: 'linear', id: 'linear_2', units: 42, activation:  'Relu'},
+          {type: 'batch_normalize', id: 'batch_normalize_2'},
+          {type: 'dropout', id: 'dropout_2', perecent: 0.5},
+          {type: 'linear', id: 'linear_3', units: 12, activation: 'Relu'},
+          {type: 'output', id: 'output', units:1},
+        ]
       }
+
     $(document).ready(()=>{
       $("#input_unit").on('click',()=>{
         alert(id)
-    })
+      })
 
       $("#Input").on('click',()=>{
           let id_count=layerUnits.filter((x)=>x.type=='input').length
@@ -146,8 +149,38 @@
           }
       })
      
+      $("#submit").click(function (event) {
+          console.log('werewer')
+          event.preventDefault();
+          ann=[
+            {type: 'input', id: 'input', units: 24, activation: 'Relu'},
+            {type: 'linear', id: 'linear_1', units: 36, activation: 'Relu'},
+            {type: 'batch_normalize', id: 'batch_normalize_1'},
+            {type: 'dropout', id: 'dropout_1', perecent: 0.4},
+            {type: 'linear', id: 'linear_2', units: 42, activation:  'Relu'},
+            {type: 'batch_normalize', id: 'batch_normalize_2'},
+            {type: 'dropout', id: 'dropout_2', perecent: 0.5},
+            {type: 'linear', id: 'linear_3', units: 12, activation: 'Relu'},
+            {type: 'output', id: 'output', units:1},
+          ]
+          $.ajax({
+              type: "POST",
+              url: "/model_training/ann",
+              data: JSON.stringify(ann),
+              processData: false,
+              cache: false,
+              timeout: 800000,
+              success: function (data) {
+                  console.log("SUCCESS : ", data);
+              },
+              error: function (e) {
+                  console.log("ERROR : ", e);
+              }
+          });
+      });
     })
 </script>
+
 <style>
     #start{
       height:40px;

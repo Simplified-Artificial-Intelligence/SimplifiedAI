@@ -4,8 +4,9 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <script src="script.js"></script>
+    <!-- <script src="script.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/leader-line-new@1.1.9/leader-line.min.js"></script>
+    <script src="src/static/js/anim-event.min.js"></script>
     <!-- <link rel="stylesheet" type="text/css" href="styles.css"> -->
   </head>
   <body>
@@ -82,6 +83,7 @@
   </script>
   <script>
       $(document).ready(()=>{
+        LeaderLine.positionByWindowResize =false
         let layerUnits=[]
         $("#linear").on('click',()=>{
             let id_count=layerUnits.filter((x)=>x.type=='linear').length
@@ -90,11 +92,14 @@
             $("#container_").append(`<div id="linear_${id_count}" class="linear"></div>`)
             if(layerUnits.length>1){
                 let elems_=layerUnits.slice(layerUnits.length-2,layerUnits.length);
-                new LeaderLine(
+                let line = new LeaderLine(
                       document.getElementById(elems_[0].id),
                       document.getElementById(elems_[1].id),
                       {dash: {animation: true}}
                 );
+                $("#container_").on('scroll', function() {
+                  line.position();
+                });
                 
             }
         })
