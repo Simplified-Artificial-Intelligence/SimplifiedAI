@@ -585,3 +585,12 @@ def download_prediction():
     except Exception as e:
         logger.error(e)
         return jsonify({'success': False})
+    
+@app_training.route('/model_training/ann', methods=['GET'])
+def ann_training():
+    try:
+        return render_template('model_training/ann.html')
+
+    except Exception as e:
+        logger.error(e)
+        return jsonify({'success': False})

@@ -1,0 +1,8 @@
+1. R & D Params (Claas & Regre)
+    Layers
+    Activation
+    Drop
+    batch Normalization
+
+2. Front End
+    Design

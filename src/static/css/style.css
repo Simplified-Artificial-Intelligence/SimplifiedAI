@@ -1109,6 +1109,41 @@ box-shadow: rgba(255,255,255, 0.75) 1.5em 0 0 0, rgba(255,255,255, 0.75) 1.1em 1
   }
 }
 
+.input-btn{
+  width: 200px;
+  height: 50px;
+  background: #bfc3b8;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #000;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  padding-top: 10px;
+  margin-top: 20px;
+}
+.img-input{
+  width: 30px;
+  height: 30px;
+}
+.input-div{
+  justify-content: center !important;
+    align-items: center !important;
+    flex-direction: column !important;
+    display: flex !important;
+    width: unset !important;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.row2{
+  display: flex !important;
+  flex-direction: row !important;
+}
+.span2 {
+  color: #f0f8ff;
+}
 
 
 
