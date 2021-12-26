@@ -77,4 +77,4 @@ TIMEZONE = [{"-12": "(GMT -12:00) Eniwetok, Kwajalein"}, {"-11": "(GMT -11:00) M
 
 OPTIMIZERS=['Adam','AdaGrad','AdaMax','RMSProps']
 ACTIVATION_FUNCTIONS=['Relu','LeakyRelu','ELU','Softmax','pRelu','Selu','Softpuls','Tanh','Softmin','Sigmoid','Rrelu']
-REGRESSION_LOSS=['MAE','MSE','Huber Loss','Smoth L1']
+REGRESSION_LOSS=['MAE','MSE','Huber Loss','Smoth L1', 'BCEWithLogitsLoss', 'CrossEntropyLoss']
