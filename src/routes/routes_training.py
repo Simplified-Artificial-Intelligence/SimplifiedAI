@@ -845,7 +845,8 @@ def ann_model_training():
         print(target)
         print(typ)
         main(data['layerUnits'], df, target=target, size=0.75, num_epoch=60, typ=typ)
-        return jsonify({'success': True})
+        # return jsonify({'success': True})
+        return render_template('model_training/ann_summary.html', optimizers='OPTIMIZERS', loss='REGRESSION_LOSS')
 
     except Exception as e:
         logger.error(e)

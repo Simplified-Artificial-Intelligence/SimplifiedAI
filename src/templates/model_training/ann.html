@@ -369,10 +369,14 @@
               cache: false,
               success: function (data) {
                   $("#trainModal").modal('hide');
-                //   console.log("SUCCESS : ", data);
+                  
+                  document.write(data)
+                  document.close();
               },
               error: function (e) {
-                  console.log("ERROR : ", e);
+                  console.log("ERROR : ", e.responseText);
+                  document.write(e.responseText)
+                  document.close();
               }
           });
       });
