@@ -76,5 +76,6 @@ TIMEZONE = [{"-12": "(GMT -12:00) Eniwetok, Kwajalein"}, {"-11": "(GMT -11:00) M
             {"12": "(GMT +12:00) Auckland, Wellington, Fiji, Kamchatka"}]
 
 OPTIMIZERS = ['Adam', 'AdaGrad', 'AdaMax', 'RMSProps']
-ACTIVATION_FUNCTIONS = ['ReLU', 'ELU', 'LeakyReLU', 'Softmax', 'PReLU', 'SELU', 'Tanh', 'Softplus', 'Softmin', 'Sigmoid', 'RReLU']
-REGRESSION_LOSS = ['MAE', 'MSE', 'Huber Loss', 'Smoth L1']
+ACTIVATION_FUNCTIONS = ['ReLU', 'ELU', 'LeakyReLU', 'Softmax', 'PReLU', 'SELU', 'Tanh', 'Softplus', 'Softmin',
+                        'Sigmoid', 'RReLU']
+REGRESSION_LOSS = ['MAE', 'MSE', 'Huber Loss', 'Smoth L1', 'BCEWithLogitsLoss', 'CrossEntropyLoss']
