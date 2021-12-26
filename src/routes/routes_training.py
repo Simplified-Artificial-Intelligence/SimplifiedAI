@@ -6,7 +6,7 @@ from src.constants.model_params import KmeansClustering_Params, DbscanClustering
 from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, \
     DecisionTreeClassifier_Params, RandomForestClassifier_Params, GradientBoostingClassifier_Params, \
     AdaBoostClassifier_Params
-from src.constants.constants import CLASSIFICATION_MODELS, CLUSTERING_MODELS
+from src.constants.constants import ACTIVATION_FUNCTIONS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, OPTIMIZERS, REGRESSION_LOSS
 from flask.json import jsonify
 from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params
 from src.model.custom.classification_models import ClassificationModels
@@ -589,7 +589,8 @@ def download_prediction():
 @app_training.route('/model_training/ann', methods=['GET'])
 def ann_training():
     try:
-        return render_template('model_training/ann.html')
+        return render_template('model_training/ann.html',optimizers=OPTIMIZERS,
+                               activation_functions=ACTIVATION_FUNCTIONS,loss=REGRESSION_LOSS)
 
     except Exception as e:
         logger.error(e)
