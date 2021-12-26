@@ -611,7 +611,7 @@ def create_layers(data=None, df=None, feature_map={}, typ=None):
     infer_in = data[0]['units']
 
     for i in data:
-        if i['type'] == 'input_layer':
+        if i['type'] == 'input':
             in_feature = df.shape[1]
             out_feature = i['units']
 
@@ -666,12 +666,12 @@ def create_layers(data=None, df=None, feature_map={}, typ=None):
             layers.append(nn.BatchNorm1d(num_features=infer_in))
 
         if i['type'] == 'dropout':
-            layers.append(nn.Dropout(p=i['perecent']))
+            layers.append(nn.Dropout(p=i['percentage']))
 
-        if i['type'] == 'output_layer':
+        if i['type'] == 'output':
             if typ == 'Regression':
                 in_feature = infer_in
-                out_feature = i['units']
+                out_feature = 1
                 layers.append(nn.Linear(in_features=in_feature, out_features=out_feature))
 
             if typ == 'Classification':
@@ -743,10 +743,11 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
     train_data_loader = DataLoader(trainData, batch_size=32, shuffle=True)
     test_data_loader = DataLoader(testData, batch_size=32)
 
+    print(feature_map)
     # Model Creation
     model = nn.Sequential(*create_layers(Data, X_train, feature_map, typ))
     # Optimizer and Loss ---- > front end
-
+    print(model)
     if typ == "Classification":
         loss_func = nn.CrossEntropyLoss()
 
@@ -834,13 +835,17 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 @app_training.route('/model_training/ann', methods=['POST'])
 def ann_model_training():
     try:
-        ann = request.get_json(force=True)
-        print(ann)
+
+        data = request.get_json(force=True)
+        print(data['layerUnits'])
         df = load_data()
         target = session['target_column']
         typ = 'Regression' if session['project_type'] == 1 else 'Classification'
-        main(ann, df, target=target, size=0.75, num_epoch=60, typ=typ)
-        return jsonify({'ann': ann})
+        print(df.head())
+        print(target)
+        print(typ)
+        main(data['layerUnits'], df, target=target, size=0.75, num_epoch=60, typ=typ)
+        return jsonify({'success': True})
 
     except Exception as e:
         logger.error(e)
