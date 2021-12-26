@@ -351,8 +351,27 @@
         renderUnits()
       })
      
+      $("#submit").click(function (event) {
+          event.preventDefault();
+          
+          $.ajax({
+              type: "POST",
+              url: "/model_training/ann",
+              data: JSON.stringify(layerUnits),
+              processData: false,
+              cache: false,
+              timeout: 800000,
+              success: function (data) {
+                  console.log("SUCCESS : ", data);
+              },
+              error: function (e) {
+                  console.log("ERROR : ", e);
+              }
+          });
+      });
     })
 </script>
+
 <style>
     #start{
       height:40px;
