@@ -608,58 +608,33 @@ def ann_training():
 def create_layers(data=None, df=None, feature_map={}, typ=None):
     layers = []
 
+    activation = {'ReLU': nn.ReLU(),
+                  'ELU': nn.ELU(),
+                  'LeakyReLU': nn.LeakyReLU(),
+                  'Softmax': nn.Softmax(),
+                  'PReLU': nn.PReLU(),
+                  'SELU': nn.SELU(),
+                  'Tanh': nn.Tanh(),
+                  'Softplus': nn.Softplus(),
+                  'Softmin': nn.Softmin(),
+                  'Sigmoid': nn.Sigmoid(),
+                  'RReLU': nn.RReLU(),
+                  }
+
     infer_in = data[0]['units']
 
     for i in data:
         if i['type'] == 'input':
             in_feature = df.shape[1]
             out_feature = i['units']
-
             layers.append(nn.Linear(in_features=in_feature, out_features=out_feature))
-
-            if i['activation'] == 'ReLU':
-                layers.append(nn.ReLU())
-
-            elif i['activation'] == 'ELU':
-                layers.append(nn.ELU())
-
-            elif i['activation'] == 'LeakyReLU':
-                layers.append(nn.LeakyReLU())
-
-            elif i['activation'] == 'LeakyReLU':
-                layers.append(nn.LeakyReLU())
-
-            elif i['activation'] == 'Softmax':
-                layers.append(nn.Softmax())
-
-            elif i['activation'] == 'PReLU':
-                layers.append(nn.PReLU())
-
-            elif i['activation'] == 'SELU':
-                layers.append(nn.SELU())
-
-            elif i['activation'] == 'Tanh':
-                layers.append(nn.Tanh())
-
-            elif i['activation'] == 'Softplus':
-                layers.append(nn.Softplus())
-
-            elif i['activation'] == 'Softmin':
-                layers.append(nn.Softmin())
-
-            elif i['activation'] == 'Sigmoid':
-                layers.append(nn.Sigmoid())
-
-            elif i['activation'] == 'RReLU':
-                layers.append(nn.RReLU())
-
-            else:
-                layers.append(nn.ReLU())
+            layers.append(activation[i['activation']])
 
         if i['type'] == 'linear':
             in_feature = infer_in
             out_feature = i['units']
             layers.append(nn.Linear(in_feature, out_feature))
+            layers.append(activation[i['activation']])
             infer_in = out_feature
 
         if i['type'] == 'batch_normalize':
@@ -727,10 +702,8 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
     # Train test Split
     feature_map = {}
     if typ == 'Classification':
-
         for i in enumerate(df[target].unique()):
             feature_map[i[1]] = i[0]
-
         df[target] = df[target].replace(feature_map)
 
     X_train, X_test, y_train, y_test = trainTestSplit(df, target, size=size)
@@ -745,16 +718,26 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
     print(feature_map)
     # Model Creation
-    model = nn.Sequential(*create_layers(Data, X_train, feature_map, typ))
+    model = nn.Sequential(*create_layers(Data['layerUnits'], X_train, feature_map, typ))
     # Optimizer and Loss ---- > front end
     print(model)
+
+    optimizer_selection = {'Adam': torch.optim.Adam(model.parameters(), lr=Data['learningRate']),
+                           'AdaGrad': torch.optim.Adagrad(model.parameters(), lr=Data['learningRate']),
+                           'AdaMax': torch.optim.Adamax(model.parameters(), lr=Data['learningRate']),
+                           'RMSProps': torch.optim.RMSprop(model.parameters(), lr=Data['learningRate'])}
+
+    optimizer = optimizer_selection[Data['optimizers']]
+
     if typ == "Classification":
-        loss_func = nn.CrossEntropyLoss()
+        loss_selection_classification = {'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(), 'CrossEntropyLoss': nn.CrossEntropyLoss()}
+        loss_func = loss_selection_classification[Data['']]
 
     if typ == "Regression":
-        loss_func = nn.MSELoss()
+        loss_selection_regression = {'MAE': nn.L1Loss(), 'MSE': nn.MSELoss(), 'Huber Loss': nn.HuberLoss(),
+                                     'Smoth L1': nn.SmoothL1Loss()}
+        loss_func = loss_selection_regression[Data['']]
 
-    optimizer = torch.optim.Adam(model.parameters())
 
     # Regression
     # Train
@@ -835,16 +818,11 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 @app_training.route('/model_training/ann', methods=['POST'])
 def ann_model_training():
     try:
-
         data = request.get_json(force=True)
-        print(data['layerUnits'])
         df = load_data()
         target = session['target_column']
         typ = 'Regression' if session['project_type'] == 1 else 'Classification'
-        print(df.head())
-        print(target)
-        print(typ)
-        main(data['layerUnits'], df, target=target, size=0.75, num_epoch=60, typ=typ)
+        main(data, df, target=target, size=0.75, num_epoch=60, typ=typ)
         return jsonify({'success': True})
 
     except Exception as e:
