@@ -599,9 +599,9 @@ def ann_training():
 @app_training.route('/model_training/ann', methods=['POST'])
 def ann_model_training():
     try:
-        ann = request.get_json(force=True)
-        print(ann)
-        return jsonify({'ann': ann})
+        data = request.get_json(force=True)
+        print(data)
+        return jsonify({'success': True})
 
     except Exception as e:
         logger.error(e)
