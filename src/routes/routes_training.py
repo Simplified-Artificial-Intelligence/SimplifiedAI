@@ -37,6 +37,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
 from sklearn.model_selection import train_test_split
+from prettytable import PrettyTable
 
 app_training = Blueprint('training', __name__)
 
@@ -608,58 +609,33 @@ def ann_training():
 def create_layers(data=None, df=None, feature_map={}, typ=None):
     layers = []
 
+    activation = {'ReLU': nn.ReLU(),
+                  'ELU': nn.ELU(),
+                  'LeakyReLU': nn.LeakyReLU(),
+                  'Softmax': nn.Softmax(),
+                  'PReLU': nn.PReLU(),
+                  'SELU': nn.SELU(),
+                  'Tanh': nn.Tanh(),
+                  'Softplus': nn.Softplus(),
+                  'Softmin': nn.Softmin(),
+                  'Sigmoid': nn.Sigmoid(),
+                  'RReLU': nn.RReLU(),
+                  }
+
     infer_in = data[0]['units']
 
     for i in data:
         if i['type'] == 'input':
             in_feature = df.shape[1]
             out_feature = i['units']
-
             layers.append(nn.Linear(in_features=in_feature, out_features=out_feature))
-
-            if i['activation'] == 'ReLU':
-                layers.append(nn.ReLU())
-
-            elif i['activation'] == 'ELU':
-                layers.append(nn.ELU())
-
-            elif i['activation'] == 'LeakyReLU':
-                layers.append(nn.LeakyReLU())
-
-            elif i['activation'] == 'LeakyReLU':
-                layers.append(nn.LeakyReLU())
-
-            elif i['activation'] == 'Softmax':
-                layers.append(nn.Softmax())
-
-            elif i['activation'] == 'PReLU':
-                layers.append(nn.PReLU())
-
-            elif i['activation'] == 'SELU':
-                layers.append(nn.SELU())
-
-            elif i['activation'] == 'Tanh':
-                layers.append(nn.Tanh())
-
-            elif i['activation'] == 'Softplus':
-                layers.append(nn.Softplus())
-
-            elif i['activation'] == 'Softmin':
-                layers.append(nn.Softmin())
-
-            elif i['activation'] == 'Sigmoid':
-                layers.append(nn.Sigmoid())
-
-            elif i['activation'] == 'RReLU':
-                layers.append(nn.RReLU())
-
-            else:
-                layers.append(nn.ReLU())
+            layers.append(activation[i['activation']])
 
         if i['type'] == 'linear':
             in_feature = infer_in
             out_feature = i['units']
             layers.append(nn.Linear(in_feature, out_feature))
+            layers.append(activation[i['activation']])
             infer_in = out_feature
 
         if i['type'] == 'batch_normalize':
@@ -715,6 +691,19 @@ class CustomTestData(Dataset):
         return self.n_sample
 
 
+def count_parameters(model):
+    table = PrettyTable(["Modules", "Parameters"])
+    total_params = 0
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad: continue
+        param = parameter.numel()
+        table.add_row([name, param])
+        total_params += param
+    return table,total_params
+
+
+
+
 def trainTestSplit(df, target, size=0.25):
     X = df.drop(target, axis=1)
     y = df[target]
@@ -724,14 +713,17 @@ def trainTestSplit(df, target, size=0.25):
 
 
 def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
-    # Train test Split
+    model_info = {}
+    model_metrice = {}
     feature_map = {}
     if typ == 'Classification':
-
         for i in enumerate(df[target].unique()):
             feature_map[i[1]] = i[0]
-
         df[target] = df[target].replace(feature_map)
+        model_info['feature_map'] = feature_map
+
+    model_info['split_size'] = size
+    model_info['batch_size'] = 32
 
     X_train, X_test, y_train, y_test = trainTestSplit(df, target, size=size)
 
@@ -743,23 +735,38 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
     train_data_loader = DataLoader(trainData, batch_size=32, shuffle=True)
     test_data_loader = DataLoader(testData, batch_size=32)
 
-    print(feature_map)
     # Model Creation
-    model = nn.Sequential(*create_layers(Data, X_train, feature_map, typ))
+    model = nn.Sequential(*create_layers(Data['layerUnits'], X_train, feature_map, typ))
     # Optimizer and Loss ---- > front end
-    print(model)
+    table, total_params = count_parameters(model)
+
+    model_info['table'] = table
+    model_info['total_params'] = total_params
+    model_info['optimizer'] = Data['optimizers']
+    model_info['loss'] = Data['loss']
+    model_info['model'] = model
+
+    optimizer_selection = {'Adam': torch.optim.Adam(model.parameters(), lr=float(Data['learningRate'])),
+                           'AdaGrad': torch.optim.Adagrad(model.parameters(), lr=float(Data['learningRate'])),
+                           'AdaMax': torch.optim.Adamax(model.parameters(), lr=float(Data['learningRate'])),
+                           'RMSProps': torch.optim.RMSprop(model.parameters(), lr=float(Data['learningRate']))}
+
+    optimizer = optimizer_selection[Data['optimizers']]
+
     if typ == "Classification":
-        loss_func = nn.CrossEntropyLoss()
+        loss_selection_classification = {'BCEWithLogitsLoss': nn.BCEWithLogitsLoss(), 'CrossEntropyLoss': nn.CrossEntropyLoss()}
+        loss_func = loss_selection_classification[Data['loss']]
 
     if typ == "Regression":
-        loss_func = nn.MSELoss()
-
-    optimizer = torch.optim.Adam(model.parameters())
-
+        loss_selection_regression = {'MAE': nn.L1Loss(), 'MSE': nn.MSELoss(), 'Huber Loss': nn.HuberLoss(),
+                                     'Smoth L1': nn.SmoothL1Loss()}
+        loss_func = loss_selection_regression[Data['loss']]
+        print(loss_func)
     # Regression
     # Train
-    loss_perEpoch = []
+
     if typ == "Regression":
+        loss_perEpoch = []
         model.train()
         num_epochs = num_epoch
         for epooch in range(num_epochs):
@@ -779,6 +786,8 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
                     loss_perEpoch.append(loss.item())
                     print(f'Epoch {epooch}/{num_epochs}  Loss: {loss.item()}')
 
+        model_metrice['train_loss'] = loss_perEpoch[-1]
+
         # Test
         model.eval()
         test_loss = []
@@ -791,11 +800,14 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
                 output = model(features)
                 test_loss.append(loss_func(output, labels).item())
 
-        print("Test Accuracy :", np.mean(test_loss))
+        model_metrice['test_loss'] = np.mean(test_loss)
+        model_metrice['test_accuracy'] = None
+        print("Test Loss :", np.mean(test_loss))
 
     # Classification
     if typ == 'Classification':
         # Train
+        loss_perEpoch = []
         model.train()
         num_epochs = num_epoch
         for epooch in range(num_epochs):
@@ -814,7 +826,7 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
                 if batch_idx % 8 == 0:
                     loss_perEpoch.append(loss.item())
                     print(f'Epoch {epooch}/{num_epochs} Loss: {loss.item()}')
-
+        model_info['train_loss'] = loss_perEpoch[-1]
         # Test
         model.eval()
         test_loss = []
@@ -831,22 +843,20 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
             print("Test Loss :", np.mean(test_loss), "  ", "Test Accuracy :", np.mean(test_acc))
 
+        model_info['Test_Accuracy'] = np.mean(test_loss)
+        model_info['test_loss'] = np.mean(test_loss)
+    return model_info, model_metrice
+
 
 @app_training.route('/model_training/ann', methods=['POST'])
 def ann_model_training():
     try:
-
         data = request.get_json(force=True)
-        print(data['layerUnits'])
         df = load_data()
         target = session['target_column']
         typ = 'Regression' if session['project_type'] == 1 else 'Classification'
-        print(df.head())
-        print(target)
-        print(typ)
-        main(data['layerUnits'], df, target=target, size=0.75, num_epoch=60, typ=typ)
-        return render_template('model_training/ann_summary.html', action='action', status="success",
-                                    reports=['reports'], scores=['scores'], model_params=['model_params'])
+        model_info, model_metrice = main(data, df, target=target, size=float(data['trainSplitPercent']), num_epoch=int(data['epoch']), typ=typ)
+        return render_template('model_training/ann_summary.html', model_info=model_info, model_metrice=model_metrice, status="success")
 
     except Exception as e:
         logger.error(e)

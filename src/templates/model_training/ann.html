@@ -143,6 +143,10 @@
                     <label for="inputEmail4">Learning Rate</label>
                     <input type="number" class="form-control" id="learningRate" value="0.001" min="0.001" max="100" placeholder="Learning Rate">
                 </div>
+                <div class="form-group col-md-12">
+                    <label for="inputEmail4">No. of Epoch</label>
+                    <input type="number" class="form-control" id="epoch" value="1" min="1" max="100000" placeholder="Epoch">
+                </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -366,7 +370,8 @@
               'trainSplitPercent': $("#trainSplitPercent").val(),
               'optimizers': $("#optimizers").val(),
               'loss': $("#loss").val(),
-              'learningRate': $("#learningRate").val()
+              'learningRate': $("#learningRate").val(),
+              'epoch': $("#epoch").val(),
           }
           
           $.ajax({
@@ -378,12 +383,11 @@
               cache: false,
               success: function (data) {
                   $("#trainModal").modal('hide');
-                  console.log(data)
+
                   document.write(data)
                   document.close();
               },
               error: function (e) {
-                  console.log("ERROR : ", e.responseText);
                   document.write(e.responseText)
                   document.close();
               }
