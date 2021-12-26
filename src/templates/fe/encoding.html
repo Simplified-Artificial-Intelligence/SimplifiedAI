@@ -44,7 +44,7 @@
                 <input type="number" id="hash" name="hash" value="8" min="8" class="form-control" />
             </div>
         </div>
-        <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
             <div class="form-group">
                 <label for="exampleFormControlSelect1">Select Columns</label>
                 <select class="js-example-basic-multiple form-control" name="columns" id="columns" multiple="multiple">
@@ -53,14 +53,14 @@
                     {% endfor %}
                 </select>
             </div>
-        </div> -->
-        <!-- <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-6 col-sm-12">
             <div class="form-group">
                 <div class="checkbox" id="">
                     <input type="checkbox" value="" id="selectall"/><label>&nbsp; Select All</label>
                   </div>
                 </div>
-        </div> -->
+        </div>
         </div>
         <div>
         <div class="row">
@@ -142,7 +142,7 @@
               debugger;
             var data={
                 'encoding_type':$("#encoding_type").val(),
-                // 'columns':$("#columns").select2('val')
+                'columns':$("#columns").select2('val')
             }
 
             if($("#base").is(':visible')){

@@ -159,32 +159,33 @@ def missing_data():
 @app_api.route('/api/encoding', methods=['GET', 'POST'])
 def fe_encoding():
     try:
+        d = {'success': True}
         df = load_data()
         encoding_type = request.json['encoding_type']
-        columns = df.columns
+        columns =request.json['columns']
 
-        if session['target_column'] is not None:
-            columns = list(df.columns[df.columns != session['target_column']])
+        if session['target_column'] is not None and session['target_column'] in columns:
+             return jsonify({'success': False, 'error': "Please don't select target column for encoding"})
+           
 
-        df = df.loc[:, columns]
-
-        d = {'success': True}
         cat_data = Preprocessing.col_seperator(df, 'Categorical_columns')
-        num_data = Preprocessing.col_seperator(df, 'Numerical_columns')
+        df = cat_data.loc[:, columns]
+        non_encoded_columns=[col for col in cat_data.columns if col not in columns]
+        rem_data=cat_data.loc[:,non_encoded_columns]
 
         if encoding_type == "Base N Encoder":
-            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type, base=request.json['base'])
+            df, _ = FeatureEngineering.encodings(df, df.columns, encoding_type, base=request.json['base'])
         elif encoding_type == "Target Encoder":
-            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
+            df, _ = FeatureEngineering.encodings(df, df.columns, encoding_type,
                                                  n_components=request.json['target'])
         elif encoding_type == "Hash Encoder":
             """This is remaining to handle"""
-            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
+            df, _ = FeatureEngineering.encodings(df, df.columns, encoding_type,
                                                  n_components=request.json['hash'])
         else:
-            df, _ = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type)
+            df, _ = FeatureEngineering.encodings(df, df.columns, encoding_type)
 
-        df = pd.concat([df, num_data], axis=1)
+        df = pd.concat([df, rem_data], axis=1)
         data = df.head(200).to_html()
         d['data'] = data
         return jsonify(d)

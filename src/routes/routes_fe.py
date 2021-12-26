@@ -67,8 +67,12 @@ def feature_engineering(action):
                     # except Exception as e:
                     #     logger.error(f'{e}, Target Column is not selected for Encoding!')
                     """ Check Encoding Already Performed or not"""
+                    
+                    
                     query_ = f"Select * from tblProject_Actions_Reports  where ProjectId={session['pid']} and ProjectActionId=4"
                     rows = mysql.fetch_all(query_)
+                    
+                    encoded_columns_list=[]
                     if len(rows) > 0:
                         return render_template('fe/encoding.html', encoding_types=ENCODING_TYPES,
                                                allowed_operation="not",
@@ -251,36 +255,31 @@ def feature_engineering_post(action):
                     try:
 
                         encoding_type = request.form['encoding_type']
-                        columns = list(df.columns[df.dtypes == 'object'])
+                        columns = request.form.getlist('columns')
 
-                        if session['target_column'] is not None:
-                            columns = list(df.columns[df.columns != session['target_column']])
 
-                        df_ = df.loc[:, columns]
-                        encdoer_ = None
-                        cat_data = Preprocessing.col_seperator(df_, 'Categorical_columns')
-                        num_data = Preprocessing.col_seperator(df_, 'Numerical_columns')
+                        cat_data = df.loc[:, columns]
+                        encoder_ = None
+                        non_encoded_columns=[col for col in df.columns if col not in columns]
 
                         if encoding_type == "Base N Encoder":
-                            (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
+                            (df_, encoder_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
                                                                            base=int(request.form['base']))
                         elif encoding_type == "Target Encoder":
-                            (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
+                            (df_, encoder_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
                                                                            n_components=request.form['target'])
                         elif encoding_type == "Hash Encoder":
                             """This is remaining to handle"""
-                            (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
+                            (df_, encoder_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type,
                                                                            n_components=int(request.form['hash']))
                         else:
-                            (df_, encdoer_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type)
+                            (df_, encoder_) = FeatureEngineering.encodings(cat_data, cat_data.columns, encoding_type)
 
-                        if session['target_column'] is not None:
-                            df_[session['target_column']]=df.loc[:,session['target_column']]
-                            
-                        df = pd.concat([df_, num_data], axis=1)
+                        rem_data=cat_data.loc[:,non_encoded_columns]
+                        df = pd.concat([df_, rem_data], axis=1)
                         df = update_data(df)
 
-                        save_project_encdoing(encdoer_)
+                        save_project_encdoing(encoder_)
 
                         ProjectReports.insert_record_fe('Perform Encoding', encoding_type, '')
                         ProjectReports.insert_project_action_report(ProjectActions.ENCODING.value,
