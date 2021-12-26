@@ -6,7 +6,8 @@ from src.constants.model_params import KmeansClustering_Params, DbscanClustering
 from src.constants.model_params import LogisticRegression_Params, SVC_Params, KNeighborsClassifier_Params, \
     DecisionTreeClassifier_Params, RandomForestClassifier_Params, GradientBoostingClassifier_Params, \
     AdaBoostClassifier_Params
-from src.constants.constants import ACTIVATION_FUNCTIONS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, OPTIMIZERS, REGRESSION_LOSS
+from src.constants.constants import ACTIVATION_FUNCTIONS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, OPTIMIZERS, \
+    REGRESSION_LOSS
 from flask.json import jsonify
 from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params
 from src.model.custom.classification_models import ClassificationModels
@@ -30,6 +31,12 @@ from from_root import from_root
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, accuracy_score, precision_score, \
     f1_score, recall_score
 from src.utils.common.project_report_helper import ProjectReports
+
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, Dataset
+import numpy as np
+from sklearn.model_selection import train_test_split
 
 app_training = Blueprint('training', __name__)
 
@@ -585,22 +592,254 @@ def download_prediction():
     except Exception as e:
         logger.error(e)
         return jsonify({'success': False})
-    
+
+
 @app_training.route('/model_training/ann', methods=['GET'])
 def ann_training():
     try:
-        return render_template('model_training/ann.html',optimizers=OPTIMIZERS,
-                               activation_functions=ACTIVATION_FUNCTIONS,loss=REGRESSION_LOSS)
+        return render_template('model_training/ann.html', optimizers=OPTIMIZERS,
+                               activation_functions=ACTIVATION_FUNCTIONS, loss=REGRESSION_LOSS)
 
     except Exception as e:
         logger.error(e)
         return jsonify({'success': False})
+
+
+def create_layers(data=None, df=None, feature_map={}, typ=None):
+    layers = []
+
+    infer_in = data[0]['units']
+
+    for i in data:
+        if i['type'] == 'input_layer':
+            in_feature = df.shape[1]
+            out_feature = i['units']
+
+            layers.append(nn.Linear(in_features=in_feature, out_features=out_feature))
+
+            if i['activation'] == 'ReLU':
+                layers.append(nn.ReLU())
+
+            elif i['activation'] == 'ELU':
+                layers.append(nn.ELU())
+
+            elif i['activation'] == 'LeakyReLU':
+                layers.append(nn.LeakyReLU())
+
+            elif i['activation'] == 'LeakyReLU':
+                layers.append(nn.LeakyReLU())
+
+            elif i['activation'] == 'Softmax':
+                layers.append(nn.Softmax())
+
+            elif i['activation'] == 'PReLU':
+                layers.append(nn.PReLU())
+
+            elif i['activation'] == 'SELU':
+                layers.append(nn.SELU())
+
+            elif i['activation'] == 'Tanh':
+                layers.append(nn.Tanh())
+
+            elif i['activation'] == 'Softplus':
+                layers.append(nn.Softplus())
+
+            elif i['activation'] == 'Softmin':
+                layers.append(nn.Softmin())
+
+            elif i['activation'] == 'Sigmoid':
+                layers.append(nn.Sigmoid())
+
+            elif i['activation'] == 'RReLU':
+                layers.append(nn.RReLU())
+
+            else:
+                layers.append(nn.ReLU())
+
+        if i['type'] == 'linear':
+            in_feature = infer_in
+            out_feature = i['units']
+            layers.append(nn.Linear(in_feature, out_feature))
+            infer_in = out_feature
+
+        if i['type'] == 'batch_normalize':
+            layers.append(nn.BatchNorm1d(num_features=infer_in))
+
+        if i['type'] == 'dropout':
+            layers.append(nn.Dropout(p=i['perecent']))
+
+        if i['type'] == 'output_layer':
+            if typ == 'Regression':
+                in_feature = infer_in
+                out_feature = i['units']
+                layers.append(nn.Linear(in_features=in_feature, out_features=out_feature))
+
+            if typ == 'Classification':
+                in_feature = infer_in
+                out_feature = len(feature_map.keys())
+                layers.append(nn.Linear(in_features=in_feature, out_features=out_feature))
+
+            if typ == 'cluestring':
+                return 'CLuestring cant be performed using Ann'
+
+    return layers
+
+
+class CustomTrainData(Dataset):
+    def __init__(self, train_df, target):
+        self.train_df = train_df
+        self.target = target
+        self.x = torch.from_numpy(self.train_df.to_numpy())
+        self.y = torch.from_numpy(self.target.to_numpy())
+        self.n_sample = self.train_df.shape[0]
+
+    def __getitem__(self, index):
+        return self.x[index], self.y[index]
+
+    def __len__(self):
+        return self.n_sample
+
+
+class CustomTestData(Dataset):
+    def __init__(self, test_df, target):
+        self.test_df = test_df
+        self.target = target
+        self.x = torch.from_numpy(self.test_df.to_numpy())
+        self.y = torch.from_numpy(self.target.to_numpy())
+        self.n_sample = self.test_df.shape[0]
+
+    def __getitem__(self, index):
+        return self.x[index], self.y[index]
+
+    def __len__(self):
+        return self.n_sample
+
+
+def trainTestSplit(df, target, size=0.25):
+    X = df.drop(target, axis=1)
+    y = df[target]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1 - size, random_state=101)
+
+    return X_train, X_test, y_train, y_test
+
+
+def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
+    # Train test Split
+    feature_map = {}
+    if typ == 'Classification':
+
+        for i in enumerate(df[target].unique()):
+            feature_map[i[1]] = i[0]
+
+        df[target] = df[target].replace(feature_map)
+
+    X_train, X_test, y_train, y_test = trainTestSplit(df, target, size=size)
+
+    # Data class creation
+    trainData = CustomTrainData(X_train, y_train)
+    testData = CustomTestData(X_test, y_test)
+
+    # Data loader creation
+    train_data_loader = DataLoader(trainData, batch_size=32, shuffle=True)
+    test_data_loader = DataLoader(testData, batch_size=32)
+
+    # Model Creation
+    model = nn.Sequential(*create_layers(Data, X_train, feature_map, typ))
+    # Optimizer and Loss ---- > front end
+
+    if typ == "Classification":
+        loss_func = nn.CrossEntropyLoss()
+
+    if typ == "Regression":
+        loss_func = nn.MSELoss()
+
+    optimizer = torch.optim.Adam(model.parameters())
+
+    # Regression
+    # Train
+    loss_perEpoch = []
+    if typ == "Regression":
+        model.train()
+        num_epochs = num_epoch
+        for epooch in range(num_epochs):
+            for batch_idx, data in enumerate(train_data_loader):
+                features = data[0].float()
+                labels = data[1].float()
+                # print(features.shape,labels.shape)
+                optimizer.zero_grad()
+
+                output = model(features)
+                loss = loss_func(output, labels)
+
+                loss.backward()
+                optimizer.step()
+
+                if batch_idx % 2 == 0:
+                    loss_perEpoch.append(loss.item())
+                    print(f'Epoch {epooch}/{num_epochs}  Loss: {loss.item()}')
+
+        # Test
+        model.eval()
+        test_loss = []
+
+        with torch.no_grad():
+            for idx, data in enumerate(test_data_loader):
+                features = data[0].float()
+                labels = data[1].float()
+
+                output = model(features)
+                test_loss.append(loss_func(output, labels).item())
+
+        print("Test Accuracy :", np.mean(test_loss))
+
+    # Classification
+    if typ == 'Classification':
+        # Train
+        model.train()
+        num_epochs = num_epoch
+        for epooch in range(num_epochs):
+            for batch_idx, data in enumerate(train_data_loader):
+                features = data[0].float()
+                labels = data[1]
+                # print(features,labels)
+                optimizer.zero_grad()
+
+                output = model(features)
+                loss = loss_func(output, labels)
+
+                loss.backward()
+                optimizer.step()
+
+                if batch_idx % 8 == 0:
+                    loss_perEpoch.append(loss.item())
+                    print(f'Epoch {epooch}/{num_epochs} Loss: {loss.item()}')
+
+        # Test
+        model.eval()
+        test_loss = []
+        test_acc = []
+        with torch.no_grad():
+            for idx, data in enumerate(test_data_loader):
+                features = data[0].float()
+                labels = data[1]
+
+                output = model(features)
+
+                test_acc.append((torch.argmax(output, axis=1) == labels.squeeze().long()).float().mean())
+                test_loss.append(loss_func(output, labels).item())
+
+            print("Test Loss :", np.mean(test_loss), "  ", "Test Accuracy :", np.mean(test_acc))
+
 
 @app_training.route('/model_training/ann', methods=['POST'])
 def ann_model_training():
     try:
         ann = request.get_json(force=True)
         print(ann)
+        df = load_data()
+        target = session['target_column']
+        typ = 'Regression' if session['project_type'] == 1 else 'Classification'
+        main(ann, df, target=target, size=0.75, num_epoch=60, typ=typ)
         return jsonify({'ann': ann})
 
     except Exception as e:
