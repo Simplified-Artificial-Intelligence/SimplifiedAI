@@ -1260,7 +1260,7 @@ def systemlogs(action):
     try:
         if action == 'terminal':
             lines = []
-            path = os.path.join(from_root(),'logger','logs','logs.log')
+            path = os.path.join(from_root(), 'logger', 'logs', 'logs.log')
             with open(path) as file_in:
                 for line in file_in:
                     lines.append(line)
@@ -1307,14 +1307,23 @@ def custom_script():
                     df = load_data()
                     code = request.form['code']
                     # Double quote is not allowed
+                    if 'import' in code:
+                        return render_template('custom-script.html', status="error", msg="Import is not allowed")
                     if '"' in code:
                         return render_template('custom-script.html', status="error", msg="Double quote is not allowed")
 
                     if code is not None:
-                        exec(code)
-                        update_data(df)
-                        ProjectReports.insert_project_action_report(ProjectActions.CUSTOM_SCRIPT.value, code)
-                        return redirect('/eda/show')
+                        try:
+                            globalsParameter = {'os': None, 'pd': pd, 'np': np}
+                            localsParameter = {'df': df}
+                            exec(code, globalsParameter, localsParameter)
+                            update_data(df)
+                            ProjectReports.insert_project_action_report(ProjectActions.CUSTOM_SCRIPT.value, code)
+                            return redirect('/eda/show')
+                        except Exception as e:
+                            return render_template('custom-script.html', status="error",
+                                                   msg="Error Detected")
+
                     else:
                         return render_template('custom-script.html', status="error", msg="Code snippets is not valid")
             else:
@@ -1325,6 +1334,38 @@ def custom_script():
         logger.error(e)
         ProjectReports.insert_record_fe(f'Error In Custom Script: {str(e)}')
         return render_template('custom-script.html', status="error", msg=str(e))
+
+
+@app.route('/insights/<action>', methods=['GET', 'POST'])
+def data_insights(action):
+    try:
+        if request.method == 'GET':
+            if 'pid' in session and 'id' in session:
+                df = load_data()
+                if df is not None:
+                    if action == "data_insights":
+                        col_lst = list(df.columns)
+                        return render_template('insights/data_insights.html', columns=list(df.columns), action=action)
+                else:
+                    return 'No Data'
+            else:
+                return redirect('/')
+
+        elif request.method == 'POST':
+            if 'pid' in session and 'id' in session:
+                df = load_data()
+                if df is not None:
+                    if action == "data_insights":
+                        columns = request.form.getlist('columns')
+                        print(columns)
+                        return render_template('insights/insights_.html', columns=columns, action=action)
+                else:
+                    return 'No Data'
+            else:
+                return redirect('/')
+
+    except Exception as e:
+        logger.error(e)
 
 
 @app.route('/scheduler/<action>', methods=['GET'])
@@ -1446,4 +1487,4 @@ if __name__ == '__main__':
     if mysql is None or mongodb is None:
         print("Not Able To connect With Database (Check Mongo and Mysql Connection)")
     else:
-        app.run(host="0.0.0.0", port=8080,debug=True)
+        app.run(host="0.0.0.0", port=8080, debug=True)
