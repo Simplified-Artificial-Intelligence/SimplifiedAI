@@ -63,41 +63,16 @@
             </div>
         </div>
 
-        <div class="alert alert-info">
-            <strong>Model Params!</strong> Follwoing is the parameters list that used in model training.
+        <!-- Plotly chart will be drawn inside this DIV -->
+          <div class="row">
+            <div id='trainDiv'> </div>
           </div>
-
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Parameter Name</th>
-                <th>Parameter Value</th>
-              </tr>
-            </thead>
-            <tbody>
-                {% for key, value in model_info.items() %}
-                  <tr>
-                    <td>{{key}}</td>
-                        {% if key=="model" %}
-                          {% for layer in model_info.model %}
-                            <td style="display:block; padding-bottom: 0px;">{{layer}}</td>
-                          {% endfor %}
-                        {% elif key=="table" %}
-                          <td style="padding: 0px;">{{value|safe}}</td>
-                        {% elif key!="model" %}
-                          <td>{{value}}</td>
-                        {% endif %}
-                  </tr>
-                {% endfor %}
-            </tbody>
-          </table>
-
-          <h5>If you are ok with this result then train model on complete data</h5>
 
           <div class="row">
-            <!-- Plotly chart will be drawn inside this DIV -->
-            <div id='myDiv'> </div>
+            <div id='testDiv'> </div>
           </div>
+
+          <h5>If you are ok with this result then train model on complete data</h5>
           
          <div class="row">
              <div class="col-md-4 col-lg-4 col-sm-12">
@@ -125,8 +100,11 @@
 </div>
 
 <script>
-  var graphs = {{graphJSON | safe}};
-  Plotly.newPlot('myDiv',  graphs);
+  var trainGraphs = {{graphJSON.train | safe}};
+  Plotly.newPlot('trainDiv',  trainGraphs);
+
+  var testGraphs = {{graphJSON.test | safe}};
+  Plotly.newPlot('testDiv',  testGraphs);
 
   $(document).ready(function() {
     $("#submit").on('click',()=>{
