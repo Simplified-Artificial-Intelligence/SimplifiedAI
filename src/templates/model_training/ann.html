@@ -380,18 +380,17 @@
               dataType: 'json',
               data: JSON.stringify(data),
               contentType:'application/json',
-              cache: false,
-              success: function (data) {
-                  $("#trainModal").modal('hide');
-
-                  document.write(data)
-                  document.close();
-              },
-              error: function (e) {
-                  document.write(e.responseText)
-                  document.close();
-              }
-          });
+              cache: false
+            }).done(function(data) {
+              $("#trainModal").modal('hide');
+              console.log(data)
+              document.write(data)
+              document.close();
+            })
+            .fail(function(err) {
+              document.write(err.responseText)
+              document.close();
+            });
       });
     })
 </script>
