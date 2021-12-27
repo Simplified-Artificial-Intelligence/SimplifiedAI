@@ -868,9 +868,7 @@ def ann_model_training():
         model_info, model_metrice, model_metrice_plot = main(data, df, target=target, size=float(data['trainSplitPercent']), num_epoch=int(data['epoch']), typ=typ)
 
         graphJSON = PlotlyHelper.line(df, x=model_metrice_plot['test_accuracy'], y=model_metrice_plot['test_loss'])
-        print('----------------')
-        print(model_metrice_plot['test_accuracy'])
-        print(model_metrice_plot['test_loss'])
+        
         return render_template('model_training/ann_summary.html', model_info=model_info, model_metrice=model_metrice, status="success", graphJSON=graphJSON)
 
     except Exception as e:
