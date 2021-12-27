@@ -775,7 +775,7 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
         for epooch in range(num_epochs):
             for batch_idx, data in enumerate(train_data_loader):
                 features = data[0].float()
-                labels = data[1].float()
+                labels = data[1].float().reshape(features.shape[0],1)
                 # print(features.shape,labels.shape)
                 optimizer.zero_grad()
 
@@ -790,7 +790,8 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
                     print(f'Epoch {epooch}/{num_epochs}  Loss: {loss.item()}')
 
         model_metrice['train_loss'] = loss_perEpoch[-1]
-        model_metrice_plot['train_loss'] = loss_perEpoch[-1]
+        model_metrice_plot['train_loss'] = loss_perEpoch
+        model_metrice_plot['train_accuracy'] = [x for x in range(len(loss_perEpoch))]
 
         # Test
         model.eval()
@@ -799,21 +800,20 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
         with torch.no_grad():
             for idx, data in enumerate(test_data_loader):
                 features = data[0].float()
-                labels = data[1].float()
+                labels = data[1].float().reshape(features.shape[0],1)
 
                 output = model(features)
                 test_loss.append(loss_func(output, labels).item())
 
         model_metrice['test_loss'] = np.mean(test_loss)
         model_metrice['test_accuracy'] = None
-        model_metrice_plot['test_loss'] = test_loss
-        model_metrice_plot['test_accuracy'] = []
         print("Test Loss :", np.mean(test_loss))
 
     # Classification
     if typ == 'Classification':
         # Train
         loss_perEpoch = []
+        train_acc = []
         model.train()
         num_epochs = num_epoch
         for epooch in range(num_epochs):
@@ -830,10 +830,14 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
                 optimizer.step()
 
                 if batch_idx % 8 == 0:
+                    train_acc.append((torch.argmax(output, axis=1) == labels.squeeze().long()).float().mean())
                     loss_perEpoch.append(loss.item())
                     print(f'Epoch {epooch}/{num_epochs} Loss: {loss.item()}')
+
         model_metrice['train_loss'] = loss_perEpoch[-1]
-        model_metrice_plot['train_loss'] = loss_perEpoch[-1]
+        model_metrice_plot['train_loss'] = loss_perEpoch
+        model_metrice_plot['train_accuracy'] = train_acc
+
         # Test
         model.eval()
         test_loss = []
@@ -852,8 +856,7 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
         model_metrice['test_accuracy'] = np.mean(test_acc)
         model_metrice['test_loss'] = np.mean(test_loss)
-        model_metrice_plot['test_accuracy'] = test_acc
-        model_metrice_plot['test_loss'] = test_loss
+
     return model_info, model_metrice, model_metrice_plot
 
 
@@ -868,7 +871,7 @@ def ann_model_training():
         model_info, model_metrice, model_metrice_plot = main(data, df, target=target, size=float(data['trainSplitPercent']), num_epoch=int(data['epoch']), typ=typ)
 
         graphJSON = {}
-        graphJSON['train'] = PlotlyHelper.line(df, x=model_metrice_plot['test_accuracy'], y=model_metrice_plot['test_loss'])
+        graphJSON['train'] = PlotlyHelper.line(df, x=model_metrice_plot['train_accuracy'], y=model_metrice_plot['train_loss'])
         graphJSON['test'] = PlotlyHelper.line(df, x=model_metrice_plot['test_accuracy'], y=model_metrice_plot['test_loss'])
         
         return render_template('model_training/ann_summary.html', model_info=model_info, model_metrice=model_metrice, status="success", graphJSON=graphJSON)
