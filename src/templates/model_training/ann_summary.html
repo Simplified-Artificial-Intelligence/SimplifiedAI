@@ -25,7 +25,15 @@
                         {% for key, value in model_info.items() %}
                         <tr>
                             <td>{{key}}</td>
-                            <td>{{value}}</td>
+                            {% if key=="model" %}
+                              {% for layer in model_info.model %}
+                                <td style="display:block; padding-bottom: 0px;">{{layer}}</td>
+                              {% endfor %}
+                            {% elif key=="table" %}
+                              <td style="padding: 0px;">{{value|safe}}</td>
+                            {% elif key!="model" %}
+                              <td>{{value}}</td>
+                            {% endif %}
                           </tr>
                         {% endfor %}
                     </tbody>
@@ -45,7 +53,7 @@
                     </thead>
                     <tbody>
                         {% for key, value in model_metrice.items() %}
-                        <tr>
+                          <tr>
                             <td>{{key}}</td>
                             <td>{{value}}</td>
                           </tr>
@@ -58,6 +66,7 @@
         <div class="alert alert-info">
             <strong>Model Params!</strong> Follwoing is the parameters list that used in model training.
           </div>
+
           <table class="table table-hover">
             <thead>
               <tr>
@@ -67,14 +76,29 @@
             </thead>
             <tbody>
                 {% for key, value in model_info.items() %}
-                <tr>
+                  <tr>
                     <td>{{key}}</td>
-                    <td>{{value}}</td>
+                        {% if key=="model" %}
+                          {% for layer in model_info.model %}
+                            <td style="display:block; padding-bottom: 0px;">{{layer}}</td>
+                          {% endfor %}
+                        {% elif key=="table" %}
+                          <td style="padding: 0px;">{{value|safe}}</td>
+                        {% elif key!="model" %}
+                          <td>{{value}}</td>
+                        {% endif %}
                   </tr>
                 {% endfor %}
             </tbody>
           </table>
+
           <h5>If you are ok with this result then train model on complete data</h5>
+
+          <div class="row">
+            <!-- Plotly chart will be drawn inside this DIV -->
+            <div id='myDiv'> </div>
+          </div>
+          
          <div class="row">
              <div class="col-md-4 col-lg-4 col-sm-12">
                 <button type="submit" id="submit" name="load_parameters" id="load_parameters" class="add-field btn btn-success px-2">
@@ -85,7 +109,7 @@
              <div class="col-md-4 col-lg-4 col-sm-12">
                 <a href="/scheduler/Training_scheduler" id="later" class="add-field btn btn-warning px-2" style="margin: 8px 0px; width: 329px;">
                     Train Model Later
-                  </a>
+                </a>
              </div>
          </div>
          <input type="hidden" value="{{model_name}}" name="model_name" />
@@ -101,11 +125,13 @@
 </div>
 
 <script>
-  $(document).ready(function() {
+  var graphs = {{graphJSON | safe}};
+  Plotly.newPlot('myDiv',  graphs);
 
+  $(document).ready(function() {
     $("#submit").on('click',()=>{
-            $("#loading").css('display', 'block');
-      })
+      $("#loading").css('display', 'block');
     })
-  </script>
+  })
+</script>
 {% endblock %}

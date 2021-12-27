@@ -38,6 +38,7 @@ from torch.utils.data import DataLoader, Dataset
 import numpy as np
 from sklearn.model_selection import train_test_split
 from prettytable import PrettyTable
+from src.utils.common.plotly_helper import PlotlyHelper
 
 app_training = Blueprint('training', __name__)
 
@@ -715,6 +716,7 @@ def trainTestSplit(df, target, size=0.25):
 def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
     model_info = {}
     model_metrice = {}
+    model_metrice_plot = {}
     feature_map = {}
     if typ == 'Classification':
         for i in enumerate(df[target].unique()):
@@ -737,14 +739,15 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
     # Model Creation
     model = nn.Sequential(*create_layers(Data['layerUnits'], X_train, feature_map, typ))
+        
     # Optimizer and Loss ---- > front end
     table, total_params = count_parameters(model)
 
-    model_info['table'] = table
+    model_info['table'] = table.get_html_string()
     model_info['total_params'] = total_params
     model_info['optimizer'] = Data['optimizers']
     model_info['loss'] = Data['loss']
-    model_info['model'] = model
+    model_info['model'] = list(model)
 
     optimizer_selection = {'Adam': torch.optim.Adam(model.parameters(), lr=float(Data['learningRate'])),
                            'AdaGrad': torch.optim.Adagrad(model.parameters(), lr=float(Data['learningRate'])),
@@ -787,6 +790,7 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
                     print(f'Epoch {epooch}/{num_epochs}  Loss: {loss.item()}')
 
         model_metrice['train_loss'] = loss_perEpoch[-1]
+        model_metrice_plot['train_loss'] = loss_perEpoch[-1]
 
         # Test
         model.eval()
@@ -802,6 +806,8 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
         model_metrice['test_loss'] = np.mean(test_loss)
         model_metrice['test_accuracy'] = None
+        model_metrice_plot['test_loss'] = test_loss
+        model_metrice_plot['test_accuracy'] = []
         print("Test Loss :", np.mean(test_loss))
 
     # Classification
@@ -826,7 +832,8 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
                 if batch_idx % 8 == 0:
                     loss_perEpoch.append(loss.item())
                     print(f'Epoch {epooch}/{num_epochs} Loss: {loss.item()}')
-        model_info['train_loss'] = loss_perEpoch[-1]
+        model_metrice['train_loss'] = loss_perEpoch[-1]
+        model_metrice_plot['train_loss'] = loss_perEpoch[-1]
         # Test
         model.eval()
         test_loss = []
@@ -843,9 +850,11 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
             print("Test Loss :", np.mean(test_loss), "  ", "Test Accuracy :", np.mean(test_acc))
 
-        model_info['Test_Accuracy'] = np.mean(test_loss)
-        model_info['test_loss'] = np.mean(test_loss)
-    return model_info, model_metrice
+        model_metrice['test_accuracy'] = np.mean(test_acc)
+        model_metrice['test_loss'] = np.mean(test_loss)
+        model_metrice_plot['test_accuracy'] = test_acc
+        model_metrice_plot['test_loss'] = test_loss
+    return model_info, model_metrice, model_metrice_plot
 
 
 @app_training.route('/model_training/ann', methods=['POST'])
@@ -855,8 +864,14 @@ def ann_model_training():
         df = load_data()
         target = session['target_column']
         typ = 'Regression' if session['project_type'] == 1 else 'Classification'
-        model_info, model_metrice = main(data, df, target=target, size=float(data['trainSplitPercent']), num_epoch=int(data['epoch']), typ=typ)
-        return render_template('model_training/ann_summary.html', model_info=model_info, model_metrice=model_metrice, status="success")
+
+        model_info, model_metrice, model_metrice_plot = main(data, df, target=target, size=float(data['trainSplitPercent']), num_epoch=int(data['epoch']), typ=typ)
+
+        graphJSON = PlotlyHelper.line(df, x=model_metrice_plot['test_accuracy'], y=model_metrice_plot['test_loss'])
+        print('----------------')
+        print(model_metrice_plot['test_accuracy'])
+        print(model_metrice_plot['test_loss'])
+        return render_template('model_training/ann_summary.html', model_info=model_info, model_metrice=model_metrice, status="success", graphJSON=graphJSON)
 
     except Exception as e:
         logger.error(e)
