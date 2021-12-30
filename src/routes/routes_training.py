@@ -607,6 +607,24 @@ def ann_training():
         return jsonify({'success': False})
 
 
+def save_neural_network(checkpoint, name='model_temp.pth.tar'):
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    file_name = os.path.join(path, name)
+    torch.save(checkpoint, file_name)
+
+
+def load_neural_network(checkpoint, name='model_temp.pth.tar'):
+    path = os.path.join(from_root(), 'artifacts', session.get('project_name'))
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    file_name = os.path.join(path, name)
+    torch.save(checkpoint, file_name)
+
+
 def create_layers(data=None, df=None, feature_map={}, typ=None):
     layers = []
 
@@ -639,7 +657,7 @@ def create_layers(data=None, df=None, feature_map={}, typ=None):
             layers.append(activation[i['activation']])
             infer_in = out_feature
 
-        if i['type'] == 'batch_normalize':
+        if i['type'] == 'batch_normalization':
             layers.append(nn.BatchNorm1d(num_features=infer_in))
 
         if i['type'] == 'dropout':
@@ -700,9 +718,7 @@ def count_parameters(model):
         param = parameter.numel()
         table.add_row([name, param])
         total_params += param
-    return table,total_params
-
-
+    return table, total_params
 
 
 def trainTestSplit(df, target, size=0.25):
@@ -739,7 +755,7 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
     # Model Creation
     model = nn.Sequential(*create_layers(Data['layerUnits'], X_train, feature_map, typ))
-        
+    print(model)
     # Optimizer and Loss ---- > front end
     table, total_params = count_parameters(model)
 
@@ -807,6 +823,8 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
         model_metrice['test_loss'] = np.mean(test_loss)
         model_metrice['test_accuracy'] = None
+        model_metrice_plot['test_loss'] = test_loss
+        model_metrice_plot['test_accuracy'] = [x for x in range(len(test_loss))]
         print("Test Loss :", np.mean(test_loss))
 
     # Classification
@@ -856,6 +874,8 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 
         model_metrice['test_accuracy'] = np.mean(test_acc)
         model_metrice['test_loss'] = np.mean(test_loss)
+        model_metrice_plot['test_loss'] = test_loss
+        model_metrice_plot['test_accuracy'] = [x for x in range(len(test_loss))]
 
     return model_info, model_metrice, model_metrice_plot
 
@@ -864,6 +884,7 @@ def main(Data=None, df=None, target=None, size=None, num_epoch=None, typ=None):
 def ann_model_training():
     try:
         data = request.get_json(force=True)
+        print(data)
         df = load_data()
         target = session['target_column']
         typ = 'Regression' if session['project_type'] == 1 else 'Classification'
@@ -871,6 +892,7 @@ def ann_model_training():
         model_info, model_metrice, model_metrice_plot = main(data, df, target=target, size=float(data['trainSplitPercent']), num_epoch=int(data['epoch']), typ=typ)
 
         graphJSON = {}
+
         graphJSON['train'] = PlotlyHelper.line(df, x=model_metrice_plot['train_accuracy'], y=model_metrice_plot['train_loss'])
         graphJSON['test'] = PlotlyHelper.line(df, x=model_metrice_plot['test_accuracy'], y=model_metrice_plot['test_loss'])
         
