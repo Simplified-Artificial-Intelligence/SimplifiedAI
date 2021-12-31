@@ -7,7 +7,7 @@ from src.constants.model_params import LogisticRegression_Params, SVC_Params, KN
     DecisionTreeClassifier_Params, RandomForestClassifier_Params, GradientBoostingClassifier_Params, \
     AdaBoostClassifier_Params
 from src.constants.constants import ACTIVATION_FUNCTIONS, CLASSIFICATION_MODELS, CLUSTERING_MODELS, OPTIMIZERS, \
-    REGRESSION_LOSS
+    REGRESSION_LOSS, POOLING
 from flask.json import jsonify
 from src.constants.model_params import DecisionTreeRegressor_Params, LinearRegression_Params
 from src.model.custom.classification_models import ClassificationModels
@@ -48,6 +48,9 @@ mysql = MySqlHelper.get_connection_obj()
 
 log_path = os.path.join(from_root(), config_args['logs']['logger'], config_args['logs']['generallogs_file'])
 logger.add(sink=log_path, format="[{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {module} ] - {message}", level="INFO")
+
+UPLOAD_FOLDER = config_args['dir_structure']['upload_folder']
+ALLOWED_EXTENSIONS = set(['zip'])
 
 
 @app_training.route('/model_training/<action>', methods=['GET'])
@@ -901,3 +904,43 @@ def ann_model_training():
     except Exception as e:
         logger.error(e)
         return jsonify({'success': False})
+
+
+@app_training.route('/model_training/cnn', methods=['GET'])
+def cnn_training():
+    try:
+        return render_template('model_training/cnn.html', optimizers=OPTIMIZERS, poolings = POOLING, 
+                               activation_functions=ACTIVATION_FUNCTIONS, loss=REGRESSION_LOSS)
+
+    except Exception as e:
+        logger.error(e)
+        return jsonify({'success': False})
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app_training.route('/model_training/upload_zip', methods=['POST'])
+def cnn_model_training():
+    try:
+        if 'zip_file' not in request.files:
+            print('No file part')
+
+        file = request.files['zip_file']
+        
+        if file.filename == '':
+            print('No selected file')
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+
+        return jsonify({'success': True})
+
+    except Exception as e:
+        logger.error(e)
+        return jsonify({'success': False})
+
+

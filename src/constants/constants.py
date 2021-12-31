@@ -79,3 +79,4 @@ OPTIMIZERS = ['Adam', 'AdaGrad', 'AdaMax', 'RMSProps']
 ACTIVATION_FUNCTIONS = ['ReLU', 'ELU', 'LeakyReLU', 'Softmax', 'PReLU', 'SELU', 'Tanh', 'Softplus', 'Softmin',
                         'Sigmoid', 'RReLU']
 REGRESSION_LOSS = ['MAE', 'MSE', 'Huber Loss', 'Smoth L1', 'BCEWithLogitsLoss', 'CrossEntropyLoss']
+POOLING = ['MaxPool2d', 'AvgPool2d']
