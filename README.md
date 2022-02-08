@@ -1,7 +1,7 @@
 
 <h1>SimplifiedAI</h1>
 
-
+[![DeepSource](https://deepsource.io/gh/Simplified-Artificial-Intelligence/SimplifiedAI.svg/?label=active+issues&show_trend=true&token=gr9scB6u8Vw4bNXAYDJ0SfNH)](https://deepsource.io/gh/Simplified-Artificial-Intelligence/SimplifiedAI/?ref=repository-badge)
 
 ## Features
 ```
