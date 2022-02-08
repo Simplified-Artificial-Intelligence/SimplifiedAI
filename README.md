@@ -1,13 +1,4 @@
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/40850370/142188982-c2158824-5d21-4618-9837-c3a4baffc17f.png" alt="Paris" align="center">
-  </p>
-<p align='center'>
-  <a href="https://github.com/ketangangal/Projectathon/blob/main/LICENSE"><img alt="GitHub license" src="https://img.shields.io/github/license/ketangangal/Projectathon"></a>
-  <img alt="Bitbucket open issues" src="https://img.shields.io/bitbucket/issues-raw/ketangangal/Projectathon?logoColor=blue">
-<a href="https://github.com/ketangangal/Projectathon/network"><img alt="GitHub forks" src="https://img.shields.io/github/forks/ketangangal/Projectathon"></a>  
-<a href="https://github.com/ketangangal/Projectathon/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ketangangal/Projectathon"></a>
-  </p>
 <h1>SimplifiedAI</h1>
 
 
